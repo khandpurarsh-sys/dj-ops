@@ -20,5 +20,8 @@ export async function decryptPayload(payload,privKey,myKid){
  const bits=await crypto.subtle.deriveBits({name:'ECDH',public:epk},privKey,256);
  const hk=await crypto.subtle.importKey('raw',bits,'HKDF',false,['deriveKey']);
  const key=await crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(0),info:enc.encode('djops-v1')},hk,{name:'AES-GCM',length:256},false,['decrypt']);
+ if(payload.v===2){const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(m.iv)},key,ub64(m.wk));
+  const dkey=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
+  return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(payload.iv)},dkey,ub64(payload.ct))));}
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(m.iv)},key,ub64(m.ct));
  return JSON.parse(dec.decode(pt));}
