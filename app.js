@@ -1,4 +1,4 @@
-import {setup,unlock,decryptPayload,kid} from './crypto.js?v=2';
+import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>'₹'+Number(n).toLocaleString('en-IN');
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':(p>=0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
@@ -6,11 +6,35 @@ const bc=x=>x?(Array.isArray(x.bills)?x.bills.length:Number(x.bills||0)):0;const
 const LS=localStorage;let hs=7,detail=null,bs='today',priv=null,myKid=null,data=null,tab='today',q='',ch='All',status='',sv='online',rq='',rf='All';const pmOn=()=>LS.getItem('dj_pm')==='1';
 const shell=inner=>`<div class="app"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>${inner}</div>`;
 const logo='<img class="logo" src="icon-192.png" alt="Dressjet">';
-function lockScreen(){const v=JSON.parse(LS.getItem('dj_vault')||'null');
- root.innerHTML=shell(`<div class="lock">${logo}<h1>Dressjet Ops</h1>${v?`<p>Enter your passphrase to open.</p><div class="glass"><input id="pw" type="password" autocomplete="current-password" placeholder="Passphrase"><button class="btn" id="go">Unlock</button><div class="err" id="err"></div></div>`:
+const DEV=()=>JSON.parse(LS.getItem('dj_dev')||'null');
+async function devKey(d,assert){const o={publicKey:{challenge:rand(32),rpId:location.hostname,allowCredentials:[{type:'public-key',id:ub64(d.cred),transports:['internal']}],userVerification:'required',timeout:60000}};
+ if(d.mode==='prf')o.publicKey.extensions={prf:{eval:{first:ub64(d.salt)}}};
+ const r=await navigator.credentials.get(o);if(!(new Uint8Array(r.response.authenticatorData)[32]&4))throw new Error('Not confirmed.');
+ if(d.mode==='prf'){const p=r.getClientExtensionResults().prf;if(!p||!p.results||!p.results.first)throw new Error('Phone did not return its key.');
+  const h=await crypto.subtle.importKey('raw',p.results.first,'HKDF',false,['deriveBits']);return new Uint8Array(await crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(0),info:new TextEncoder().encode('djops-dev')},h,256));}
+ return ub64(d.k);}
+async function devEnable(jwkText){if(!window.PublicKeyCredential||!navigator.credentials)throw new Error('Not available on this phone.');
+ if(PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()))throw new Error('This phone has no screen lock available for the app.');
+ const c=await navigator.credentials.create({publicKey:{rp:{name:'Dressjet Ops',id:location.hostname},user:{id:rand(16),name:'owner',displayName:'Owner'},challenge:rand(32),pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},extensions:{prf:{}},timeout:60000,attestation:'none'}});
+ const cred=b64(c.rawId),salt=b64(rand(32));let d={cred,mode:'gate',salt};
+ const prf=c.getClientExtensionResults().prf;
+ if(prf&&prf.enabled!==false&&prf.enabled!==undefined){try{d.mode='prf';const k=await devKey(d);d.w=await wrapWith(k,jwkText);}catch{d={cred,mode:'gate',salt};}}
+ if(d.mode==='gate'){const k=rand(32);d.k=b64(k);d.w=await wrapWith(k,jwkText);const t=await devKey(d);void t;}
+ LS.setItem('dj_dev',JSON.stringify(d));if(!LS.getItem('dj_cred')){LS.setItem('dj_cred',cred);LS.setItem('dj_lock','webauthn');}return d.mode;}
+async function devUnlock(){const d=DEV(),k=await devKey(d);priv=await importPriv(await unwrapWith(k,d.w));}
+function offerDev(jwk){root.innerHTML=shell(`<div class="lock">${logo}<h1>Open with your phone lock?</h1><p>Use Face ID, fingerprint or your phone passcode to open the app next time instead of typing the passphrase. The passphrase stays as a backup.</p><div class="glass"><button class="btn" id="dvy">Turn on phone unlock</button><button class="btn alt" id="dvn">Not now</button><div class="err" id="err"></div></div></div>`);
+ $('#dvn').onclick=()=>{LS.setItem('dj_devno','1');start();};
+ $('#dvy').onclick=async()=>{const e=$('#err');e.textContent='';$('#dvy').disabled=true;try{await devEnable(jwk);start();}catch(x){$('#dvy').disabled=false;e.textContent=(x&&x.name==='NotAllowedError'?'Cancelled. ':'')+(x&&x.name!=='NotAllowedError'?(x.message||'Could not turn on. '):'')+'You can try again from Settings.';setTimeout(start,1800);}};}
+function lockScreen(auto){const v=JSON.parse(LS.getItem('dj_vault')||'null');const d=v&&DEV();
+ const pass=`<p>Enter your passphrase to open.</p><div class="glass"><input id="pw" type="password" autocomplete="current-password" placeholder="Passphrase"><button class="btn" id="go">Unlock</button><div class="err" id="err"></div></div>`;
+ root.innerHTML=shell(`<div class="lock">${logo}<h1>Dressjet Ops</h1>${d?`<p>Unlock with your phone lock.</p><div class="glass"><button class="btn" id="dvu">Unlock with phone</button><div class="err" id="err"></div></div><p class="note"><a href="#" id="upp" style="color:inherit">Use passphrase</a></p>`:v?pass:
  `<p>First time on this phone. Choose a passphrase. It never leaves this phone and cannot be recovered, so keep it somewhere safe.</p><div class="glass"><input id="pw" type="password" placeholder="Passphrase (10+ characters)"><input id="pw2" type="password" placeholder="Repeat passphrase"><button class="btn" id="go">Create</button><div class="err" id="err"></div></div>`}</div>`);
+ if(d){const run=async()=>{const e=$('#err');e.textContent='';try{await devUnlock();myKid=await kid(v.pub);start();}catch(x){e.textContent=x&&x.name==='NotAllowedError'?'Cancelled. Tap to try again, or use the passphrase.':'Could not unlock with phone. Use the passphrase.';}};
+  $('#dvu').onclick=run;$('#upp').onclick=ev=>{ev.preventDefault();const dd=DEV();LS.setItem('dj_dev_hold',JSON.stringify(dd));LS.removeItem('dj_dev');lockScreen();LS.setItem('dj_dev',LS.getItem('dj_dev_hold'));LS.removeItem('dj_dev_hold');};
+  if(auto!==false)run();return;}
  $('#go').onclick=async()=>{const e=$('#err');e.textContent='';const pw=$('#pw').value;
-  try{ if(v){priv=await unlock(v,pw);myKid=await kid(v.pub);start();}
+  try{ if(v){priv=await unlock(v,pw);myKid=await kid(v.pub);
+    if(!LS.getItem('dj_dev')&&!LS.getItem('dj_devno')&&window.PublicKeyCredential){offerDev(await unlockJwk(v,pw));}else start();}
    else{ if(pw.length<10){e.textContent='Use at least 10 characters.';return;} if(pw!==$('#pw2').value){e.textContent='Passphrases do not match.';return;}
     $('#go').textContent='Working...';const r=await setup(pw);LS.setItem('dj_vault',JSON.stringify(r.vault));showKey(r.pubText);} }
   catch(x){e.textContent=v?'Wrong passphrase.':'Something went wrong: '+x.message;$('#go').textContent=v?'Unlock':'Create';}};}
@@ -132,8 +156,10 @@ function settingsView(){const on=pmOn(),lk=lockKind();
  const hint=on?(pmUi==='pass'?'Enter the passphrase you use to open this app.':(lk==='pin'?'Enter your PIN to turn it off.':'Your phone will ask for its screen lock, fingerprint or face to turn it off.')):(lk?'Turn on with one tap.':(pmUi==='pin'?'Choose a 4-digit PIN. You will need it to turn privacy off.':'The first time, your phone will ask you to confirm its screen lock so only you can turn it off.'));
  return `<section class="glass list"><div class="line" style="border:0"><span>Privacy mode<br><small>Blurs amounts, counts, article and customer names, stock numbers. Labels and layout stay clear.</small></span><b>${on?'On':'Off'}</b></div></section>
  <section class="glass list" style="margin-top:12px"><div class="line" style="border:0;padding-bottom:6px"><span>${hint}</span></div>${ctl}<p id="pme" class="note" style="padding:0 0 10px"></p></section>
+${DEV()?`<section class="glass list" style="margin-top:12px"><div class="line" style="border:0"><span>Open app with phone lock<br><small>On (${DEV().mode==='prf'?'key sealed by phone':'phone lock gate'}). Passphrase still works as backup.</small></span><b>On</b></div><div style="padding:8px 0 12px"><button class="refresh" id="dvt" style="margin-left:0">Turn off</button></div></section>`:`<section class="glass list" style="margin-top:12px"><div class="line" style="border:0"><span>Open app with phone lock<br><small>Skip typing the passphrase. Enter it once to turn on.</small></span><b>Off</b></div><div class="glass search" style="margin:8px 0"><input id="dvp" type="password" autocomplete="current-password" placeholder="Your app passphrase"></div><div style="padding:8px 0 12px"><button class="refresh" id="dvt" style="margin-left:0">Turn on</button></div><p id="dve" class="note" style="padding:0 0 10px"></p></section>`}
  <p class="note" style="padding-bottom:0">Turning it off is protected by your phone's own lock (or a PIN if the phone cannot do that). This is a screen blur for casual viewers. It does not add encryption.</p>`;}
-function bindSettings(){const go=$('#pgo');const pl=$('#plink');if(pl)pl.onclick=ev=>{ev.preventDefault();pmUi=pmUi==='pass'?'':'pass';render()};if(!go)return;
+function bindSettings(){const go=$('#pgo');const dt=$('#dvt');if(dt)dt.onclick=async()=>{if(DEV()){LS.removeItem('dj_dev');LS.removeItem('dj_devno');render();return;}const m=$('#dve');m.textContent='';dt.disabled=true;try{const v=JSON.parse(LS.getItem('dj_vault'));let j;try{j=await unlockJwk(v,$('#dvp').value);}catch{m.textContent='Wrong passphrase.';dt.disabled=false;return;}await devEnable(j);render();}catch(x){dt.disabled=false;m.textContent=x&&x.name==='NotAllowedError'?'Cancelled.':(x&&x.message)||'Could not turn on.';}};
+const pl=$('#plink');if(pl)pl.onclick=ev=>{ev.preventDefault();pmUi=pmUi==='pass'?'':'pass';render()};if(!go)return;
  go.onclick=async()=>{const m=$('#pme'),on=pmUi==='pass'||pmOn(),lk=lockKind();m.textContent='';go.disabled=true;try{
   if(!pmOn()){
    if(pmUi==='pin'){const v=$('#pn1').value;if(!/^\d{4}$/.test(v)){m.textContent='Enter 4 digits.';return;}if(v!==$('#pn2').value){m.textContent='PINs do not match.';return;}const salt=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));LS.setItem('dj_pin',JSON.stringify({salt,h:await pinHash(v,salt)}));LS.setItem('dj_lock','pin');LS.setItem('dj_pm','1');pmUi='';render();return;}
