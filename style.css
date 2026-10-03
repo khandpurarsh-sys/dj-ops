@@ -52,7 +52,7 @@ header .logo{width:56px;height:56px}
 .tile.amber b{color:#e6bf80}.tile.green b{color:#a9cdb0}.tile.red b{color:#e59a92}
 h1,.big{font-weight:500;letter-spacing:0;font-family:"Didot","Bodoni 72","Playfair Display",Georgia,serif}.eyebrow,h2{letter-spacing:.16em;font-size:12px}
 
-.eye{margin-left:auto;padding:0;width:44px;min-width:44px;flex:none;display:flex;align-items:center;justify-content:center}.eye+.refresh{margin-left:0}
 .pmrow{margin-top:18px}.pmrow .line{cursor:pointer}
-.pm main .glass:not(.search):not(.pmrow){filter:blur(11px);-webkit-user-select:none;user-select:none}
-.pm header h1{filter:none}.pm.pmd header h1{filter:blur(9px)}
+.sv{font-style:normal}.pm .sv{filter:blur(7px);font-style:normal;display:inline-block;max-width:100%;-webkit-user-select:none;user-select:none}
+.pm .big,.pm .tile b,.pm .split b,.pm .line>b,.pm .ometa b,.pm .otop b,.pm .osku,.pm .chtop span:last-child{filter:blur(7px);-webkit-user-select:none;user-select:none}
+.pm svg text{opacity:0}.pm.pmd header h1{filter:blur(9px)}
