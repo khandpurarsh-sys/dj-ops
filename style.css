@@ -41,3 +41,13 @@ header .logo{width:56px;height:56px}
 .note { color:var(--ink2); font-size:12px; text-align:center; padding:6px 0 90px; } .tabbar button { font-size:14px; }
 .low{color:#ff8a8a} small{opacity:.7;font-weight:400} .tabbar button{font-size:12.5px;padding:13px 0}
 [data-d]{cursor:pointer;-webkit-tap-highlight-color:transparent} [data-d]:active{opacity:.7}
+:root{--ink:#f2e8d8;--ink2:rgba(242,232,216,.56);--glass:rgba(240,225,200,.05);--edge:rgba(231,211,168,.17);--shadow:0 14px 36px rgba(0,0,0,.6);--bg1:#0b0d12;--bg2:#1b130f;--accent:#e7d3a8}
+.app{background:linear-gradient(170deg,var(--bg1),#10121a 40%,var(--bg2))}
+.b1{background:#27324d;opacity:.45}.b2{background:#5a3a2a;opacity:.30}.b3{background:#e7d3a8;opacity:.10}
+.glass{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,245,225,.08)!important}
+.bar i{background:linear-gradient(90deg,#9c8358,#f1e2c0)!important}
+.tabbar button.on,.pills button.on,.btn{background:linear-gradient(180deg,#f1e2c0,#d3b982)!important;color:#15110b!important;border-color:transparent}
+.chip{background:rgba(231,211,168,.15)!important;color:#ecdcb6}
+.st{background:rgba(242,232,216,.09)}.st.complete{background:rgba(140,175,150,.16);color:#a9cdb0}.st.processing{background:rgba(231,211,168,.16);color:#ecdcb6}.st.pending_verification,.st.verify{background:rgba(214,160,100,.2);color:#e6b27a}.st.cancelled{background:rgba(205,100,95,.17);color:#e59a92}
+.tile.amber b{color:#e6bf80}.tile.green b{color:#a9cdb0}.tile.red b{color:#e59a92}
+h1,.big{font-weight:500;letter-spacing:0;font-family:"Didot","Bodoni 72","Playfair Display",Georgia,serif}.eyebrow,h2{letter-spacing:.16em;font-size:12px}
