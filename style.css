@@ -51,3 +51,8 @@ header .logo{width:56px;height:56px}
 .st{background:rgba(242,232,216,.09)}.st.complete{background:rgba(140,175,150,.16);color:#a9cdb0}.st.processing{background:rgba(231,211,168,.16);color:#ecdcb6}.st.pending_verification,.st.verify{background:rgba(214,160,100,.2);color:#e6b27a}.st.cancelled{background:rgba(205,100,95,.17);color:#e59a92}
 .tile.amber b{color:#e6bf80}.tile.green b{color:#a9cdb0}.tile.red b{color:#e59a92}
 h1,.big{font-weight:500;letter-spacing:0;font-family:"Didot","Bodoni 72","Playfair Display",Georgia,serif}.eyebrow,h2{letter-spacing:.16em;font-size:12px}
+
+.eye{margin-left:auto;padding:0;width:44px;min-width:44px;flex:none;display:flex;align-items:center;justify-content:center}.eye+.refresh{margin-left:0}
+.pmrow{margin-top:18px}.pmrow .line{cursor:pointer}
+.pm main .glass:not(.search):not(.pmrow){filter:blur(11px);-webkit-user-select:none;user-select:none}
+.pm header h1{filter:none}.pm.pmd header h1{filter:blur(9px)}
