@@ -151,7 +151,7 @@ function dayBills(kind,day){const n=v=>Number(v||0),iso=new Date(Date.now()-new 
  const R=data.retail,S=R&&A(R.stores)||[],sf=rf==='All'?S:S.filter(z=>z.name===rf);
  if(today){const l=[];sf.forEach(z=>(A(z.billList)||[]).forEach(b=>l.push({...b,store:z.name})));return l.length?l:null;}
  const e=(A(data.retailHistory)||[]).find(z=>z.d===day);if(!e)return null;
- if(rf!=='All'){const b=bl(e.by&&e.by[rf]);return b?b.map(x=>({...x,store:rf})):null;}
+ if(rf!=='All'){const b=bl(e.by&&e.by[rf])||(Object.keys(e.by||{}).length<=1?bl(e):null);return b?b.map(x=>({...x,store:rf})):null;}
  if(bl(e))return bl(e);const l=[];Object.entries(e.by||{}).forEach(([s,v])=>(bl(v)||[]).forEach(b=>l.push({...b,store:s})));return l.length?l:null;}
 function render(){if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];
