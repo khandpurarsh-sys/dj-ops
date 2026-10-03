@@ -232,7 +232,8 @@ function attnStock(chn){const t=attn(chn);if(!t)return '';if(!t.low.length&&!t.s
 function itemsOf(e,chn){if(!e)return null;if(chn==='online')return A(e.itemList)||(Array.isArray(e.items)?A(e.items):null)||(bl(e)?bl(e).flatMap(b=>A(b.items)||[]):null);
  if(Array.isArray(e.items)&&e.items.length)return e.items;if(e.by){const l=[];let any=false;Object.values(e.by).forEach(v=>{if(v&&Array.isArray(v.items)&&v.items.length){any=true;l.push(...v.items);}});if(any)return l;}
  const b=bl(e);if(b){const l=b.flatMap(z=>A(z.items)||[]);return l.length?l:null;}return null;}
-function sales(chn,days){const H=A(chn==='online'?data.history:data.retailHistory);if(!H)return null;const ds=H.map(x=>x.d).filter(Boolean).sort();if(!ds.length)return null;
+function sales(chn,days){const sm=A(data[(chn==='online'?'online':'retail')+days]);if(sm){const m={};sm.forEach(i=>{const k=String(i.sku);const r=(m[k]=m[k]||{sku:k,name:i.name||'',qty:null,amt:0});if(i.qty!=null)r.qty=(r.qty||0)+nn(i.qty);r.amt+=nn(i.amt);});return {m,cov:days,span:days,summary:true};}
+ const H=A(chn==='online'?data.history:data.retailHistory);if(!H)return null;const ds=H.map(x=>x.d).filter(Boolean).sort();if(!ds.length)return null;
  const last=new Date(ds[ds.length-1]+'T00:00:00').getTime(),cut=last-(days-1)*864e5;const m={};let cov=0;
  H.forEach(e=>{if(!e.d||new Date(e.d+'T00:00:00').getTime()<cut)return;const it=itemsOf(e,chn);if(!it)return;cov++;it.forEach(i=>{const k=String(i.sku);const r=(m[k]=m[k]||{sku:k,name:i.name||'',qty:0,amt:0});r.qty+=nn(i.qty);r.amt+=nn(i.amt);if(i.name&&!r.name)r.name=i.name;});});
  return {m,cov,span:H.filter(e=>e.d&&new Date(e.d+'T00:00:00').getTime()>=cut).length};}
@@ -241,19 +242,21 @@ function bestBlock(){const hasR=!!A(data.retailHistory);if(!hasR&&bchn==='retail
  let h=`<h2>Best and slowest</h2><div class="pills">${pill('bw',7,bwin,'7 days')}${pill('bw',30,bwin,'30 days')}${pill('bm','units',bmet,'By units')}${pill('bm','rev',bmet,'By revenue')}${hasR?pill('bch','online',bchn,'Online')+pill('bch','retail',bchn,'Retail'):''}</div>`;
  const rows=sl?Object.values(sl.m):[];
  if(!rows.length){const fb=bchn==='online'?(bwin===7?(data.sellers&&data.sellers.week):(data.sellers&&data.sellers.month)):null;
-  if(A(fb))return h+`<section class="glass list">${fb.slice(0,10).map((r,n)=>`<div class="line"><span>${n+1}. ${SV(esc(r.sku))}</span><b>${r.qty!=null?r.qty+' sold':''}${r.qty!=null&&r.rev?' · ':''}${r.rev?inr(r.rev):''}</b></div>`).join('')}</section><p class="note">Top sellers only. Item-level sales per day are needed for slowest and dead stock.</p>`;
+  if(A(fb))return h+`<section class="glass list">${fb.slice(0,10).map((r,n)=>`<div class="line"><span>${n+1}. ${SV(esc(r.sku))}</span><b>${r.qty!=null?r.qty+' sold':''}${r.qty!=null&&r.rev?' · ':''}${r.rev?inr(r.rev):''}</b></div>`).join('')}</section><p class="note">Online shows revenue only (units and dead stock are not available online).</p>`;
   return h+`<section class="glass list"><div class="line"><span>Item-level sales are not available yet for ${bchn==='retail'?'retail':'online'}.</span><b>—</b></div></section>`;}
- const key=bmet==='rev'?'amt':'qty';const hasAmt=rows.some(r=>r.amt>0);const k=(bmet==='rev'&&!hasAmt)?'qty':key;
- const sorted=rows.slice().sort((p,q)=>q[k]-p[k]||p.sku.localeCompare(q.sku));const fmt=r=>`${r.qty} unit${r.qty===1?'':'s'}${r.amt?' · '+inr(r.amt):''}`;
+ const hasAmt=rows.some(r=>r.amt>0),hasQty=rows.some(r=>r.qty>0);const k=(bmet==='rev'&&hasAmt)||!hasQty?'amt':'qty';
+ const sorted=rows.slice().sort((p,q)=>nn(q[k])-nn(p[k])||p.sku.localeCompare(q.sku));const fmt=r=>(r.qty!=null?`${r.qty} unit${r.qty===1?'':'s'}`:'')+(r.qty!=null&&r.amt?' · ':'')+(r.amt?inr(r.amt):'');
  const row=(r,n)=>`<div class="line"><span>${n!=null?n+'. ':''}${SV(esc(r.sku))}${r.name?'<br><small>'+esc(r.name)+'</small>':''}</span><b>${fmt(r)}</b></div>`;
  h+=`<section class="glass list"><div class="line" style="border:0"><span><small>Top ${Math.min(8,sorted.length)}</small></span></div>${sorted.slice(0,8).map((r,n)=>row(r,n+1)).join('')}</section>`;
  const bot=sorted.length>8?sorted.slice(-Math.min(8,sorted.length-8)).reverse():[];if(bot.length)h+=`<section class="glass list" style="margin-top:12px"><div class="line" style="border:0"><span><small>Slowest that still sold</small></span></div>${bot.map(r=>row(r)).join('')}</section>`;
  const stk=bchn==='online'?onStockRows():rtStockRows();
  if(bwin===30){const s30=sl,full=s30.span>0&&s30.cov>=s30.span;
-  if(stk){const sold=new Set(rows.map(r=>r.sku));const dead=stk.filter(x=>x.onHand>0&&!sold.has(x.sku)).sort((p,q)=>q.onHand-p.onHand);
+  const pre=A(bchn==='online'?data.deadStock:data.retailDead);
+  if(pre)h+=`<h2>No sales in 30 days, stock on hand</h2><section class="glass list">${pre.filter(x=>nn(x.onHand)>0).slice(0,15).map(x=>`<div class="line"><span>${SV(esc(x.sku))}${x.name?'<br><small>'+esc(x.name)+'</small>':''}</span><b>${nn(x.onHand)} in stock</b></div>`).join('')}</section>`;
+  else if(stk&&bchn!=='online'){const sold=new Set(rows.map(r=>r.sku));const dead=stk.filter(x=>x.onHand>0&&!sold.has(x.sku)).sort((p,q)=>q.onHand-p.onHand);
    const partial=!full||s30.span<30;
    h+=`<h2>No sales in 30 days, stock on hand</h2><section class="glass list">${dead.length?dead.slice(0,15).map(x=>`<div class="line"><span>${SV(esc(x.sku))}${x.name?'<br><small>'+esc(x.name)+'</small>':''}</span><b>${x.onHand} in stock</b></div>`).join(''):'<div class="line"><span>None found in the stock list.</span><b>✓</b></div>'}</section>${partial?`<p class="note">Based on ${s30.cov} day${s30.cov===1?'':'s'} of item sales, so this list may be incomplete.</p>`:''}`;}
-  else h+=`<h2>No sales in 30 days, stock on hand</h2><section class="glass list"><div class="line"><span>Waiting for ${bchn} stock data.</span><b>—</b></div></section>`;}
+  else if(bchn!=='online')h+=`<h2>No sales in 30 days, stock on hand</h2><section class="glass list"><div class="line"><span>Waiting for ${bchn} stock data.</span><b>—</b></div></section>`;}
  else if(sl.cov<sl.span)h+=`<p class="note">Item detail for ${sl.cov} of ${sl.span} days.</p>`;
  return h;}
 let lastAnim=null,dir='f',lastX=null;const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
