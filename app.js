@@ -41,25 +41,16 @@ function lockScreen(auto){const v=JSON.parse(LS.getItem('dj_vault')||'null');con
 function showKey(t){root.innerHTML=shell(`<div class="lock">${logo}<h1>Almost done</h1><p>Send this public key to your assistant. It is not secret. It lets updates be locked so only this phone can read them.</p><div class="glass"><div class="keybox" id="k">${esc(t)}</div><button class="btn" id="cp">Copy key</button><button class="btn alt" id="sh">Share key</button><button class="btn alt" id="nx">Continue</button></div></div>`);
  $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(t);$('#cp').textContent='Copied'}catch{}};
  $('#sh').onclick=()=>navigator.share?navigator.share({text:t}):0;$('#nx').onclick=lockScreen;}
-async function fetchLatest(){const repo=(window.DJ_CONFIG||{}).repo;
- const r=await fetch(`https://api.github.com/repos/${repo}/issues/comments?sort=created&direction=desc&per_page=1&_=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
- if(!r.ok)throw new Error('GitHub '+r.status);const j=await r.json();if(!j.length)throw new Error('No data yet');
- const body=j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();LS.setItem('dj_last',body);return body;}
-let stk=null;
-function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
- if(R&&Array.isArray(R.rows)&&R.rows.length){data.retailStock=Array.isArray(R.rows[0][1])?R.rows.flatMap(r=>(r[1]||[]).map(z=>({sku:String(((r[0]||'')+' '+(z[0]||'')).trim()),onHand:nn(z[1])}))):R.rows.map(r=>({sku:String(((r[0]||'')+' '+(r[1]||'')).trim()),onHand:nn(r[2])}));data.retailStockTotal={skus:new Set(data.retailStock.map(x=>x.sku)).size,units:data.retailStock.reduce((q,x)=>q+Math.max(0,x.onHand),0)};}
- if(O&&Array.isArray(O.rows)&&O.rows.length){const NM=Array.isArray(O.names)?O.names:null,v2=!!NM;let rows=v2?O.rows.map(r=>({sku:String(r[0]),name:NM[r[1]]||'',onHand:nn(r[2]),perDay:r[3]!=null?nn(r[3])/30:undefined,sold30:r[3]})):O.rows.map(r=>({sku:String(r[0]),name:r[1]||'',onHand:nn(r[2]),perDay:r[3]!=null?nn(r[3])/30:undefined,sold30:r[3]}));
-  if(v2&&Array.isArray(O.zero))rows=rows.concat(O.zero.map(r=>({sku:String(r[0]),name:NM[r[1]]||'',onHand:0,perDay:undefined,sold30:null})));data.stock=rows;
-  data.stockMeta={tot:nn(O.totalSkus)||rows.length,cov:rows.length,oos:rows.filter(x=>x.onHand<=0).length,units:rows.reduce((q,x)=>q+Math.max(0,x.onHand),0)};
-  if(!A(data.deadStock)&&rows.some(x=>x.sold30!=null)){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));if(d.length){data.deadStock=d;data._deadDerived=true;}}}
- }catch(e){}}
+async function lastComment(repo,num){const h={Accept:'application/vnd.github+json'},iss=await (await fetch(`https://api.github.com/repos/${repo}/issues/${num}?_=${Date.now()}`,{cache:'no-store',headers:h})).json();const n=iss&&iss.comments;if(!n)throw new Error('No data yet');
+ const r=await fetch(`https://api.github.com/repos/${repo}/issues/${num}/comments?per_page=1&page=${n}&_=${Date.now()}`,{cache:'no-store',headers:h});if(!r.ok)throw new Error('GitHub '+r.status);const j=await r.json();if(!j.length)throw new Error('No data yet');
+ const own=String(repo).split('/')[0].toLowerCase();if(j[0].user&&String(j[0].user.login).toLowerCase()!==own)throw new Error('Newest comment is not from the owner');
+ return j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();}
+async function fetchLatest(){const repo=(window.DJ_CONFIG||{}).repo;const body=await lastComment(repo,1);LS.setItem('dj_last',body);return body;}
 async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
- try{const h={Accept:'application/vnd.github+json'},iss=await (await fetch(`https://api.github.com/repos/${repo}/issues/2?_=${Date.now()}`,{cache:'no-store',headers:h})).json();const n=iss&&iss.comments;if(!n)throw 0;
-  const r=await fetch(`https://api.github.com/repos/${repo}/issues/2/comments?per_page=1&page=${n}&_=${Date.now()}`,{cache:'no-store',headers:h});if(!r.ok)throw 0;const j=await r.json();if(!j.length)throw 0;
-  b=j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();LS.setItem('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');}
+ try{b=await lastComment(repo,2);LS.setItem('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');}
  if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){}}
 async function load(){try{status='Updating...';render();let b;try{b=await fetchLatest();status='';}catch(e){b=LS.getItem('dj_last');status=b?'Offline, showing last saved data':'No data yet: '+e.message;if(!b){render();return;}}
- data=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();}catch(e){status='Could not read update: '+e.message;}render();loadStock();}
+ const dd=await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');data=dd;applyStk();}catch(e){status='Could not read update: '+e.message;}render();loadStock();}
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?'Revenue today':t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
 function ocard(o){const items=o.items?o.items.map(i=>esc(i.sku)+(i.qty>1?' ×'+i.qty:'')).join(', '):esc(o.skus||'');const st=o.status||'';
