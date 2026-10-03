@@ -46,6 +46,14 @@ async function lastComment(repo,num){const h={Accept:'application/vnd.github+jso
  const own=String(repo).split('/')[0].toLowerCase();if(j[0].user&&String(j[0].user.login).toLowerCase()!==own)throw new Error('Newest comment is not from the owner');
  return j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();}
 async function fetchLatest(){const repo=(window.DJ_CONFIG||{}).repo;const body=await lastComment(repo,1);LS.setItem('dj_last',body);return body;}
+let stk=null;
+function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
+ if(R&&Array.isArray(R.rows)&&R.rows.length){data.retailStock=Array.isArray(R.rows[0][1])?R.rows.flatMap(r=>(r[1]||[]).map(z=>({sku:String(((r[0]||'')+' '+(z[0]||'')).trim()),onHand:nn(z[1])}))):R.rows.map(r=>({sku:String(((r[0]||'')+' '+(r[1]||'')).trim()),onHand:nn(r[2])}));data.retailStockTotal={skus:new Set(data.retailStock.map(x=>x.sku)).size,units:data.retailStock.reduce((q,x)=>q+Math.max(0,x.onHand),0)};}
+ if(O&&Array.isArray(O.rows)&&O.rows.length){const NM=Array.isArray(O.names)?O.names:null,v2=!!NM;let rows=v2?O.rows.map(r=>({sku:String(r[0]),name:NM[r[1]]||'',onHand:nn(r[2]),perDay:r[3]!=null?nn(r[3])/30:undefined,sold30:r[3]})):O.rows.map(r=>({sku:String(r[0]),name:r[1]||'',onHand:nn(r[2]),perDay:r[3]!=null?nn(r[3])/30:undefined,sold30:r[3]}));
+  if(v2&&Array.isArray(O.zero))rows=rows.concat(O.zero.map(r=>({sku:String(r[0]),name:NM[r[1]]||'',onHand:0,perDay:undefined,sold30:null})));data.stock=rows;
+  data.stockMeta={tot:nn(O.totalSkus)||rows.length,cov:rows.length,oos:rows.filter(x=>x.onHand<=0).length,units:rows.reduce((q,x)=>q+Math.max(0,x.onHand),0)};
+  if(!A(data.deadStock)&&rows.some(x=>x.sold30!=null)){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));if(d.length){data.deadStock=d;data._deadDerived=true;}}}
+ }catch(e){}}
 async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
  try{b=await lastComment(repo,2);LS.setItem('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');}
  if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){}}
