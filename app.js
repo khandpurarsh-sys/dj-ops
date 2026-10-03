@@ -179,9 +179,17 @@ function dayBills(kind,day){const n=v=>Number(v||0),iso=new Date(Date.now()-new 
  const e=(A(data.retailHistory)||[]).find(z=>z.d===day);if(!e)return null;
  if(rf!=='All'){const b=bl(e.by&&e.by[rf])||(Object.keys(e.by||{}).length<=1?bl(e):null);return b?b.map(x=>({...x,store:rf})):null;}
  if(bl(e))return bl(e);const l=[];Object.entries(e.by||{}).forEach(([s,v])=>(bl(v)||[]).forEach(b=>l.push({...b,store:s})));return l.length?l:null;}
+function asOfMs(s){const x=s||{};for(const k of ['ts','generatedAt','atIso']){if(x[k]){const t=Date.parse(x[k]);if(!isNaN(t))return t;}}
+ const m=String(x.at||'').match(/(\d{1,2})\s+([A-Za-z]{3})[a-z]*,?\s+(\d{1,2}):(\d{2})\s*([AP]M)/i);if(!m)return null;
+ const mo='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ').indexOf(m[2].toLowerCase());if(mo<0)return null;
+ let h=+m[3]%12+(/p/i.test(m[5])?12:0);const now=new Date(),ist=new Date(now.getTime()+19800000);let y=ist.getUTCFullYear();
+ let t=Date.UTC(y,mo,+m[1],h,+m[4])-19800000;if(t>now.getTime()+86400000)t=Date.UTC(y-1,mo,+m[1],h,+m[4])-19800000;return t;}
+function freshBanner(s){const t=asOfMs(s),lbl=esc(String((s&&s.at)||''));if(t==null)return lbl?`<div class="asof"><span>Data as of ${lbl}</span></div>`:'';
+ const mins=Math.max(0,Math.round((Date.now()-t)/60000)),stale=mins>90;const ago=mins<60?mins+' min ago':mins<1440?Math.floor(mins/60)+'h '+(mins%60)+'m ago':Math.floor(mins/1440)+'d ago';
+ return `<div class="asof${stale?' stale':''}"><span>${stale?'Data may be stale · as of ':'Data as of '}${lbl}</span><small>${ago}</small></div>`;}
 function render(){if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];
- let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail'})[tab]}</h1><p>Dressjet · ${esc(s.at)}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header><main>`;
+ let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail'})[tab]}</h1><p>Dressjet · ${esc(s.at)}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail?'':freshBanner(s)}<main>`;
  if(detail==='set:privacy'){h+=settingsView();}
  else if(detail){h+=detailView(orders,live,pend,s);}
  else if(tab==='retail'){h+=retailView();}
