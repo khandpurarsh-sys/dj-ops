@@ -53,8 +53,25 @@ header .logo{width:56px;height:56px}
 h1,.big{font-weight:500;letter-spacing:0;font-family:"Didot","Bodoni 72","Playfair Display",Georgia,serif}.eyebrow,h2{letter-spacing:.16em;font-size:12px}
 
 .pmrow{margin-top:18px}.pmrow .line{cursor:pointer}
-.sv{font-style:normal}.pm .sv{filter:blur(7px);font-style:normal;display:inline-block;max-width:100%;-webkit-user-select:none;user-select:none}
-.pm .big,.pm .tile b,.pm .split b,.pm .line>b,.pm .ometa b,.pm .otop b,.pm .osku,.pm .chtop span:last-child{filter:blur(7px);-webkit-user-select:none;user-select:none}
+.sv{font-style:normal}.pmx .sv{filter:blur(var(--bl));font-style:normal;display:inline-block;max-width:100%;-webkit-user-select:none;user-select:none}
+.pmx .big,.pmx .tile b,.pmx .split b,.pmx .line>b,.pmx .ometa b,.pmx .otop b,.pmx .osku,.pmx .chtop span:last-child{filter:blur(var(--bl));-webkit-user-select:none;user-select:none}
 .pm svg text{opacity:0}.pm.pmd header h1{filter:blur(9px)}
 
 .asof{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0 12px;padding:9px 14px;border-radius:14px;font-size:13px;color:#cdbfa8;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}.asof small{opacity:.75;font-size:12px}.asof.stale{color:#ffc46b;background:rgba(255,170,40,.12);border-color:rgba(255,170,40,.45);font-weight:600}
+
+/* motion */
+@property --bl{syntax:'<length>';inherits:true;initial-value:0px}
+body{--bl:0px;transition:--bl .38s cubic-bezier(.3,.7,.2,1)}body.pm{--bl:7px}body.nt{transition:none}
+@keyframes rise{from{opacity:0;transform:translate3d(var(--dx,0),12px,0)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+main.anim.f{--dx:22px}main.anim.b{--dx:-22px}
+main.anim>*{animation:rise .46s cubic-bezier(.2,.9,.2,1) both;animation-delay:calc(var(--i,8)*38ms)}
+svg rect[fill^="url"]{transform-box:fill-box;transform-origin:50% 100%}
+main.anim svg rect[fill^="url"]{animation:grow .7s cubic-bezier(.2,.9,.2,1) both}
+.bar i{transform-origin:0 50%}main.anim .bar i{animation:growx .8s cubic-bezier(.2,.9,.2,1) both}
+[data-d],.refresh,.pills button,.tabbar button,.btn,.chrow{transition:transform .2s cubic-bezier(.2,.9,.2,1),opacity .2s;-webkit-tap-highlight-color:transparent}
+[data-d]:active,.refresh:active,.pills button:active,.tabbar button:active,.btn:active{transform:scale(.965)}
+.tabbar{position:fixed}.tabbar button{position:relative;z-index:1}.tabbar .ind{position:absolute;top:6px;bottom:6px;left:0;border-radius:99px;background:linear-gradient(180deg,#f1e2c0,#d3b982);will-change:transform;z-index:0;pointer-events:none}
+.tabbar button.on{background:transparent!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
