@@ -17,7 +17,7 @@ function showKey(t){root.innerHTML=shell(`<div class="lock">${logo}<h1>Almost do
  $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(t);$('#cp').textContent='Copied'}catch{}};
  $('#sh').onclick=()=>navigator.share?navigator.share({text:t}):0;$('#nx').onclick=lockScreen;}
 async function fetchLatest(){const repo=(window.DJ_CONFIG||{}).repo;
- const r=await fetch(`https://api.github.com/repos/${repo}/issues/comments?sort=created&direction=desc&per_page=1`,{headers:{Accept:'application/vnd.github+json'}});
+ const r=await fetch(`https://api.github.com/repos/${repo}/issues/comments?sort=created&direction=desc&per_page=1&_=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
  if(!r.ok)throw new Error('GitHub '+r.status);const j=await r.json();if(!j.length)throw new Error('No data yet');
  const body=j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();LS.setItem('dj_last',body);return body;}
 async function load(){try{status='Updating...';render();let b;try{b=await fetchLatest();status='';}catch(e){b=LS.getItem('dj_last');status=b?'Offline, showing last saved data':'No data yet: '+e.message;if(!b){render();return;}}
