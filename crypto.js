@@ -25,3 +25,9 @@ export async function decryptPayload(payload,privKey,myKid){
   return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(payload.iv)},dkey,ub64(payload.ct))));}
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(m.iv)},key,ub64(m.ct));
  return JSON.parse(dec.decode(pt));}
+
+export async function unlockJwk(vault,pass){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(vault.iv)},await pbkdf(pass,ub64(vault.salt)),ub64(vault.ct));return dec.decode(pt);}
+export function importPriv(jwkText){return crypto.subtle.importKey('jwk',JSON.parse(jwkText),{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);}
+export async function wrapWith(raw32,text){const k=await crypto.subtle.importKey('raw',raw32,'AES-GCM',false,['encrypt']);const iv=crypto.getRandomValues(new Uint8Array(12));return {iv:b64(iv),ct:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(text)))};}
+export async function unwrapWith(raw32,w){const k=await crypto.subtle.importKey('raw',raw32,'AES-GCM',false,['decrypt']);return dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},k,ub64(w.ct)));}
+export const rand=n=>crypto.getRandomValues(new Uint8Array(n));export {b64,ub64};
