@@ -149,35 +149,5 @@ body:not(.pm) .sv,body:not(.pm) .big,body:not(.pm) .tile b,body:not(.pm) .split 
 .askchips{flex-wrap:wrap;gap:8px;margin-bottom:12px}.askchips button{font-size:13px;padding:8px 12px}
 .tabbar{width:min(380px,calc(100% - 20px))!important}.tabbar button{font-size:11.5px!important;letter-spacing:-.1px}
 
-#vbtn{position:fixed;right:12px;bottom:84px;z-index:60;display:none;align-items:center;gap:7px;padding:9px 13px;border-radius:99px;border:1px solid var(--edge);background:var(--glass);color:var(--ink);font-size:12px;font-weight:700;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 6px 24px rgba(0,0,0,.28)}
-#vbtn small{font-weight:500;opacity:.65;font-size:10.5px}.vdot{width:8px;height:8px;border-radius:50%;background:#46d38b;box-shadow:0 0 0 0 rgba(70,211,139,.6);animation:vdot 1.8s infinite}
-@keyframes vdot{0%{box-shadow:0 0 0 0 rgba(70,211,139,.55)}70%{box-shadow:0 0 0 9px rgba(70,211,139,0)}100%{box-shadow:0 0 0 0 rgba(70,211,139,0)}}
-#vo{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .35s ease,visibility 0s .35s}
-#vo.on{opacity:1;visibility:visible;transition:opacity .3s ease}
-#vo .vo-bd{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 100%,rgba(8,12,30,.55),rgba(8,12,30,.18) 60%,transparent);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-#vo .vo-glow{position:absolute;left:-10%;right:-10%;bottom:-70px;height:300px;filter:blur(38px);opacity:.95}
-#vo .vo-glow i{position:absolute;bottom:0;width:55%;height:230px;border-radius:50%;mix-blend-mode:screen;animation:vgl 5.5s ease-in-out infinite}
-#vo .vo-glow i:nth-child(1){left:0;background:radial-gradient(circle,#2f7bff,transparent 68%)}
-#vo .vo-glow i:nth-child(2){left:22%;background:radial-gradient(circle,#b45cff,transparent 68%);animation-duration:4.4s;animation-delay:-1.2s}
-#vo .vo-glow i:nth-child(3){right:0;background:radial-gradient(circle,#ffb04a,transparent 68%);animation-duration:6.4s;animation-delay:-2.6s}
-@keyframes vgl{0%,100%{transform:translate3d(-6%,10px,0) scale(1)}50%{transform:translate3d(10%,-34px,0) scale(1.22)}}
-#vo .vo-mid{position:absolute;left:0;right:0;bottom:110px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 24px;text-align:center}
-#vo .vo-orb{position:relative;width:104px;height:104px;border-radius:50%;animation:vorb 2.2s ease-in-out infinite}
-#vo .vo-orb b{position:absolute;inset:0;border-radius:50%;filter:blur(7px);mix-blend-mode:screen}
-#vo .vo-orb b:nth-child(1){background:conic-gradient(from 0deg,#2f7bff,#b45cff,#ff6bb0,#ffb04a,#2fe0c8,#2f7bff);animation:vspin 3.2s linear infinite}
-#vo .vo-orb b:nth-child(2){inset:14px;background:conic-gradient(from 180deg,#ffffff,#8fc2ff,#d9a6ff,#ffffff);animation:vspin 2.1s linear infinite reverse;opacity:.9}
-#vo .vo-orb b:nth-child(3){inset:30px;background:#fff;filter:blur(10px);opacity:.85}
-#vo.busy .vo-orb{animation-duration:.9s}
-@keyframes vspin{to{transform:rotate(360deg)}}@keyframes vorb{0%,100%{transform:scale(.92)}50%{transform:scale(1.1)}}
-#vo .vo-t1{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#fff;opacity:.8;font-weight:700}
-#vo .vo-t2{max-width:330px;font-size:18px;line-height:1.3;color:#fff;font-weight:600;text-shadow:0 2px 14px rgba(0,0,0,.6);min-height:24px}
-#vo .vo-x{pointer-events:auto;margin-top:6px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:99px;padding:8px 18px;font-size:13px;font-weight:600;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-body.noanim #vo .vo-glow i,body.noanim #vo .vo-orb,body.noanim #vo .vo-orb b,body.noanim .vdot{animation:none!important}
-@media (prefers-reduced-motion:reduce){#vo .vo-glow i,#vo .vo-orb,#vo .vo-orb b{animation:none!important}}
-main.vfx{animation:vfx .55s cubic-bezier(.2,.9,.2,1)}
-@keyframes vfx{0%{opacity:.25;transform:translate3d(0,26px,0) scale(.985);filter:blur(7px)}100%{opacity:1;transform:none;filter:none}}
-.tabbar.vfx2{animation:vfx2 .6s cubic-bezier(.3,1.4,.4,1)}
-@keyframes vfx2{0%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) scale(1.045)}100%{transform:translateX(-50%) scale(1)}}
-body.noanim main.vfx,body.noanim .tabbar.vfx2{animation:none}
 
-#vo .vo-dbg{max-width:340px;margin-top:10px;font-size:10.5px;opacity:.6;color:#fff;line-height:1.35}#vo .vo-orb{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}#vbtn{cursor:pointer;touch-action:manipulation}
+.askb{font-size:12px;opacity:.6;margin:2px 4px 6px;font-style:italic}
