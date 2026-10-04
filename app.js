@@ -245,10 +245,11 @@ function freshBanner(s){const t=asOfMs(s),lbl=esc(String((s&&s.at)||''));if(t==n
  return `<div class="asof${stale?' stale':''}"><span>${stale?'Data may be stale · as of ':'Data as of '}${lbl}</span><small>${ago}</small></div>`;}
 function render(){if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
- let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail'})[tab]}</h1><p>Dressjet · ${esc(s.at)}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail?'':freshBanner(s)}<main>`;
+ let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail',ask:'Ask'})[tab]}</h1><p>Dressjet · ${esc(s.at)}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail?'':freshBanner(s)}<main>`;
  if(detail==='set:privacy'){h+=settingsView();}
  else if(detail){h+=detailView(orders,live,pend,s);}
  else if(tab==='retail'){h+=retailView();}
+ else if(tab==='ask'){h+=askView();}
  else if(tab==='today'){h+=gsearch();const CH=chanOf(s,OI),cn={};live.forEach(o=>cn[o.ch]=(cn[o.ch]||0)+1);const by=Object.entries(CH.m).map(([c,v])=>[c,(v&&typeof v==='object')?{amt:nn(v.amt!=null?v.amt:v.rev),n:v.n!=null?v.n:(v.orders!=null?v.orders:cn[c])}:{amt:nn(v),n:(CH.full?null:cn[c])}]).sort((a,b)=>(a[0]==='Not itemised')-(b[0]==='Not itemised')||b[1].amt-a[1].amt),max=Math.max(1,...by.map(c=>c[1].amt));
   const RT=data.retail&&A(data.retail.stores),rs=RT?RT.reduce((q,z)=>q+Number(z.sales||0),0):0,rb=RT?RT.reduce((q,z)=>q+Number(z.bills||0),0):0,ru=RT?RT.reduce((q,z)=>q+Number(z.units||0),0):0;
   if(RT){h+=`<div class="grid2" style="margin-bottom:12px"><section class="glass tile" data-d="r:rev" style="padding:18px"><span class="eyebrow">Online</span><b style="font-family:var(--serif,inherit);font-size:26px;margin-top:6px">${inr(s.revenue)}</b><span>${SV(ordN(OI)+' orders · '+s.items+' items')}</span><span style="opacity:.6;font-size:11px;margin-top:4px">incl. GST · yesterday ${SV(inr(s.revenuePrev))}</span></section><section class="glass tile" data-t="retail" style="padding:18px"><span class="eyebrow">Retail</span><b style="font-family:var(--serif,inherit);font-size:26px;margin-top:6px">${inr(rs)}</b><span>${SV(rb+' bills · '+ru+' units')}</span><span style="opacity:.6;font-size:11px;margin-top:4px">incl. GST${data.retail.at?' · '+SV(esc(data.retail.at)):''}</span></section></div><section class="glass" style="padding:14px 18px;margin-bottom:12px"><div class="line" style="border:0;padding:0"><span class="eyebrow">Combined today</span><b style="font-family:var(--serif,inherit);font-size:22px">${inr(Number(s.revenue)+rs)}</b></div></section>`;}
@@ -271,8 +272,8 @@ ${(()=>{let x='';
  else{const chans=['All',...new Set(orders.map(o=>o.ch))];const list=orders.filter(o=>(ch==='All'||o.ch===ch)&&(!q||(o.id+o.items.map(i=>i.sku).join(' ')).toLowerCase().includes(q.toLowerCase())));
   h+=`<p class="note" style="padding:0 0 8px;text-align:left">${OI.all!=null&&OI.all>orders.length?'Showing the latest '+orders.length+' of '+OI.all+' orders today (incl. cancelled).':(OI.partial?'Showing the latest '+orders.length+' orders. Today has more than this list holds.':orders.length+' orders today.')}</p><div class="glass search"><input id="q" placeholder="Search order or SKU" value="${esc(q)}"></div><div class="pills">${chans.map(c=>`<button data-c="${esc(c)}" class="${c===ch?'on':''}">${esc(c)}</button>`).join('')}</div><section class="ol">${list.length?list.map(o=>`<article class="glass order" data-d="o:${esc(o.id)}"><div class="otop"><b>${esc(o.id)}</b><span class="st ${o.status.toLowerCase()}">${esc(o.status)}</span></div><div class="osku">${o.items.map(i=>esc(i.sku)+(i.qty>1?' ×'+i.qty:'')).join(', ')}</div><div class="ometa"><span>${esc(o.ch)}${payOf(o)?' · '+esc(payOf(o)):''} · ${esc(oT(o))}</span><b>${o.amt?inr(o.amt):'—'}</b></div></article>`).join(''):'<div class="glass empty">No orders match.</div>'}</section>`;}
  if(!detail)h+=`<section class="glass list pmrow"><div class="line" data-pm="1" style="border:0"><span>Settings<br><small>Privacy mode: ${pmOn()?'On':'Off'}</small></span><b>›</b></div></section>`;
- h+=`</main><nav class="glass tabbar"><button data-t="today" class="${tab==='today'?'on':''}">Today</button><button data-t="orders" class="${tab==='orders'?'on':''}">Orders</button><button data-t="best" class="${tab==='best'?'on':''}">Sellers</button><button data-t="stock" class="${tab==='stock'?'on':''}">Stock</button><button data-t="retail" class="${tab==='retail'?'on':''}">Retail</button></nav>`;
- document.body.classList.toggle('pm',pmOn());document.body.classList.toggle('pmx',pmOn());document.body.classList.toggle('pmd',!!detail&&/^(o|s|rb|db):/.test(detail));root.innerHTML=shell(h);$('#rf').onclick=load;document.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{detail='set:privacy';window.scrollTo(0,0);render()});document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;detail=null;render()});document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.d;window.scrollTo(0,0);render()});bindSettings();const bk=$('#bk');if(bk)bk.onclick=()=>{if(history.state&&history.state.n)history.back();else{detail=null;render();}};document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{tab=b.dataset.go;detail=null;window.scrollTo(0,0);render()});[['bw',v=>bwin=+v],['bm',v=>bmet=v],['bch',v=>bchn=v]].forEach(([k,f])=>document.querySelectorAll('[data-'+k+']').forEach(b=>b.onclick=()=>{f(b.dataset[k]);render()}));if(pmOn())maskNums();motion();nav();document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{hs=+b.dataset.h;render()});document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{bs=b.dataset.b;render()});document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ch=b.dataset.c;render()});
+ h+=`</main><nav class="glass tabbar"><button data-t="today" class="${tab==='today'?'on':''}">Today</button><button data-t="orders" class="${tab==='orders'?'on':''}">Orders</button><button data-t="best" class="${tab==='best'?'on':''}">Sellers</button><button data-t="stock" class="${tab==='stock'?'on':''}">Stock</button><button data-t="retail" class="${tab==='retail'?'on':''}">Retail</button><button data-t="ask" class="${tab==='ask'?'on':''}">Ask</button></nav>`;
+ document.body.classList.toggle('pm',pmOn());document.body.classList.toggle('pmx',pmOn());document.body.classList.toggle('pmd',!!detail&&/^(o|s|rb|db):/.test(detail));root.innerHTML=shell(h);$('#rf').onclick=load;document.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{detail='set:privacy';window.scrollTo(0,0);render()});document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;detail=null;render()});document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.d;window.scrollTo(0,0);render()});bindSettings();if(tab==='ask'&&!detail)bindAsk();const bk=$('#bk');if(bk)bk.onclick=()=>{if(history.state&&history.state.n)history.back();else{detail=null;render();}};document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{tab=b.dataset.go;detail=null;window.scrollTo(0,0);render()});[['bw',v=>bwin=+v],['bm',v=>bmet=v],['bch',v=>bchn=v]].forEach(([k,f])=>document.querySelectorAll('[data-'+k+']').forEach(b=>b.onclick=()=>{f(b.dataset[k]);render()}));if(pmOn())maskNums();motion();nav();document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{hs=+b.dataset.h;render()});document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{bs=b.dataset.b;render()});document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ch=b.dataset.c;render()});
  document.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{rf=b.dataset.rf;render()});document.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{sv=b.dataset.sv;rq='';render()});const ri=$('#rq');if(ri)ri.oninput=e=>{rq=e.target.value;const p=e.target.selectionStart;render();const n=$('#rq');n.focus();n.setSelectionRange(p,p)};const gi=$('#gq');if(gi)gi.oninput=e=>{gq=e.target.value;const p=e.target.selectionStart;render();const n=$('#gq');n.focus();n.setSelectionRange(p,p)};document.querySelectorAll('[data-gs]').forEach(b=>b.onclick=()=>{const i=b.dataset.gs.indexOf(':');sv=b.dataset.gs.slice(0,i);rq=gq.trim();tab='stock';detail=null;window.scrollTo(0,0);render()});const qi=$('#q');if(qi)qi.oninput=e=>{q=e.target.value;const p=e.target.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)};}
 
 const nn=v=>Number(v||0);
@@ -337,6 +338,283 @@ let navOn=false,exitArm=false;const navKey=()=>(detail||'')+'|'+tab;
 function toast(m){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(30,26,22,.95);color:#f3e9d6;padding:10px 16px;border-radius:14px;font-size:14px;z-index:99;border:1px solid rgba(255,255,255,.12)';document.body.appendChild(t);}t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2000);}
 function nav(){if(!navOn)return;const k=navKey(),s=history.state;if(s&&s.n&&s.k===k)return;
  const dp=(s&&s.n)||1;if(k==='|today'){if(dp>1)history.go(1-dp);}else history.pushState({n:dp+1,k,d:detail,t:tab},'');}
+/* ===== Ask: on-device question answering. No network, no AI service, data stays on the phone. ===== */
+let askLog=[],askQ='';
+const ASK_CHIPS=['Aaj ki sale kitni hui?','Orders today by status','Top 5 sellers this week','Low stock','Retail bills today','Payment mode today','Today vs yesterday','Pending orders kitne hain?'];
+const askTokOk=(t,v)=>{if(t===v)return true;if(t.length<5||v.length<5||t[0]!==v[0])return false;const k=v.length<=7?1:2;return dl(t,v,k)<=k};
+const ASK_STOP=new Set('the a an of in on for to is are was were be me my mujhe batao bata dikhao show tell give what whats how much many kitna kitne kitni kitna hai hain hua hui hue ka ki ke ko se me mein aur and or with by from all any please plz pls yaar bhai do de aaye aaya aayi aaye hua kya kaun konsa konsi which this that these those it its there their our we i you your abhi tak wala wale wali sabhi saare sare list get see check can could would will not no yes ok'.split(' '));
+function askNorm(q){return fzn(String(q||'').replace(/₹|\brs\.?(?=\s|\d|$)/gi,' ').replace(/\bkal\b/gi,' yesterday '))}
+function askAnswer(raw){
+ const q=askNorm(raw),T=q.split(' ').filter(Boolean),qs=' '+q+' ';
+ const is=(...L)=>L.some(v=>v.includes(' ')?qs.includes(' '+v+' '):T.some(t=>askTokOk(t,v)));
+ const s=data.snapshot||{},OI=ordInfo(s),orders=data.orders||[],pend=A(data.pending)||[],live=OI.live,iso=IST();
+ const n=nn,V=x=>SV(esc(String(x))),M=x=>SV(inr(n(x))),pl=(c,w)=>c+' '+w+(c===1?'':'s');
+ const stores=A(data.retail&&data.retail.stores)||[];
+ const card=(head,rows,note)=>`<section class="glass list"><div class="line" style="border:0"><span>${head}</span></div>${(rows||[]).map(r=>`<div class="line" ${r[2]?'data-d="'+r[2]+'"':''}><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</section>${note?`<p class="note" style="padding:0 0 6px;text-align:left">${note}</p>`:''}`;
+ // period
+ let per='today',days=0,mm;
+ if(is('yesterday','beeta','pichle din'))per='yday';
+ else if((mm=qs.match(/ (\d{1,3}) (day|days|din|d) /))){days=Math.min(365,+mm[1]);per='days'}
+ else if(is('90','quarter','ninety','3 months','teen mahine'))per='quarter';
+ else if(is('month','monthly','mahina','mahine','30','thirty'))per='month';
+ else if(is('week','weekly','hafta','hafte','7','saptah','seven'))per='week';
+ const PN=n=>({today:'today',yday:'yesterday',week:'last 7 full days',month:'last 30 full days',quarter:'last 90 full days',days:'last '+n+' full days'});
+ const NDAYS={week:7,month:30,quarter:90,days:days};
+ const histO=N=>{const H=(A(data.history)||[]).filter(x=>x.d<iso).sort((a,b)=>a.d<b.d?-1:1).slice(-N);return {k:H.length,rev:H.reduce((t,x)=>t+n(x.rev),0),orders:H.reduce((t,x)=>t+n(x.orders!=null?x.orders:x.n),0),items:H.reduce((t,x)=>t+n(x.items),0),H}};
+ const histR=N=>{const H=(A(data.retailHistory)||[]).filter(x=>x.d<iso).sort((a,b)=>a.d<b.d?-1:1).slice(-N);return {k:H.length,rev:H.reduce((t,x)=>t+n(x.rev!=null?x.rev:x.sales),0),bills:H.reduce((t,x)=>t+bc(x),0),units:H.reduce((t,x)=>t+n(x.units),0),H}};
+ const dayO=d=>(A(data.history)||[]).find(x=>x.d===d),dayR=d=>(A(data.retailHistory)||[]).find(x=>x.d===d);
+ const rToday={rev:stores.reduce((t,x)=>t+n(x.sales),0),bills:stores.reduce((t,x)=>t+n(x.bills),0),units:stores.reduce((t,x)=>t+n(x.units),0)};
+ const yd=addD(iso,-1);
+ // channel names
+ const chNames=[...new Set([...orders.map(o=>o.ch),...Object.keys(chanOf(s,OI).m)].filter(Boolean))];
+ const wantRetail=is('retail','store','ptg','bill','bills','shop','showroom','drj','offline','pos','logic'),wantOnline=is('online','shopify','myntra','nykaa','ajio','website','unicommerce','marketplace');
+ const chHit=chNames.find(c=>T.some(t=>askTokOk(t,fzn(c))||fzn(c).split(' ').some(w=>askTokOk(t,w))));
+ const sHit=stores.find(x=>T.some(t=>askTokOk(t,fzn(x.name||''))));
+ const topN=(()=>{const m=qs.match(/ (?:top|best|first) (\d{1,2}) /)||qs.match(/ (\d{1,2}) (?:best|top|sellers|skus|items)/);return m?Math.min(20,+m[1]):5})();
+ // residual words (possible SKU / article / city / name)
+ const KNOWN='stok value aov sale sales revenue bikri kamai turnover becha bika bik income business collection order orders ordr parcel today aaj todays now yesterday beeta week weekly hafta hafte month monthly mahina mahine quarter stock inventory maal bacha bachi available left remaining units pieces piece pcs top best sabse zyada jyada highest most popular bestseller bestsellers slow slowest worst least kam dead lowest low short out oos khatam payment payments pay paid mode cod upi cash card prepaid retail store stores ptg bill bills shop drj offline online shopify myntra nykaa ajio status city state pending cancelled cancel return returns rto vs versus compare comparison sold sell selling bika bikey bikay article articles sku skus item items day days din last pichle average avg per total count number revenue amount kitne sabse help hello hi hey tum'.split(' ');
+ const res=T.filter(t=>!ASK_STOP.has(t)&&!/^\d+$/.test(t)&&!KNOWN.some(k=>askTokOk(t,k))&&!(chHit&&fzn(chHit).split(' ').some(w=>askTokOk(t,w)))&&!(sHit&&fzn(sHit.name).split(' ').some(w=>askTokOk(t,w))));
+ const all=[];const seen={};(A(data.stock)||[]).forEach(x=>{const k=String(x.sku);seen[k]=1;all.push({sku:k,name:x.name||'',on:x})});
+ (A(data.retailStock)||[]).forEach(x=>{const k=String(x.sku);if(!seen[k]){seen[k]=1;all.push({sku:k,name:x.name||'',on:null})}});
+ (A(data.sellers&&data.sellers.quarter)||[]).concat(A(data.sellers&&data.sellers.month)||[],A(data.sellers&&data.sellers.week)||[]).forEach(x=>{const k=String(x.sku);if(!seen[k]){seen[k]=1;all.push({sku:k,name:x.name||'',on:null})}});
+ const foot='Answered on this phone from the app\'s latest data ('+esc(s.at||'')+'). Nothing was sent anywhere.';
+ const chips=c=>'';
+ // ---- help
+ if(!q||is('help','hello','hi','hey','namaste')||is('what can you do','kya puch','kya kar sakte'))return card('Ask me about sales, orders, stock, SKUs, payments and retail bills. English or Hinglish. Tap an example below, or type your own.',[],'');
+ // ---- compare
+ if(is('vs','versus','compare','comparison','compared','tulna','difference','growth','better')){
+  const rows=[];const pc=(a,b)=>b?(a>=b?'▲ ':'▼ ')+Math.abs(Math.round((a-b)/b*100))+'%':'';
+  if(!wantRetail||wantOnline){
+   if(per==='week'||per==='month'||per==='quarter'||per==='days'){const N=NDAYS[per],c=histO(N),p=(()=>{const H=(A(data.history)||[]).filter(x=>x.d<addD(iso,-N)).sort((a,b)=>a.d<b.d?-1:1).slice(-N);return {k:H.length,rev:H.reduce((t,x)=>t+n(x.rev),0)}})();rows.push(['Online · '+PN(N)[per==='days'?'days':per],M(c.rev)+(p.k?' <small>'+pc(c.rev,p.rev)+' vs previous</small>':'')]);if(p.k)rows.push(['Online · previous '+N+' days',M(p.rev)]);}
+   else{const y=dayO(yd);rows.push(['Online today (so far)',M(s.revenue)]);rows.push(['Online yesterday (full day)',y?M(y.rev):'no data']);if(y)rows.push(['Change',(y.rev?pc(n(s.revenue),n(y.rev)):'—')]);}}
+  if(!wantOnline||wantRetail){
+   if(per==='week'||per==='month'||per==='quarter'||per==='days'){const N=NDAYS[per],c=histR(N);rows.push(['Retail · '+PN(N)[per==='days'?'days':per],c.k?M(c.rev):'no data']);}
+   else{const y=dayR(yd);rows.push(['Retail today (so far)',M(rToday.rev)]);rows.push(['Retail yesterday (full day)',y?M(y.rev!=null?y.rev:y.sales):'no data']);}}
+  return card('Comparison',rows,'Today is partly done, so it will look lower than a full day. '+foot);}
+ // ---- payments
+ if(is('payment','payments','pay mode','paid','cod','upi','cash','card','prepaid','credit','debit')){
+  const mode=['cod','upi','cash','card','prepaid'].find(m=>is(m)),kind=wantRetail&&!wantOnline?'retail':wantOnline&&!wantRetail?'online':null;
+  const calc=k=>{const L=k==='online'?live:stores.flatMap(z=>A(z.billList)||[]);const r=payMixOf(L);return {m:r.m,k:r.k,tot:L.length}};
+  const rows=[];let k2=0;(kind?[kind]:['online','retail']).forEach(k=>{const c=calc(k);k2+=c.k;Object.entries(c.m).filter(([a])=>!mode||fzn(a).includes(mode)||(mode==='card'&&/card/i.test(a))).sort((a,b)=>b[1].amt-a[1].amt).forEach(([a,x])=>rows.push([(k==='online'?'Online · ':'Retail · ')+esc(a),V(pl(x.n,k==='online'?'order':'bill'))+' · '+M(x.amt)]))});
+  if(!rows.length)return card('No payment mode data yet'+(mode?' for '+mode.toUpperCase():'')+'. The refresh has to include it on each order and bill.',[],'');
+  return card('Payment mode today'+(mode?' · '+mode.toUpperCase():''),rows,'Itemised orders and bills that carry a payment mode only ('+k2+'). '+foot);}
+ // ---- returns
+ if(is('return','returns','wapas','rto')&&!res.length){
+  const ro=orders.filter(o=>/return|rto/i.test(o.status||'')),rr=stores.reduce((t,x)=>t+n(x.returns),0);
+  return card('Returns today',[['Retail returns',V(rr)],['Online orders in a return status',V(ro.length)]].concat(ro.slice(0,5).map(o=>[V(esc(o.id)),esc(o.status),'o:'+esc(o.id)])),foot);}
+ // ---- a specific order or bill number
+ {const oo=orders.concat(pend).find(o=>qs.includes(' '+fzn(o.id)+' '));
+  if(oo){const it=(A(oo.items)||[]).map(i=>i.sku+(n(i.qty)>1?' ×'+n(i.qty):'')).join(', ')||oo.skus||'';return card('Order <b>'+V(esc(oo.id))+'</b>',[['Status',esc(oo.status||'')],['Channel',esc(oo.ch||'')],payOf(oo)?['Payment',esc(payOf(oo))]:null,oo.city?['City',V(esc(oo.city))]:null,['Amount',oo.amt?M(oo.amt):'—'],it?['SKUs',V(esc(it))]:null,['Open details','›','o:'+esc(oo.id)]].filter(Boolean),foot)}
+  for(const z of stores){const b=(A(z.billList)||[]).find(x=>x.no&&qs.includes(' '+fzn(x.no)+' '));if(b)return card('Bill <b>'+V(esc(b.no))+'</b> · '+esc(z.name||'Store'),[b.time?['Time',esc(b.time)]:null,payOf(b)?['Payment',esc(payOf(b))]:null,['SKUs',V(esc(skuLine(b)||'no item detail'))],['Amount',M(b.amt)],['Open details','›','rb:'+esc(z.name||'Store')+'||'+esc(b.no)]].filter(Boolean),foot)}}
+ // ---- orders above/below an amount
+ {const am=qs.match(/ (\d{3,7}) /);if(am&&is('order','orders','ordr')&&is('above','over','zyada','jyada','more','greater','below','under','kam','less','se')){const lim=+am[1],up=!is('below','under','kam','less');const L=live.filter(o=>up?n(o.amt)>=lim:n(o.amt)<=lim).sort((a,b)=>up?n(b.amt)-n(a.amt):n(a.amt)-n(b.amt));return card(V(pl(L.length,'order'))+' '+(up?'at or above ':'at or below ')+M(lim)+' today',L.slice(0,8).map(o=>[V(esc(o.id))+'<br><small>'+esc(o.ch||'')+' · '+esc(o.status||'')+'</small>',M(o.amt),'o:'+esc(o.id)]),(OI.partial?'Only itemised orders are covered. ':'')+foot)}}
+ // ---- SKU lookup
+ let skuHits=[];if(res.length){skuHits=fzFilter(all,res.join(' '),x=>x.sku+' '+x.name).slice(0,12)}
+ const cityQ=res.length&&!skuHits.length?res:[];
+ if(skuHits.length){
+  const exact=skuHits.filter(x=>{const f=fzn(x.sku+' '+x.name);return res.every(t=>f.includes(t))});const use=(exact.length?exact:skuHits).slice(0,3);
+  const out=[];
+  use.forEach(h=>{const rows=[],sk=h.sku;
+   const st=(A(data.stock)||[]).find(x=>String(x.sku)===sk);
+   if(st){const pd=st.perDay!=null?st.perDay:null;rows.push(['Online stock',V(n(st.onHand)+' in stock')+(pd>0?' <small>'+Math.round(st.onHand/pd)+'d left</small>':'')])}
+   const rs=(A(data.retailStock)||[]).filter(x=>String(x.sku)===sk);if(rs.length){const by={};rs.forEach(x=>{const k=x.store||'Retail';by[k]=(by[k]||0)+n(x.onHand)});Object.entries(by).forEach(([k,v])=>rows.push(['Retail stock · '+esc(k),V(v+' in stock')]))}
+   const tq=live.reduce((t,o)=>t+(o.items||[]).filter(i=>String(i.sku)===sk).reduce((u,i)=>u+n(i.qty||1),0),0);
+   rows.push(['Sold online today (itemised)',V(pl(tq,'unit'))]);
+   [['week','7 days'],['month','30 days'],['quarter','90 days']].forEach(([k,l])=>{const r=(A(data.sellers&&data.sellers[k])||[]).find(x=>String(x.sku)===sk);if(r)rows.push(['Sold online · '+l,V((r.qty!=null?r.qty+' units':'')+(r.rev?(r.qty!=null?' · ':'')+inr(r.rev):''))])});
+   let bq=0,bn=0;stores.forEach(z=>(A(z.billList)||[]).forEach(b=>{const it=(A(b.items)||[]).filter(i=>String(i.sku)===sk);if(it.length){bn++;bq+=it.reduce((u,i)=>u+n(i.qty||1),0)}}));if(stores.some(z=>A(z.billList)))rows.push(['Billed in retail today',V(pl(bq,'unit')+' · '+pl(bn,'bill'))]);
+   out.push(card('<b>'+V(esc(sk))+'</b>'+(h.name?'<br><small>'+V(esc(h.name))+'</small>':''),rows));});
+  const extra=skuHits.length>use.length&&!exact.length?`<p class="note" style="padding:0 0 6px;text-align:left">${skuHits.length} SKUs look similar. Showing the closest ${use.length}. Add more of the name to narrow it.</p>`:'';
+  return out.join('')+extra+`<p class="note" style="padding:0 0 6px;text-align:left">${foot}</p>`;}
+ // ---- retail (bills, stores)
+ if(wantRetail&&!wantOnline||sHit){
+  if(!stores.length)return card('No retail data in the latest update.',[],'');
+  const S=sHit?[sHit]:stores;
+  if(per!=='today'&&per!=='yday'){const N=NDAYS[per],c=histR(N);if(!c.k)return card('No retail history for that period yet.',[],'');return card('Retail · '+PN(N)[per==='days'?'days':per],[['Sales (incl. GST)',M(c.rev)],['Bills',V(c.bills)],['Units',V(c.units)],['Avg bill',M(Math.round(c.rev/Math.max(1,c.bills)))]],foot);}
+  if(per==='yday'){const y=dayR(yd);if(!y)return card('No retail data for yesterday.',[],'');return card('Retail yesterday',[['Sales (incl. GST)',M(y.rev!=null?y.rev:y.sales)],['Bills',V(bc(y))],['Units',V(n(y.units))]],foot);}
+  const rev=S.reduce((t,x)=>t+n(x.sales),0),bl=S.reduce((t,x)=>t+n(x.bills),0),un=S.reduce((t,x)=>t+n(x.units),0);
+  const list=S.flatMap(z=>(A(z.billList)||[]).map(b=>({...b,store:z.name})));
+  const rows=[['Sales (incl. GST)',M(rev)],['Bills',V(bl)],['Units',V(un)],['Avg bill',M(Math.round(rev/Math.max(1,bl)))]];
+  if(!sHit&&S.length>1)S.forEach(z=>rows.push([esc(z.name||'Store'),M(n(z.sales))+' <small>'+V(n(z.bills)+' bills')+'</small>']));
+  let h=card((sHit?esc(sHit.name)+' · ':'Retail · ')+'today',rows);
+  if(list.length){h+=card('Latest bills',list.slice(-8).reverse().map(b=>[V(esc(b.no||'Bill'))+'<br><small>'+(b.time?esc(b.time)+' · ':'')+(payOf(b)?esc(payOf(b))+' · ':'')+V(esc(skuLine(b)||'no item detail'))+'</small>',M(b.amt),'rb:'+esc(b.store||'Store')+'||'+esc(b.no||'')]))}
+  return h+`<p class="note" style="padding:0 0 6px;text-align:left">${foot}</p>`;}
+ // ---- stock overview
+ if(is('stock','stok','inventory','maal','khatam','oos','bacha','left','out of stock')&&!is('sold','sell','sale','sales')){
+  const st=A(data.stock)||[],M0=data.stockMeta;if(!st.length)return card('No online stock data in the latest update.',[],'');
+  const oos=st.filter(x=>n(x.onHand)<=0),low=st.filter(x=>n(x.onHand)>0).map(x=>({...x,d:x.perDay>0?x.onHand/x.perDay:null})).sort((a,b)=>(a.d===null)-(b.d===null)||(a.d!==null?a.d-b.d:a.onHand-b.onHand));
+  const wantOos=is('out','oos','khatam','finished','zero');
+  const rows=wantOos?oos.slice(0,10).map(x=>[V(esc(x.sku)),V('0 in stock'),'s:'+esc(x.sku)]):low.slice(0,topN>5?topN:8).map(x=>[V(esc(x.sku)),V(x.onHand+' in stock')+(x.d!==null?' <small>'+(x.d<1?'<1':Math.round(x.d))+'d left</small>':''),'s:'+esc(x.sku)]);
+  return card(wantOos?pl(oos.length,'SKU')+' out of stock (online)':'Lowest stock first (online)',rows,(M0?M0.units.toLocaleString('en-IN')+' units across '+M0.cov+' reachable SKUs. ':'')+foot);}
+ // ---- top / slow sellers
+ if(is('top','best','sabse','zyada','jyada','highest','most','popular','bestseller','bestsellers','slow','slowest','worst','least','dead','sellers','seller')||is('sold','sell','selling','bika')&&!res.length){
+  const slow=is('slow','slowest','worst','least','dead','lowest');
+  if(slow){const d=A(data.deadStock)||[];if(!d.length)return card('No slow-seller data in the latest update.',[],'');return card('Not selling (stock but no sales in 30 days)',d.slice(0,topN>5?topN:8).map(x=>[V(esc(x.sku)),V(n(x.onHand)+' in stock'),'s:'+esc(x.sku)]),foot);}
+  const per2=(per!=='today'||is('today','aaj','todays','now'))?per:'week';let rows;if(per2==='today'||per2==='yday'){const m={};live.forEach(o=>(o.items||[]).forEach(i=>{const e=(m[i.sku]=m[i.sku]||{sku:i.sku,qty:0});e.qty+=n(i.qty||1)}));rows=Object.values(m).sort((a,b)=>b.qty-a.qty)}
+  else rows=A(data.sellers&&data.sellers[per2==='days'?(days<=10?'week':days<=45?'month':'quarter'):per2])||[];
+  if(!rows.length)return card('No sales data for that period yet.',[],'');
+  const lab=per2==='today'||per2==='yday'?'today (itemised orders)':per2==='days'?'last '+(days<=10?7:days<=45?30:90)+' days':PN()[per2];
+  return card((rows.length>1?'Top '+Math.min(topN,rows.length)+' sellers':'Top seller')+' · '+lab,rows.slice(0,topN).map((r,i)=>[(i+1)+'. '+V(esc(r.sku)),V((r.qty!=null?r.qty+' sold':'')+(r.rev?(r.qty!=null?' · ':'')+inr(r.rev):'')),'s:'+esc(r.sku)]),(per2==='yday'?'Yesterday by SKU is not stored, so this shows today. ':'')+foot);}
+ // ---- orders: status / city / channel / pending
+ const wantOrders=is('order','orders','ordr','parcel','pending','cancelled','cancel','dispatch','status','city','state','shehar','pin')||chHit||cityQ.length;
+ if(wantOrders&&!is('sale','sales','revenue','bikri','kamai','average','avg','aov')||cityQ.length||is('pending','cancelled','status','city','state')){
+  if(is('pending','dispatch')){const p=pend.length?pend:[];if(!p.length)return card('No pending dispatch list in the latest data.',[],'');const old=[...p].sort((a,b)=>b.ageH-a.ageH);return card(pl(p.length,'order')+' pending dispatch',old.slice(0,6).map(o=>[V(esc(o.id))+'<br><small>'+esc(o.ch||'')+' · '+ageTxt(o.ageH)+' old</small>',o.amt?M(o.amt):'','o:'+esc(o.id)]),'Oldest first. '+foot);}
+  let L=orders;const ttl=[];
+  if(chHit){L=L.filter(o=>o.ch===chHit);ttl.push(chHit)}
+  if(cityQ.length){const f=o=>fzMatch(cityQ.join(' '),[o.city,o.state,o.pin,o.customer,o.name].join(' '))>=0;const L2=L.filter(f);if(!L2.length)return null;L=L2;ttl.push(cityQ.join(' '))}
+  if(is('cancelled','cancel'))L=L.filter(o=>o.status==='Cancelled');
+  const by=(k)=>{const m={};L.forEach(o=>{const v=k(o)||'Unknown';const e=(m[v]=m[v]||{n:0,a:0});e.n++;e.a+=n(o.amt)});return Object.entries(m).sort((a,b)=>b[1].n-a[1].n)};
+  const liveL=L.filter(o=>o.status!=='Cancelled'),rev=liveL.reduce((t,o)=>t+n(o.amt),0);
+  const rows=[];
+  if(is('city','shehar'))by(o=>o.city).slice(0,8).forEach(([k,v])=>rows.push([esc(k),V(pl(v.n,'order'))+' · '+M(v.a)]));
+  else if(is('state'))by(o=>o.state).slice(0,8).forEach(([k,v])=>rows.push([esc(k),V(pl(v.n,'order'))+' · '+M(v.a)]));
+  else if(is('payment','pay'))by(o=>payOf(o)).forEach(([k,v])=>rows.push([esc(k),V(pl(v.n,'order'))+' · '+M(v.a)]));
+  else if(chHit)by(o=>o.status).forEach(([k,v])=>rows.push([esc(k),V(v.n)]));
+  else by(o=>o.status).forEach(([k,v])=>rows.push([esc(k),V(pl(v.n,'order'))+' · '+M(v.a)]));
+  const head=(ttl.length?esc(ttl.join(' · '))+' · ':'')+V(pl(L.length,'order'))+' today'+(liveL.length?' · '+M(rev):'');
+  const sample=(cityQ.length||chHit)&&L.length<=6?L.map(o=>[V(esc(o.id))+'<br><small>'+esc(o.ch||'')+(o.city?' · '+V(esc(o.city)):'')+' · '+esc(o.status||'')+'</small>',o.amt?M(o.amt):'','o:'+esc(o.id)]):[];
+  return card(head,rows.concat(sample),(OI.partial?'Only the '+orders.length+' itemised orders are covered; today has more. ':'')+foot);}
+ // ---- sales (default)
+ if(is('sale','sales','revenue','bikri','kamai','turnover','becha','bika','income','business','collection','order','orders','kitna','kitne','average','avg','total','amount')||per!=='today'){
+  const rows=[];const online=!wantRetail||wantOnline,retail=!wantOnline||wantRetail;let head;
+  if(per==='today'){
+   if(online){const ch=chHit?(chanOf(s,OI).m[chHit]):null;const cv=ch?(typeof ch==='object'?n(ch.amt!=null?ch.amt:ch.rev):n(ch)):null;rows.push([chHit?esc(chHit)+' today':'Online today',M(chHit&&cv!=null?cv:s.revenue)]);if(!chHit){rows.push(['Online orders',V(OI.n+(OI.plus?'+':''))]);rows.push(['Avg online order',M(Math.round(n(s.revenue)/Math.max(1,OI.n)))]);rows.push(['Items sold online',V(n(s.items))])}}
+   if(retail&&stores.length&&!chHit){rows.push(['Retail today',M(rToday.rev)]);rows.push(['Retail bills',V(rToday.bills)])}
+   if(online&&retail&&stores.length&&!chHit)rows.unshift(['Combined today',M(n(s.revenue)+rToday.rev)]);
+   head='Sales today (so far, incl. GST)';}
+  else if(per==='yday'){const o=dayO(yd),r=dayR(yd);if(online)rows.push(['Online yesterday',o?M(o.rev):'no data']);if(online&&o&&o.orders!=null)rows.push(['Online orders',V(o.orders)]);if(retail)rows.push(['Retail yesterday',r?M(r.rev!=null?r.rev:r.sales):'no data']);if(online&&retail&&o&&r)rows.unshift(['Combined yesterday',M(n(o.rev)+n(r.rev!=null?r.rev:r.sales))]);head='Sales yesterday (incl. GST)';}
+  else{const N=NDAYS[per],o=histO(N),r=histR(N);if(online)rows.push(['Online · '+PN(N)[per==='days'?'days':per],o.k?M(o.rev):'no data']);if(online&&o.k){if(o.orders)rows.push(['Online orders',V(o.orders)]);rows.push(['Avg per day',M(Math.round(o.rev/o.k))])}if(retail)rows.push(['Retail',r.k?M(r.rev):'no data']);if(online&&retail&&o.k&&r.k)rows.unshift(['Combined',M(o.rev+r.rev)]);head='Sales · '+PN(N)[per==='days'?'days':per]+' (incl. GST)';if((o.k&&o.k<N)||(r.k&&r.k<N))head+=' <small>only '+Math.max(o.k,r.k)+' days of history</small>'}
+  return card(head,rows,foot);}
+ // ---- fallback
+ return null;
+}
+function askView(){
+ const body=askLog.map((q,i)=>{let a;try{a=askAnswer(q)}catch(e){a=null}
+  return `<div class="askq">${esc(q)}</div>${a||`<section class="glass list"><div class="line" style="border:0"><span>I can't answer that yet. I can answer questions about sales, orders, payments, SKUs, stock, top sellers and retail bills from the data in this app. Try one of the examples.</span></div></section>`}`}).join('');
+ const vp=`<section class="glass list" style="margin:0 0 10px"><div class="line" style="border:0"><span>Voice mode<br><small>${VO.err?esc(VO.err):VO.on?'Listening for "Kingsley". Say it, then a command, for example "Kingsley, open orders".':'Say "Kingsley" then a command. Works only while this app is open on screen. Uses the browser\'s speech service, so audio goes to the browser maker (Google on Chrome).'}</small></span><button class="refresh" id="vtog" style="margin:0">${VO.on?'Voice mode on':'Voice mode off'}</button></div><div class="line" style="border:0;padding-top:0"><span><small>Speak replies</small></span><button class="refresh" id="vsp" style="margin:0">${VO.speak?'On':'Off'}</button></div></section>`;
+ return vp+`<div class="glass search" style="margin:0 0 10px"><form id="askf" style="display:flex;gap:8px;align-items:center"><input id="askin" type="text" autocomplete="off" autocapitalize="none" enterkeyhint="send" placeholder="Ask about sales, orders, SKUs, stock..." value="${esc(askQ)}" style="flex:1"><button class="refresh" id="asks" type="submit" style="margin:0">Ask</button></form></div>
+ <div class="pills askchips">${ASK_CHIPS.map(c=>`<button data-ak="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+ ${body||`<p class="note" style="text-align:left">Ask in English or Hinglish, for example "aaj ki sale", "montara polo stock", "top 5 sellers this month", "cod orders", "PTG bills". Answers use only the data already in this app, on this phone. Nothing is sent anywhere.</p>`}
+ ${askLog.length?'<p class="note" style="padding:6px 0"><a href="#" id="askclr" style="color:inherit">Clear chat</a></p>':''}`;}
+function bindAsk(){const f=$('#askf'),i=$('#askin');if(!f)return;i.oninput=()=>{askQ=i.value};
+ const go=t=>{t=String(t||'').trim();if(!t)return;askLog.push(t);if(askLog.length>12)askLog.shift();askQ='';render();setTimeout(()=>{const a=document.querySelectorAll('.askq');if(a.length)a[a.length-1].scrollIntoView({block:'start',behavior:'smooth'})},50)};
+ f.onsubmit=e=>{e.preventDefault();go(i.value)};
+ document.querySelectorAll('[data-ak]').forEach(b=>b.onclick=()=>go(b.dataset.ak));
+ const c=$('#askclr');if(c)c.onclick=e=>{e.preventDefault();askLog=[];render()};
+ const vt=$('#vtog');if(vt)vt.onclick=()=>vToggle();const vs=$('#vsp');if(vs)vs.onclick=()=>{VO.speak=!VO.speak;LS.setItem('dj_vspeak',VO.speak?'1':'0');render()};}
+
+/* ===== Voice mode: browser speech recognition (free). Works only while the app is open on screen. ===== */
+const VSR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const VO={on:false,st:'off',rec:null,done:-1,wakeIdx:-1,tm:null,hold:false,hear:'',say:'',err:'',speak:LS.getItem('dj_vspeak')!=='0',fails:0};
+function vWake(text){const tk=fzn(text).split(' ').filter(Boolean);
+ for(let i=0;i<tk.length;i++)for(let sp=1;sp<=2&&i+sp<=tk.length;sp++){const c=tk.slice(i,i+sp).join('');if(c.length>=6&&c.length<=10&&dl(c,'kingsley',2)<=2)return {found:true,rest:tk.slice(i+sp).join(' ')};}
+ const m=String(text).match(/किंग्?स?(ले|ली|लि|ल)ी?/);if(m)return {found:true,rest:fzn(String(text).slice(m.index+m[0].length))};
+ return {found:false,rest:''};}
+function vPlain(html){const d=document.createElement('div');d.innerHTML=html;const out=[];d.querySelectorAll('.line').forEach(l=>{const sp=l.querySelector('span'),b=l.querySelector('b');const a=sp?sp.innerText.replace(/\s+/g,' ').trim():'',c=b?b.innerText.replace(/\s+/g,' ').trim():'';if(c==='›')return;out.push(a+(c?' '+c:''))});return out.slice(0,6).join('. ').replace(/₹/g,'rupees ').slice(0,380)}
+function vUI(){let el=document.getElementById('vo');
+ if(!el){el=document.createElement('div');el.id='vo';el.innerHTML='<div class="vo-bd"></div><div class="vo-glow"><i></i><i></i><i></i></div><div class="vo-mid"><div class="vo-orb"><b></b><b></b><b></b></div><div class="vo-t1" id="vot1"></div><div class="vo-t2" id="vot2"></div><button type="button" class="vo-x" id="vox">Close</button></div>';document.body.appendChild(el);el.querySelector('#vox').onclick=()=>{VO.st=VO.on?'idle':'off';clearTimeout(VO.tm);vSyncUI();};}
+ let pill=document.getElementById('vbtn');
+ if(!pill){pill=document.createElement('button');pill.id='vbtn';pill.type='button';pill.onclick=()=>vToggle(false);document.body.appendChild(pill);}
+ vSyncUI();}
+function vSyncUI(){const el=document.getElementById('vo'),pill=document.getElementById('vbtn');if(!el||!pill)return;
+ const act=VO.on&&(VO.st==='active'||VO.st==='busy');el.className=act?'on '+VO.st:'';
+ const t1=document.getElementById('vot1'),t2=document.getElementById('vot2');if(t1)t1.textContent=VO.st==='busy'?'':'Listening...';if(t1&&VO.st==='busy')t1.textContent=VO.say?'':'Working...';
+ if(t2)t2.textContent=VO.say||VO.hear||'Say what you need';
+ pill.style.display=VO.on?'flex':'none';pill.innerHTML='<i class="vdot"></i>Voice mode on<small>say "Kingsley"</small>';}
+function vSpeak(text,done){const fin=()=>{VO.hold=false;if(VO.on&&!VO.rec&&!document.hidden)vStart();done&&done()};
+ if(!VO.speak||!window.speechSynthesis||!text){done&&done();return;}
+ try{VO.hold=true;try{VO.rec&&VO.rec.abort()}catch(e){}const u=new SpeechSynthesisUtterance(text);u.lang='en-IN';u.rate=1.02;u.onend=fin;u.onerror=fin;speechSynthesis.cancel();speechSynthesis.speak(u);setTimeout(()=>{if(VO.hold)fin()},9000);}catch(e){fin()}}
+function vErr(e){const c=e&&e.error;
+ if(c==='not-allowed'||c==='service-not-allowed'){VO.err='Microphone permission is blocked. Allow the microphone for this app in the browser settings, then turn Voice mode on again.';vOff();render();return;}
+ if(c==='audio-capture'){VO.err='No microphone found.';vOff();render();return;}
+ if(c==='network'){VO.fails++;if(VO.fails>=4){VO.err='The speech service could not be reached (it needs internet). Voice mode is off.';vOff();render();}return;}}
+function vStart(){if(!VSR||VO.rec||!VO.on)return;try{const r=new VSR();r.lang='en-IN';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
+ r.onresult=vResult;r.onerror=vErr;r.onstart=()=>{VO.fails=0};
+ r.onend=()=>{VO.rec=null;if(VO.on&&!VO.hold&&!document.hidden)setTimeout(()=>{if(VO.on&&!VO.rec&&!VO.hold)vStart()},350)};
+ VO.rec=r;VO.done=-1;VO.wakeIdx=-1;r.start();}catch(e){VO.rec=null}}
+function vOff(){VO.on=false;VO.st='off';clearTimeout(VO.tm);try{VO.rec&&VO.rec.abort()}catch(e){}VO.rec=null;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}vSyncUI();}
+function vToggle(on){if(on===undefined)on=!VO.on;VO.err='';
+ if(!on){vOff();render();return;}
+ if(!VSR){VO.err='This browser has no speech recognition. Voice mode works in Chrome on Android. On iPhone it is not reliable in an installed app.';render();return;}
+ VO.on=true;VO.st='idle';VO.hear='';VO.say='';vUI();vStart();render();}
+function vArm(){clearTimeout(VO.tm);VO.tm=setTimeout(()=>{if(VO.st==='active'){VO.st='idle';VO.hear='';vSyncUI();}},10000)}
+function vResult(e){for(let i=e.resultIndex;i<e.results.length;i++){if(i<=VO.done)continue;const R=e.results[i],txt=R[0].transcript,fin=R.isFinal;
+  if(VO.st==='idle'||VO.st==='busy'){const w=vWake(txt);if(w.found){VO.st='active';VO.wakeIdx=i;VO.hear=w.rest;VO.say='';VO.fk='';vSyncUI();vArm();if(fin){VO.done=i;if(w.rest)vExec(w.rest);}else if(w.rest)vFastSched(w.rest,i);}else if(fin)VO.done=i;continue;}
+  if(VO.st==='active'){let cmd=txt;if(i===VO.wakeIdx){const w=vWake(txt);cmd=w.found?w.rest:txt}else if(i<VO.wakeIdx)continue;VO.hear=cmd;vSyncUI();vArm();if(!fin){vFastSched(cmd,i);}else{VO.done=i;clearTimeout(VO.ft);const k=fzn(cmd);if(!k)continue;if(VO.fk&&VO.fi===i&&(k===VO.fk||(k.startsWith(VO.fk)&&k.slice(VO.fk.length).trim().split(' ').every(w=>!w||ASK_STOP.has(w))))){VO.fk='';VO.st='busy';vSyncUI();setTimeout(()=>{if(VO.on&&VO.st==='busy'){VO.st='idle';VO.hear='';VO.say='';vSyncUI();}},1400);}else vExec(cmd);}}}}
+function vFastSched(cmd,i){clearTimeout(VO.ft);const k=fzn(cmd);if(!k||VO.fk===k)return;VO.ft=setTimeout(async()=>{if(VO.st!=='active')return;let r=null;try{r=await vIntent(cmd,true)}catch(e){}if(r&&r.say){VO.fk=k;VO.fi=i;VO.say=r.say;vFx();vSyncUI();}},300)}
+function vFx(){if(LS.getItem('dj_anim')==='reduced')return;const m=document.querySelector('main');if(m){m.classList.remove('vfx');void m.offsetWidth;m.classList.add('vfx');}const tb=document.querySelector('.tabbar');if(tb){tb.classList.remove('vfx2');void tb.offsetWidth;tb.classList.add('vfx2');}}
+async function vExec(text){clearTimeout(VO.tm);VO.st='busy';VO.hear=text;VO.say='';vSyncUI();let r;try{r=await vIntent(text)}catch(e){r={say:"Sorry, that didn't work."}}
+ vFx();
+ const priv=pmOn(),say=r&&r.say||'',show=r&&r.show!=null?r.show:say;VO.say=priv&&r&&r.num?'Answer is on screen. Privacy mode is on, so I will not read it out.':show;vSyncUI();
+ const talk=priv&&r&&r.num?'Here is your answer. Privacy mode is on, so I will not read it out.':(priv?say.replace(/[₹\d][\d,.]*/g,'').trim():say);
+ vSpeak(talk,()=>{setTimeout(()=>{if(VO.on&&VO.st==='busy'){VO.st='idle';VO.hear='';VO.say='';vSyncUI();}},r&&r.hold?4200:1600)});}
+const V_SCREENS=[['today',['today','home','dashboard','main','overview','aaj']],['orders',['orders','order list','orders list']],['best',['sellers','best sellers','bestsellers','top sellers','best seller']],['stock',['stock','inventory','stock list','low stock']],['retail',['retail','stores','store','retail sales']],['ask',['ask','assistant','chat','ask tab']],['settings',['settings','setting','privacy settings','preferences','options','theme settings']]];
+function vGoScreen(k){detail=null;if(k==='settings'){detail='set:privacy';}else tab=k;window.scrollTo(0,0);render();}
+function vFindAll(){const a=[],seen={};(A(data.stock)||[]).forEach(x=>{if(!seen[x.sku]){seen[x.sku]=1;a.push({sku:String(x.sku),name:x.name||''})}});(A(data.retailStock)||[]).forEach(x=>{if(!seen[x.sku]){seen[x.sku]=1;a.push({sku:String(x.sku),name:x.name||''})}});(data.orders||[]).forEach(o=>(o.items||[]).forEach(i=>{if(!seen[i.sku]){seen[i.sku]=1;a.push({sku:String(i.sku),name:i.name||''})}}));return a}
+function vClickList(label){const bad=/turn on|turn off|unlock|set pin|passphrase|create/i;const els=[...document.querySelectorAll('main button,.tabbar button,header button,[data-d],[data-gs],.pills button')].filter(el=>el.offsetParent&&!el.closest('.lock')&&!el.closest('.askchips')&&!['pgo','dvt','plink','asks','askclr'].includes(el.id));
+ return els.map(el=>{const t=(el.innerText||'').replace(/\s+/g,' ').trim();return {el,t,s:t?fzMatch(label,t):-1,ex:fzn(t)===fzn(label)}}).filter(x=>x.s>=0&&x.t&&!bad.test(x.t)).sort((a,b)=>(b.ex-a.ex)||a.s-b.s||a.t.length-b.t.length);}
+async function vIntent(raw,fast){
+ const q=askNorm(raw),T=q.split(' ').filter(Boolean),qs=' '+q+' ';
+ const is=(...L)=>L.some(v=>v.includes(' ')?qs.includes(' '+v+' '):T.some(t=>askTokOk(t,v)));
+ const had=k=>qs.includes(' '+k+' ');
+ if(!q)return fast?null:{say:''};
+ const navv=is('go','open','show','take','dikhao','kholo','jao','switch','navigate','chalo','khol');
+ if(!fast&&is('stop','cancel','nevermind','never mind','rehne do','ruko','chup','quiet','nothing')&&T.length<=3)return {say:'Okay.'};
+ if(!fast&&(is('voice')&&is('off','stop','band','disable'))||is('stop listening','band karo','mic off','sleep'))return (setTimeout(()=>vToggle(false),1800),{say:'Voice mode off.'});
+ if(!data)return {say:'The app has no data yet. Try again after it loads.'};
+ const s=data.snapshot||{};
+ // back / scroll / refresh
+ if(is('go back','back','wapas','piche','peeche','previous')&&T.length<=3&&(!fast||T.length>=2)){const b=$('#bk');if(b)b.click();else{detail=null;tab='today';render();}return {say:'Going back.'};}
+ if(!fast&&(is('scroll','neeche','upar','niche')||is('page down','page up'))){const dn=!is('up','upar','top');window.scrollBy({top:dn?window.innerHeight*.8:-window.innerHeight*.8,behavior:'smooth'});return {say:dn?'Scrolling down.':'Scrolling up.'};}
+ if(!fast&&(is('refresh','reload','update','sync')&&T.length<=4)){load();return {say:'Refreshing.'};}
+ // privacy
+ if(!fast&&(is('privacy','private','blur','hide numbers','hide amounts')||is('show numbers','unblur'))){
+  const off=is('off','disable','hatao','band','remove','show numbers','unblur','turn off');
+  if(off||!lockKind()){detail='set:privacy';window.scrollTo(0,0);render();return {say:off?'Turning privacy off needs your phone lock, so I opened the screen for you.':'I opened the privacy screen. Turn it on there first.'};}
+  LS.setItem('dj_pm','1');render();return {say:'Privacy mode on.'};}
+ // animations
+ if(!fast&&is('animation','animations','motion')){const red=is('reduced','reduce','off','less','slow','band','disable');LS.setItem('dj_anim',red?'reduced':'full');applyAnim();render();return {say:red?'Animations reduced.':'Animations full.'};}
+ // theme
+ if(!fast&&is('theme','themes','colour','color','look')){const t=THEMES.find(x=>x[0].split('-').concat(fzn(x[1]).split(' ')).some(w=>w.length>2&&w!=='and'&&T.some(k=>k===w||askTokOk(k,w))&&!(w==='android'&&THEMES.filter(y=>y[0].startsWith('android')).length>1&&is('dark')))) ;let pick=null;
+  if(is('dark')&&is('android'))pick=THEMES.find(x=>x[0]==='android-dark');else if(is('onyx')&&is('android'))pick=THEMES.find(x=>x[0]==='android-onyx');else if(t&&!is('next','change','another','badlo','badal'))pick=t;
+  if(!pick){const i=THEMES.findIndex(x=>x[0]===themeNow());pick=THEMES[(i+1)%THEMES.length];}
+  LS.setItem('dj_theme',pick[0]);applyTheme();render();return {say:'Theme: '+pick[1]+'.'};}
+ // screens
+ const strip=T.filter(t=>!ASK_STOP.has(t)&&!['go','open','show','take','dikhao','kholo','jao','switch','navigate','tab','screen','page','section','to','khol','dikha','me','le','chalo','karo','please'].includes(t)&&!askTokOk(t,'screen'));
+ const sj=strip.join(' ');
+ for(const [k,al] of V_SCREENS){if((!fast||navv)&&al.some(a=>fzn(a)===sj)||(strip.length&&(!fast||navv)&&al.some(a=>askTokOk(sj,fzn(a))&&sj.length>=5))){if(k==='stock'&&is('retail')){sv='retail'}vGoScreen(k);return {say:k==='settings'?'Opening settings.':'Opening '+(k==='best'?'sellers':k)+'.'};}}
+ if((!fast||navv)&&(sj==='retail stock'||sj==='stock retail')){tab='stock';sv='retail';detail=null;render();return {say:'Opening retail stock.'}}
+ if((!fast||navv)&&(sj==='online stock'||sj==='stock online')){tab='stock';sv='online';detail=null;render();return {say:'Opening online stock.'}}
+ // search
+ const sm=qs.match(/ (?:search|find|khojo|dhundo|dhoondo|look for|search for) (.+) $/);
+ if(sm&&!fast){gq=sm[1].trim();tab='today';detail=null;window.scrollTo(0,0);render();return {say:'Searching.',show:'Searching for '+gq}}
+ // open a specific order / bill / sku / store / channel / day
+ const op=fast?navv:(is('open','show','dikhao','kholo','details','detail','view','tap','click','select','choose','press')||strip.length<=3);
+ const orders=data.orders||[],pend=A(data.pending)||[];
+ const oo=orders.concat(pend).find(o=>{const dg=String(o.id).replace(/\D/g,'');return qs.includes(' '+fzn(o.id)+' ')||(dg.length>=3&&T.includes(dg)&&had('order'))});
+ if(oo&&op){detail='o:'+oo.id;window.scrollTo(0,0);render();return {say:'Opening that order.'}}
+ for(const z of (A(data.retail&&data.retail.stores)||[])){const b=(A(z.billList)||[]).find(x=>x.no&&qs.includes(' '+fzn(x.no)+' '));if(b&&op){detail='rb:'+(z.name||'Store')+'||'+b.no;window.scrollTo(0,0);render();return {say:'Opening that bill.'}}}
+ const ord=T.findIndex(t=>['first','1st','pehla','second','2nd','dusra','third','3rd','teesra','last'].includes(t));
+ if(ord>=0&&op){const kinds=is('order','orders')?['o:']:is('bill','bills')?['rb:','db:']:is('sku','item','article','seller','stock')?['s:']:is('store')?['rt:']:null;if(kinds){const L=[...document.querySelectorAll('[data-d]')].filter(el=>el.offsetParent&&kinds.some(k=>el.dataset.d.startsWith(k)));const w=T[ord];const ix=['first','1st','pehla'].includes(w)?0:['second','2nd','dusra'].includes(w)?1:['third','3rd','teesra'].includes(w)?2:L.length-1;if(L[ix]){L[ix].click();return {say:'Opening it.'}}return {say:'I could not find that on this screen.'}}}
+ if(is('yesterday','beeta')&&is('revenue','sales','sale','bikri')&&op){detail='dy:'+(is('retail')?'r':'o')+'|'+addD(IST(),-1);window.scrollTo(0,0);render();return {say:'Opening yesterday.'}}
+ if(is('today','aaj')&&is('revenue')&&op&&!is('retail')){detail='r:rev';window.scrollTo(0,0);render();return {say:'Opening today\'s revenue.'}}
+ const stn=(A(data.retail&&data.retail.stores)||[]).find(z=>T.some(t=>askTokOk(t,fzn(z.name||''))));
+ if(stn&&is('store','retail','ptg','drj')&&op&&!is('bill','bills','sale','sales')&&strip.length<=4){detail='rt:'+(stn.name||'Store');window.scrollTo(0,0);render();return {say:'Opening '+(stn.name||'the store')+'.'}}
+ const chn=[...new Set(orders.map(o=>o.ch).filter(Boolean))].find(c=>T.some(t=>askTokOk(t,fzn(c))));
+ if(chn&&op&&strip.length<=3&&!is('orders','order','sales','sale')){detail='c:'+chn;window.scrollTo(0,0);render();return {say:'Opening '+chn+'.'}}
+ if(is('open','show','dikhao','kholo','view','details')&&strip.length>=1&&!is('sales','sale','revenue','orders','stock')){const skuRes=strip.filter(t=>!['sku','item','article','product','details','detail','view'].includes(t));if(skuRes.length){const hit=fzFilter(vFindAll(),skuRes.join(' '),x=>x.sku+' '+x.name)[0];if(hit){detail='s:'+hit.sku;window.scrollTo(0,0);render();return {say:'Opening that item.'}}}}
+ // generic control click ("7 days", "week", "online", "shopify", pills, tabs, any button label)
+ const cv=is('tap','click','press','select','choose','touch','toggle','switch','filter','dabao');
+ const lbl=T.filter(t=>!ASK_STOP.has(t)&&!['tap','click','press','select','choose','touch','toggle','switch','filter','dabao','button','on','the'].includes(t)).join(' ');
+ if(fast&&!cv)return null;
+ if(lbl&&(cv||strip.length<=3)){const L=vClickList(lbl);const best=L[0];if(best&&(best.ex||cv&&(L.length===1||best.s===0))){best.el.click();return {say:'Done.'}}if(L.length>1&&cv)return {say:'Which one? '+L.slice(0,3).map(x=>x.t).join(', or ')+'.',hold:true}}
+ if(fast)return null;
+ // otherwise it is a question: answer on the Ask tab
+ askLog.push(String(raw).trim());if(askLog.length>12)askLog.shift();askQ='';tab='ask';detail=null;render();
+ let a=null;try{a=askAnswer(raw)}catch(e){}
+ if(!a)return {say:"Sorry, I can't answer that yet.",show:"I can't answer that yet."};
+ const ptxt=vPlain(a);return {say:ptxt||'Here you go.',show:ptxt||'Answer on screen.',num:true,hold:true};}
+
+document.addEventListener('visibilitychange',()=>{if(!VO.on)return;if(document.hidden){try{VO.rec&&VO.rec.abort()}catch(e){}VO.rec=null;}else if(!VO.rec&&!VO.hold)vStart();});
 document.body.classList.add('nt');if(pmOn())document.body.classList.add('pm','pmx');setTimeout(()=>document.body.classList.remove('nt'),900);
 function initNav(){if(navOn)return;navOn=true;
  history.replaceState({g:1},'');history.pushState({n:1,k:navKey(),d:detail,t:tab},'');
