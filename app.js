@@ -106,9 +106,9 @@ async function load(){try{status='Updating...';render();let b;try{b=await fetchL
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?'Revenue today':t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
 /* order time as epoch ms: ts/at, else age in hours, else today's "h:mm AM" time (IST) */
-function ordMs(o){if(!o)return null;const v=o.ts!=null?o.ts:o.at;if(v!=null&&v!==''){const d=typeof v==='number'?(v<1e11?v*1000:v):Date.parse(v);if(!isNaN(d))return d}
+function ordMs(o){if(!o)return null;for(const k of ['ts','at','createdAt','created','placedAt','orderTime','orderDate']){const v=o[k];if(v!=null&&v!==''){const d=typeof v==='number'||/^\d{9,13}$/.test(String(v))?(Number(v)<1e11?Number(v)*1000:Number(v)):Date.parse(/(Z|[+-]\d{2}:?\d{2})$/i.test(String(v))||!/\d{1,2}:\d{2}/.test(String(v))?String(v):String(v).replace(' ','T')+'+05:30');if(!isNaN(d))return d}}
  if(o.ageH!=null&&!isNaN(Number(o.ageH)))return Date.now()-Number(o.ageH)*3600000;
- const m=String(o.time||'').match(/(\d{1,2}):(\d{2})\s*([ap]m)?/i);if(m){let h=+m[1];if(m[3]){h=h%12+(/p/i.test(m[3])?12:0)}const day=new Date(Date.now()+19800000).toISOString().slice(0,10);return Date.parse(day+'T'+String(h).padStart(2,'0')+':'+m[2]+':00+05:30')}return null}
+ const m=String(o.time||'').match(/(\d{1,2}):(\d{2})\s*([ap]m)?/i);if(m){let h=+m[1];if(m[3]){h=h%12+(/p/i.test(m[3])?12:0)}const dm=String(o.date||'').match(/^\d{4}-\d{2}-\d{2}/);const hasDate=!!dm;const day=hasDate?dm[0]:new Date(Date.now()+19800000).toISOString().slice(0,10);let t=Date.parse(day+'T'+String(h).padStart(2,'0')+':'+m[2]+':00+05:30');if(!hasDate&&t>Date.now()+300000)t-=86400000;return t}return null}
 const isMoreId=id=>/^\+\s*\d+\s*more$/i.test(String(id||'').trim());
 const oid=o=>isMoreId(o.id)?esc((o.ch||'')+' order'):esc(o.id);
 function ocard(o){const items=o.items?o.items.map(i=>esc(i.sku)+(i.qty>1?' ×'+i.qty:'')).join(', '):esc(o.skus||'');const st=o.status||'';
