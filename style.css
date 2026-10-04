@@ -86,3 +86,42 @@ main.anim svg rect[fill^="url"]{animation:grow .7s cubic-bezier(.2,.9,.2,1) both
 .thm{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:8px 0 14px}.thm button{border:1.5px solid var(--edge);background:var(--glass);color:var(--ink);border-radius:18px;padding:10px 6px 9px;font-size:12px;min-height:76px;display:flex;flex-direction:column;align-items:center;gap:7px}.thm button.on{border-color:var(--g1);box-shadow:0 0 0 1px var(--g1)}.thm i{display:block;width:100%;height:30px;border-radius:10px;border:1px solid rgba(128,128,128,.3)}
 
 html{background:var(--bg2)}
+
+:root[data-th=black]{--bg1:#000;--bg2:#000;--mid:#000;--ink:#f5f5f5;--ink2:rgba(245,245,245,.6);--glass:rgba(255,255,255,.055);--edge:rgba(255,255,255,.14);--shadow:none;--accent:#e8e8e8;--g1:#f2f2f2;--g2:#b8b8b8;--btn:#000;--ok:#9ad3a8;--warn:#e8c27a;--bad:#f0a0a0;--low:#ff9c9c;--bo:0;--tint:255,255,255}
+:root[data-th=black] .blob{display:none}
+:root[data-th=black] .glass{-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-th=android]{--bg1:#fef7ff;--bg2:#fef7ff;--mid:#fef7ff;--ink:#1d1b20;--ink2:rgba(29,27,32,.7);--glass:#f3edf7;--edge:rgba(121,116,126,.22);--shadow:none;--accent:#6750a4;--g1:#6750a4;--g2:#6750a4;--btn:#fff;--ok:#2e6b1f;--warn:#8a5100;--bad:#b3261e;--low:#b3261e;--bo:0;--tint:121,116,126}
+:root[data-th=android] .blob{display:none}
+:root[data-th=android] .app,:root[data-th=android] body{font-family:Roboto,"Google Sans",system-ui,-apple-system,sans-serif}
+:root[data-th=android] h1,:root[data-th=android] .big{font-family:inherit;font-weight:500;letter-spacing:-.01em}
+:root[data-th=android] h1{font-size:30px}
+:root[data-th=android] .big{font-size:44px}
+:root[data-th=android] h2,:root[data-th=android] .eyebrow{text-transform:none;letter-spacing:.01em;font-size:15px;font-weight:600;color:var(--ink)}
+:root[data-th=android] .eyebrow{font-size:13px;font-weight:500;color:var(--ink2)}
+:root[data-th=android] .glass{-webkit-backdrop-filter:none;backdrop-filter:none;border:0;border-radius:28px;box-shadow:none!important;background:var(--glass)}
+:root[data-th=android] .tile,:root[data-th=android] .search{border-radius:24px}
+:root[data-th=android] .search{background:#ece6f0;border-radius:99px;padding:2px 20px}
+:root[data-th=android] .hero{background:#e8def8}
+:root[data-th=android] .tile b{font-size:34px;font-weight:500}
+:root[data-th=android] .chip{background:#e8def8!important;color:#1d192b;border-radius:10px}
+:root[data-th=android] .line{border-bottom:1px solid rgba(121,116,126,.16)}
+:root[data-th=android] .pills button{border-radius:10px;border:1px solid #79747e;background:transparent;color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-th=android] .pills button.on{background:#e8def8!important;color:#1d192b!important;border-color:transparent}
+:root[data-th=android] .btn,:root[data-th=android] .tabbar button.on{background:#6750a4!important;color:#fff!important;border-radius:99px}
+:root[data-th=android] .refresh{background:#e8def8;color:#1d192b;border:0;border-radius:99px}
+:root[data-th=android] .bar{background:#e7e0ec;height:10px}
+:root[data-th=android] .bar i{background:#6750a4!important}
+:root[data-th=android] .tile.amber b{color:var(--warn)}
+:root[data-th=android] .asof{background:#fff1d6;border-color:transparent;color:#5c3d00}
+:root[data-th=android] .tabbar{left:0;right:0;transform:none;bottom:0;width:100%;border-radius:0;padding:12px 8px calc(16px + env(safe-area-inset-bottom));background:#f3edf7;gap:0}
+:root[data-th=android] .tabbar button{font-size:12.5px;font-weight:600;color:#49454f;border-radius:16px;min-height:56px}
+:root[data-th=android] .tabbar button.on{background:transparent!important;color:#1d192b!important}
+:root[data-th=android] .tabbar .ind{background:#e8def8;top:12px;bottom:calc(16px + env(safe-area-inset-bottom));border-radius:16px}
+:root[data-th=android] .st{border-radius:8px}
+:root[data-th=android] .thm button.on{border-color:#6750a4;box-shadow:none;background:#e8def8}
+:root[data-th=android] .lock input,:root[data-th=android] .search input{color:var(--ink)}
+.swt{display:inline-block}
+:root[data-th=android] .swt{font-size:0!important;width:52px;height:32px;border-radius:16px;border:2px solid #79747e;background:#e6e0e9;position:relative;flex:none;box-sizing:border-box;filter:none!important}
+:root[data-th=android] .swt::after{content:'';position:absolute;top:50%;left:6px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#79747e;transition:left .2s,width .2s,height .2s,margin .2s}
+:root[data-th=android] .swt.on{background:#6750a4;border-color:#6750a4}
+:root[data-th=android] .swt.on::after{left:22px;width:24px;height:24px;margin-top:-12px;background:#fff}
