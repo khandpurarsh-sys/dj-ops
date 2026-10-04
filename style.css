@@ -67,7 +67,7 @@ h1,.big{font-weight:500;letter-spacing:0;font-family:"Didot","Bodoni 72","Playfa
 
 /* motion */
 @property --bl{syntax:'<length>';inherits:true;initial-value:0px}
-body{--bl:0px;transition:--bl .38s cubic-bezier(.3,.7,.2,1)}body.pm{--bl:7px}body.nt{transition:none}
+body{--bl:0px;transition:--bl .38s cubic-bezier(.3,.7,.2,1)}body.pm{--bl:18px}body.nt{transition:none}
 @keyframes rise{from{opacity:0;transform:translate3d(var(--dx,0),16px,0)}60%{opacity:1}to{opacity:1;transform:translate3d(0,0,0)}}
 @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -140,3 +140,5 @@ html{background:var(--bg2)}
 .tabbar.glass{background:color-mix(in srgb,var(--mid) 88%,var(--ink) 12%)}
 :root[data-th=android] .tabbar.glass{background:var(--sf)}
 [data-d]:active,.refresh:active,.pills button:active,.tabbar button:active,.btn:active,#totop:active{transform:scale(.95)!important;transition-duration:.08s}
+.pmx .sv,.pmx .big,.pmx .tile b,.pmx .split b,.pmx .line>b,.pmx .ometa b,.pmx .otop b,.pmx .osku,.pmx .chtop span:last-child{opacity:.8}
+.pm .swt{filter:none!important}
