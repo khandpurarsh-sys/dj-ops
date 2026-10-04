@@ -179,3 +179,5 @@ main.vfx{animation:vfx .55s cubic-bezier(.2,.9,.2,1)}
 .tabbar.vfx2{animation:vfx2 .6s cubic-bezier(.3,1.4,.4,1)}
 @keyframes vfx2{0%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) scale(1.045)}100%{transform:translateX(-50%) scale(1)}}
 body.noanim main.vfx,body.noanim .tabbar.vfx2{animation:none}
+
+#vo .vo-dbg{max-width:340px;margin-top:10px;font-size:10.5px;opacity:.6;color:#fff;line-height:1.35}#vo .vo-orb{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}#vbtn{cursor:pointer;touch-action:manipulation}
