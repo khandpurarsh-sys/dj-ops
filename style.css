@@ -142,3 +142,5 @@ html{background:var(--bg2)}
 [data-d]:active,.refresh:active,.pills button:active,.tabbar button:active,.btn:active,#totop:active{transform:scale(.95)!important;transition-duration:.08s}
 .pmx .sv,.pmx .big,.pmx .tile b,.pmx .split b,.pmx .line>b,.pmx .ometa b,.pmx .otop b,.pmx .osku,.pmx .chtop span:last-child{opacity:.8}
 .pm .swt{filter:none!important}
+
+body:not(.pm) .sv,body:not(.pm) .big,body:not(.pm) .tile b,body:not(.pm) .split b,body:not(.pm) .line>b,body:not(.pm) .ometa b,body:not(.pm) .otop b,body:not(.pm) .osku,body:not(.pm) .chtop span:last-child{filter:none!important;opacity:1!important;-webkit-user-select:auto;user-select:auto}
