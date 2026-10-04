@@ -14,6 +14,8 @@ export async function setup(pass){
 export async function unlock(vault,pass){
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(vault.iv)},await pbkdf(pass,ub64(vault.salt)),ub64(vault.ct));
  return crypto.subtle.importKey('jwk',JSON.parse(dec.decode(pt)),{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);}
+async function inflate(buf){const r=new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')));return new Uint8Array(await r.arrayBuffer())}
+async function toText(payload,bytes){return dec.decode(payload.z?await inflate(bytes):bytes)}
 export async function decryptPayload(payload,privKey,myKid){
  const m=payload.msgs.find(x=>x.kid===myKid);if(!m)throw new Error('This update was not encrypted for this phone');
  const epk=await crypto.subtle.importKey('jwk',{kty:'EC',crv:'P-256',x:m.epk.x,y:m.epk.y},{name:'ECDH',namedCurve:'P-256'},false,[]);
@@ -22,9 +24,9 @@ export async function decryptPayload(payload,privKey,myKid){
  const key=await crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt:new Uint8Array(0),info:enc.encode('djops-v1')},hk,{name:'AES-GCM',length:256},false,['decrypt']);
  if(payload.v===2){const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(m.iv)},key,ub64(m.wk));
   const dkey=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
-  return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(payload.iv)},dkey,ub64(payload.ct))));}
+  return JSON.parse(await toText(payload,new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(payload.iv)},dkey,ub64(payload.ct)))));}
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(m.iv)},key,ub64(m.ct));
- return JSON.parse(dec.decode(pt));}
+ return JSON.parse(await toText(payload,new Uint8Array(pt)));}
 
 export async function unlockJwk(vault,pass){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(vault.iv)},await pbkdf(pass,ub64(vault.salt)),ub64(vault.ct));return dec.decode(pt);}
 export function importPriv(jwkText){return crypto.subtle.importKey('jwk',JSON.parse(jwkText),{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);}
