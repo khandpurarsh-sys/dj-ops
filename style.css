@@ -127,3 +127,8 @@ html{background:var(--bg2)}
 :root[data-th^=android] .swt::after{content:'';position:absolute;top:50%;left:6px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--ol);transition:left .2s,width .2s,height .2s,margin .2s}
 :root[data-th^=android] .swt.on{background:var(--pr);border-color:var(--pr)}
 :root[data-th^=android] .swt.on::after{left:22px;width:24px;height:24px;margin-top:-12px;background:#fff}
+
+#topstrip{position:fixed;top:0;left:0;right:0;height:max(30px,calc(env(safe-area-inset-top) + 8px));z-index:50;background:transparent;-webkit-tap-highlight-color:transparent}
+#totop{position:fixed;right:18px;bottom:96px;width:46px;height:46px;border-radius:50%;border:1px solid var(--edge);background:linear-gradient(180deg,var(--g1),var(--g2));color:var(--btn);display:flex;align-items:center;justify-content:center;z-index:60;opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .25s,transform .25s;padding:0;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#totop.show{opacity:1;transform:none;pointer-events:auto}
+:root[data-th^=android] #totop{border-radius:16px;width:56px;height:56px;background:var(--sc);color:var(--osc);border:0;bottom:104px}
