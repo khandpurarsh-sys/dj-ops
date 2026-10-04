@@ -253,7 +253,7 @@ function freshBanner(s){const t=asOfMs(s),lbl=esc(String((s&&s.at)||''));if(t==n
 const KINGSLEY=false;
 function render(){if(!KINGSLEY&&tab==='ask')tab='today';if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
- let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail',ask:'Kingsley'})[tab]}</h1><p>Dressjet · ${esc(s.at)}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail?'':freshBanner(s)}<main>`;
+ let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Best sellers',stock:'Low stock',retail:'Retail',ask:'Kingsley'})[tab]}</h1><p>Dressjet${(s.at||s.asOf)?' · '+esc(s.at||s.asOf):''}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail?'':freshBanner(s)}<main>`;
  if(detail==='set:privacy'){h+=settingsView();}
  else if(detail){h+=detailView(orders,live,pend,s);}
  else if(tab==='retail'){h+=retailView();}
