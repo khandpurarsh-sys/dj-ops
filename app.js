@@ -431,7 +431,7 @@ function askAnswer(raw){
   const rows=[];const pc=(a,b)=>b?(a>=b?'▲ ':'▼ ')+Math.abs(Math.round((a-b)/b*100))+'%':'';
   if(!wantRetail||wantOnline){
    if(per==='week'||per==='month'||per==='quarter'||per==='days'){const N=NDAYS[per],c=histO(N),p=(()=>{const H=(A(data.history)||[]).filter(x=>x.d<addD(iso,-N)).sort((a,b)=>a.d<b.d?-1:1).slice(-N);return {k:H.length,rev:H.reduce((t,x)=>t+n(x.rev),0)}})();rows.push(['Online · '+PN(N)[per==='days'?'days':per],M(c.rev)+(p.k?' <small>'+pc(c.rev,p.rev)+' vs previous</small>':'')]);if(p.k)rows.push(['Online · previous '+N+' days',M(p.rev)]);}
-   else{const y=dayO(yd);rows.push(['Online today (so far)',M(s.revenue)]);rows.push(['Online yesterday (full day)',y?M(y.rev):'no data']);if(y)rows.push(['Change',(y.rev?pc(n(s.revenue),n(y.rev)):'—')]);}}
+   else{const y=dayO(yd);rows.push(['Online today (so far)',rollStale(s)?'not read yet':M(s.revenue)]);rows.push(['Online yesterday (full day)',y?M(y.rev):'no data']);if(y&&!rollStale(s))rows.push(['Change',(y.rev?pc(n(s.revenue),n(y.rev)):'—')]);}}
   if(!wantOnline||wantRetail){
    if(per==='week'||per==='month'||per==='quarter'||per==='days'){const N=NDAYS[per],c=histR(N);rows.push(['Retail · '+PN(N)[per==='days'?'days':per],c.k?M(c.rev):'no data']);}
    else{const y=dayR(yd);rows.push(['Retail today (so far)',M(rToday.rev)]);rows.push(['Retail yesterday (full day)',y?M(y.rev!=null?y.rev:y.sales):'no data']);}}
@@ -520,11 +520,11 @@ function askAnswer(raw){
   return card(head,rows.concat(sample),(OI.partial?'Only the '+orders.length+' itemised orders are covered; today has more. ':'')+foot);}
  // ---- sales (default)
  if(is('sale','sales','revenue','bikri','kamai','turnover','becha','bika','income','business','collection','order','orders','kitna','kitne','average','avg','total','amount')||per!=='today'){
-  const rows=[];const online=!wantRetail||wantOnline,retail=!wantOnline||wantRetail;let head;
+  const rows=[];const RLa=rollStale(s);const online=!wantRetail||wantOnline,retail=!wantOnline||wantRetail;let head;
   if(per==='today'){
-   if(online){const ch=chHit?(chanOf(s,OI).m[chHit]):null;const cv=ch?(typeof ch==='object'?n(ch.amt!=null?ch.amt:ch.rev):n(ch)):null;rows.push([chHit?esc(chHit)+' today':'Online today',M(chHit&&cv!=null?cv:s.revenue)]);if(!chHit){rows.push(['Online orders',V(OI.n+(OI.plus?'+':''))]);rows.push(['Avg online order',M(Math.round(n(s.revenue)/Math.max(1,OI.n)))]);rows.push(['Items sold online',V(n(s.items))])}}
+   if(online){const ch=chHit?(chanOf(s,OI).m[chHit]):null;const cv=ch?(typeof ch==='object'?n(ch.amt!=null?ch.amt:ch.rev):n(ch)):null;rows.push([chHit?esc(chHit)+' today':'Online today',RLa?'not read yet':M(chHit&&cv!=null?cv:s.revenue)]);if(!chHit&&!RLa){rows.push(['Online orders',V(OI.n+(OI.plus?'+':''))]);rows.push(['Avg online order',M(Math.round(n(s.revenue)/Math.max(1,OI.n)))]);rows.push(['Items sold online',V(n(s.items))])}}
    if(retail&&stores.length&&!chHit){rows.push(['Retail today',M(rToday.rev)]);rows.push(['Retail bills',V(rToday.bills)])}
-   if(online&&retail&&stores.length&&!chHit)rows.unshift(['Combined today',M(n(s.revenue)+rToday.rev)]);
+   if(online&&retail&&stores.length&&!chHit&&!RLa)rows.unshift(['Combined today',M(n(s.revenue)+rToday.rev)]);
    head='Sales today (so far, incl. GST)';}
   else if(per==='yday'){const o=dayO(yd),r=dayR(yd);if(online)rows.push(['Online yesterday',o?M(o.rev):'no data']);if(online&&o&&o.orders!=null)rows.push(['Online orders',V(o.orders)]);if(retail)rows.push(['Retail yesterday',r?M(r.rev!=null?r.rev:r.sales):'no data']);if(online&&retail&&o&&r)rows.unshift(['Combined yesterday',M(n(o.rev)+n(r.rev!=null?r.rev:r.sales))]);head='Sales yesterday (incl. GST)';}
   else{const N=NDAYS[per],o=histO(N),r=histR(N);if(online)rows.push(['Online · '+PN(N)[per==='days'?'days':per],o.k?M(o.rev):'no data']);if(online&&o.k){if(o.orders)rows.push(['Online orders',V(o.orders)]);rows.push(['Avg per day',M(Math.round(o.rev/o.k))])}if(retail)rows.push(['Retail',r.k?M(r.rev):'no data']);if(online&&retail&&o.k&&r.k)rows.unshift(['Combined',M(o.rev+r.rev)]);head='Sales · '+PN(N)[per==='days'?'days':per]+' (incl. GST)';if((o.k&&o.k<N)||(r.k&&r.k<N))head+=' <small>only '+Math.max(o.k,r.k)+' days of history</small>'}
