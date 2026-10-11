@@ -197,3 +197,21 @@ header>div{min-width:0;flex:1}
 h1{overflow-wrap:anywhere;line-height:1.12}
 h1.hl,:root h1.hl{font-size:24px!important}
 header p{overflow-wrap:anywhere}
+
+:root[data-th=adventure]{--bg1:#fbefc9;--bg2:#b9ddee;--mid:#f1e6c4;--ink:#2a2330;--ink2:rgba(42,35,48,.64);--glass:rgba(255,255,255,.66);--edge:rgba(42,35,48,.16);--shadow:0 14px 36px rgba(90,60,20,.18);--accent:#c4571f;--g1:#f0b23a;--g2:#d4682a;--btn:#2a1608;--bb1:#f6d48a;--bb2:#9ccbe3;--bb3:#fff2c8;--ok:#1f7a45;--warn:#9a6200;--bad:#b3342f;--low:#c03030;--bo:.35;--tint:42,35,48}
+#adv{position:fixed;left:50%;bottom:76px;width:min(340px,calc(100% - 40px));height:64px;margin-left:calc(min(340px,calc(100% - 40px))/-2);pointer-events:none;z-index:3;contain:layout style;--w:300px}
+body:not(:has(.tabbar)) #adv,body.noanim #adv{display:none}
+#adv .run{position:absolute;left:0;bottom:0;width:100%;height:60px}
+#adv .rn{position:absolute;left:0;bottom:0;width:36px;height:60px;will-change:transform;animation:advX 11.6s linear infinite}
+#adv .fl{position:absolute;inset:0;will-change:transform;animation:advFl 11.6s steps(1,end) infinite}
+#adv .hop{position:absolute;left:0;bottom:0;will-change:transform;animation:advHop 1.16s infinite}
+#adv .bo .hop{bottom:-1px}#adv .dg .hop{bottom:-2px}
+#adv .dg .rn,#adv .dg .fl,#adv .dg .hop{animation-delay:.75s}
+#adv svg{display:block;overflow:visible}
+#adv .fa{animation:advA .3s steps(1) infinite}#adv .fb{animation:advB .3s steps(1) infinite}
+@keyframes advX{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(var(--w),0,0)}100%{transform:translate3d(0,0,0)}}
+@keyframes advFl{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+@keyframes advHop{0%{transform:translate3d(0,0,0);animation-timing-function:cubic-bezier(.25,.8,.4,1)}42%{transform:translate3d(0,-20px,0);animation-timing-function:cubic-bezier(.6,0,.75,.2)}84%,100%{transform:translate3d(0,0,0)}}
+@keyframes advA{0%{opacity:1}50%{opacity:0}}
+@keyframes advB{0%{opacity:0}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){#adv{display:none}}
