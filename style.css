@@ -179,3 +179,11 @@ button,[data-d],.refresh,.pills button,.tabbar button,.chrow,a,summary,input,sel
 .glass.list[data-d]+.glass.list[data-d]{margin-top:12px}
 button:focus-visible,[data-d]:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 55%,transparent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+.pills{scrollbar-width:none;-ms-overflow-style:none}
+.pills::-webkit-scrollbar{display:none}
+.pills button small{opacity:.65;margin-left:5px;font-size:12px}
+.search{position:relative}
+.search .sx{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;border-radius:99px;background:color-mix(in srgb,var(--ink) 12%,transparent);color:var(--ink2);font-size:12px;line-height:28px;padding:0;cursor:pointer}
+.search input{padding-right:34px}
+.order:has(.st.cancelled){opacity:.62}
+.pills+.pills{padding-top:0}
