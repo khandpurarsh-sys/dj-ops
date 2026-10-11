@@ -193,3 +193,7 @@ button:focus-visible,[data-d]:focus-visible,a:focus-visible,input:focus-visible{
 .bar.split2 i{display:block;height:100%;border-radius:0}
 .bar.split2 i.b{opacity:.4}
 .topb{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--g1) 30%,transparent);color:var(--ink);margin-left:6px;vertical-align:middle}
+header>div{min-width:0;flex:1}
+h1{overflow-wrap:anywhere;line-height:1.12}
+h1.hl,:root h1.hl{font-size:24px!important}
+header p{overflow-wrap:anywhere}
