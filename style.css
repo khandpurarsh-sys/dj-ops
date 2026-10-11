@@ -167,3 +167,15 @@ body:not(.pm) .sv,body:not(.pm) .big,body:not(.pm) .tile b,body:not(.pm) .split 
 .chatbar #asks{width:42px;height:42px;border-radius:50%;border:0;background:linear-gradient(180deg,var(--g1),var(--g2));color:var(--btn);font-size:20px;font-weight:700;padding:0;flex:none}
 body.chatkb .tabbar{display:none}body.chatkb .chatbar{bottom:0}
 body.chatpage #totop{display:none!important}
+
+/* polish 2026-10-11 */
+html{-webkit-tap-highlight-color:transparent}
+button,[data-d],.refresh,.pills button,.tabbar button,.chrow,a,summary,input,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.big,.tile b,.split b,.line>b,.pmrow b,.sv,.ometa b,.otop b,.osku{font-variant-numeric:tabular-nums lining-nums}
+.asof{flex-wrap:nowrap}
+.asof>small{white-space:nowrap;flex-shrink:0}
+.note,.tile span,.eyebrow,.sub{text-wrap:pretty}
+.line>span{min-width:0;overflow-wrap:anywhere}
+.glass.list[data-d]+.glass.list[data-d]{margin-top:12px}
+button:focus-visible,[data-d]:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid color-mix(in srgb,var(--ink) 55%,transparent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
