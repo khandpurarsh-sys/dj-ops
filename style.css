@@ -241,3 +241,40 @@ body.lay-bento .olh::-webkit-scrollbar{display:none}
 body.lay-bento .olh>.order{flex:0 0 80%;scroll-snap-align:start;margin-top:0}
 body.lay-bento .fold>summary{padding:6px 14px;border-radius:999px;background:rgba(var(--tint),.1);border:1px solid var(--edge);display:inline-flex;gap:10px}
 body.lay-bento .tabbar{border-radius:32px}
+
+body.lay-ledger{padding-top:58px}
+body.lay-ledger .tabbar{top:0;bottom:auto;left:0;right:0;transform:none;width:100%;margin:0;border-radius:0;border:0;border-bottom:1px solid var(--edge);padding:calc(env(safe-area-inset-top,0px) + 6px) 10px 0;gap:0;box-shadow:0 8px 24px rgba(0,0,0,.35)!important}
+body.lay-ledger .tabbar button{padding:14px 0 15px;font-size:13px;letter-spacing:.04em;color:var(--ink2)!important;background:transparent!important;border-radius:0}
+body.lay-ledger .tabbar button.on{color:var(--g1)!important;font-weight:700}
+body.lay-ledger .tabbar .ind{top:auto;bottom:0;height:3px;border-radius:3px 3px 0 0}
+body.lay-ledger header{padding:22px 2px 6px;display:block;position:relative}
+body.lay-ledger header .logo{display:none}
+body.lay-ledger header h1{font-size:44px;line-height:1.05;letter-spacing:-.03em;display:block}
+body.lay-ledger header h1 .dt{display:block;font-family:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--g2);margin-top:6px;font-weight:700}
+body.lay-ledger header p{margin-top:6px;font-size:12px;letter-spacing:.02em}
+body.lay-ledger header #rf{position:absolute;right:0;top:20px;min-height:36px;padding:7px 14px;font-size:13px;border-radius:8px;background:transparent}
+body.lay-ledger header #bk{min-height:34px;padding:6px 12px;font-size:13px;border-radius:8px;background:transparent;margin:0 0 8px;display:inline-block}
+body.lay-ledger main .glass:not(.search):not(.tile){padding-left:0!important;padding-right:0!important}
+body.lay-ledger main{position:relative;margin-left:8px;padding-left:18px;border-left:1px solid var(--g2)}
+body.lay-ledger main .glass:not(.search){background:transparent;border:0;border-top:1px solid var(--edge);border-radius:0;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;margin-top:0;padding:14px 0}
+body.lay-ledger main .glass.list{padding:2px 0}
+body.lay-ledger main .search{background:transparent;border:0;border-bottom:1px solid var(--g2);border-radius:0;box-shadow:none!important;margin-top:14px;padding:2px 0}
+body.lay-ledger h2{position:relative;margin:30px 0 8px;padding:0;border:0;background:none;display:block;font-size:12px;letter-spacing:.2em;color:var(--g1);text-transform:uppercase}
+body.lay-ledger h2::before{content:'';position:absolute;left:-23px;top:50%;width:9px;height:9px;margin-top:-4.5px;border-radius:50%;background:var(--g2);box-shadow:0 0 0 3px var(--bg1)}
+body.lay-ledger .grid2{display:block}
+body.lay-ledger .grid2 .tile,body.lay-ledger .tile{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;min-height:0;border-radius:0}
+body.lay-ledger .tile b{font-size:34px;font-family:"Didot","Bodoni 72","Playfair Display",Georgia,serif;font-weight:500;color:var(--g1)}
+body.lay-ledger .tile[data-t="retail"],body.lay-ledger .tile[data-d="r:rev"]{flex-direction:column;align-items:flex-start;gap:2px;padding:16px 0!important}
+body.lay-ledger .tile .eyebrow{font-size:12px}
+body.lay-ledger .hero .big{font-size:60px;color:var(--g1);margin:2px 0 8px}
+body.lay-ledger .split{border-top:1px solid var(--edge)}
+body.lay-ledger .ol{display:block}
+body.lay-ledger .order{padding:14px 0;margin:0;border-radius:0;border-top:1px solid var(--edge)!important}
+body.lay-ledger .order .ometa{margin-top:2px}
+body.lay-ledger .pills{gap:0;padding:6px 0;border-bottom:1px solid var(--edge)}
+body.lay-ledger .pills button{border:0;border-radius:0;background:transparent!important;color:var(--ink2)!important;padding:10px 14px;min-height:40px;border-bottom:2px solid transparent}
+body.lay-ledger .pills button.on{color:var(--g1)!important;border-bottom-color:var(--g2)}
+body.lay-ledger .fold>summary{padding:0;background:none;border:0;display:flex}
+body.lay-ledger .btn{border-radius:8px}
+body.lay-ledger .note{text-align:left}
+body.lay-ledger #adv{display:none}
