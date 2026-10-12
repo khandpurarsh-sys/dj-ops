@@ -215,3 +215,12 @@ body:not(:has(.tabbar)) #adv,body.noanim #adv{display:none}
 @keyframes advA{0%{opacity:1}50%{opacity:0}}
 @keyframes advB{0%{opacity:0}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){#adv{display:none}}
+
+.grp{margin-top:22px;padding-top:2px}
+.grp>h2:first-child{margin-top:0}
+.grp .note{opacity:.72;font-size:12px;line-height:1.45}
+.fold{margin-top:26px}
+.fold>summary{list-style:none;cursor:pointer;letter-spacing:.16em;font-size:12px;font-weight:600;text-transform:uppercase;opacity:.85;padding:10px 2px;display:flex;justify-content:space-between;align-items:center}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:'\203A';font-size:18px;transition:transform .2s;letter-spacing:0}
+.fold[open]>summary::after{transform:rotate(90deg)}
