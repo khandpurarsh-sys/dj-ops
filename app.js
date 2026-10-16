@@ -346,6 +346,38 @@ function topSalesToday(){
  return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Sizes and colours share a row only when the product identity is verified. Uncertain style or colour matches stay separate. Retail and Online are never added together.</p>';
 }
 
+let hiDeskView='all',hiDeskNotice='';
+function hiDeskState(){try{const x=JSON.parse(LS.getItem('dj_insight_choices_v1')||'{}');return x&&typeof x==='object'&&!Array.isArray(x)?x:{}}catch{return {}}}
+function haloInsightDesk(main){
+ main.classList.add('hi-desk');const choices=hiDeskState(),items=[...main.querySelectorAll('.hi-card')],hidden=[];
+ const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
+ items.forEach((el,i)=>{const expansion=el.dataset.hiKind==='expansion',key=expansion?'site-'+slug(el.querySelector('h2').textContent):el.dataset.hiKind==='stock'?'exact-size-check':'idea-'+slug(el.querySelector('.hi-kicker>span').textContent.replace(/^\d+\s*\/\s*/,''));el.dataset.hiId=key;el.id='hi-'+key;const state=choices[key]||{},title=el.querySelector('h2').textContent.trim();
+ const controls=document.createElement('div');controls.className='hi-choice';controls.innerHTML='<button data-hi-save="'+key+'" aria-pressed="'+!!state.saved+'">'+(state.saved?'Saved ✓':'Save idea')+'</button><button data-hi-hide="'+key+'">Hide</button>';el.append(controls);
+ if(state.hidden){hidden.push({key,title});el.hidden=true}else if(hiDeskView==='saved'&&!state.saved)el.hidden=true;
+ });
+ const savedCount=items.filter(e=>choices[e.dataset.hiId]?.saved&&!choices[e.dataset.hiId]?.hidden).length;
+ const toolbar=document.createElement('section');toolbar.className='hi-desk-tools';toolbar.innerHTML='<div role="group" aria-label="Idea view"><button data-hi-view="all" aria-pressed="'+(hiDeskView==='all')+'">All ideas</button><button data-hi-view="saved" aria-pressed="'+(hiDeskView==='saved')+'">Saved ('+savedCount+')</button></div><p>Saved on this device only. No task, campaign or reminder is created.</p>'+(hiDeskNotice?'<div role="status" class="hi-desk-notice">'+esc(hiDeskNotice)+'</div>':'');
+ if(hiDeskView==='saved'){for(const sel of ['#hi-business','#hi-expansion']){const sec=main.querySelector(sel);if(sec&&![...sec.querySelectorAll('.hi-card')].some(e=>!e.hidden))sec.hidden=true}main.querySelector('#hi-public').hidden=true;main.querySelector('.hi-jump').hidden=true;const base=main.querySelector('.hi-store-baseline');if(base)base.hidden=true;}
+ const intro=main.querySelector('.hi-intro');intro.after(toolbar);
+ if(hiDeskView==='saved'&&savedCount===0){const empty=document.createElement('div');empty.className='hi-empty';empty.textContent='No saved ideas yet. Use All ideas, then save the ones worth discussing.';toolbar.after(empty)}
+ const visible=items.filter(e=>!e.hidden),stock=visible.find(e=>e.dataset.hiKind==='stock'&&e.querySelector('h2').textContent.includes('Protect the sizes'));
+ const tags=['push-a-winner','gifting-pairing'];let priority=[];if(stock)priority.push(stock);for(const tag of tags){const el=visible.find(e=>e.dataset.hiId==='idea-'+tag);if(el)priority.push(el)}for(const el of visible){if(priority.length>=3)break;if(!priority.includes(el))priority.push(el)}priority=priority.slice(0,3);
+ const retailAt=data.topSellers?.retail?.asOf,now=Date.now(),age=now-Date.parse(retailAt),fresh=Number.isFinite(age)&&age>=-60000&&age<=75*60000&&data.topSellers?.date===IST();
+ const top=document.createElement('section');top.className='hi-top-moves';top.innerHTML='<span class="hi-overline">YOUR SHORTLIST / '+(hiDeskView==='saved'?'SAVED':'TOP '+priority.length)+'</span><h2>'+ (fresh?'Start with these.':'Plan from the last read.')+'</h2><p>'+(fresh?'Fresh retail evidence can surface an exact-size stock check. The other moves are editorial tests.':'No fresh same-day retail read. Keep these as planning ideas; refresh stock before execution.')+'</p><div>'+priority.map((el,i)=>'<button data-hi-jump="'+el.id+'"><span>0'+(i+1)+'</span><div><b>'+SV(esc(el.querySelector('h2').textContent.trim()))+'</b>'+(el.dataset.hiKind==='stock'?'<small class="hi-top-proof">'+SV(esc([...el.querySelector('.hi-summary').childNodes].slice(0,[...el.querySelector('.hi-summary').childNodes].findIndex(x=>x.nodeName==='BR')<0?undefined:[...el.querySelector('.hi-summary').childNodes].findIndex(x=>x.nodeName==='BR')).map(x=>x.textContent).join('')) )+'</small>':'')+'<small>'+esc(el.querySelector('.hi-effort')?.textContent||'Research')+'</small></div><i>↘</i></button>').join('')+'</div><small class="hi-top-source">Retail evidence: '+esc(retailAt?stkFmt(retailAt):'time unknown')+' · Public research checked 16 Oct 2026</small>';
+ if(priority.length)toolbar.after(top);
+ if(hidden.length){const h=document.createElement('details');h.className='hi-hidden-drawer';h.innerHTML='<summary>Hidden ideas ('+hidden.length+') · undo <b>+</b></summary>'+hidden.map(x=>'<div><span>'+SV(esc(x.title))+'</span><button data-hi-restore="'+x.key+'">Restore</button></div>').join('');main.querySelector('.hi-disclaimer').before(h)}
+}
+function bindInsightDesk(){
+ if(detail!=='halo:Insights')return;
+ const change=(key,field,value)=>{const x=hiDeskState();x[key]={...(x[key]||{}),[field]:value};LS.setItem('dj_insight_choices_v1',JSON.stringify(x));};
+ const redraw=()=>{const y=scrollY;render();window.scrollTo({top:y,behavior:'instant'})};
+ root.querySelectorAll('[data-hi-save]').forEach(b=>b.onclick=()=>{const key=b.dataset.hiSave,value=!hiDeskState()[key]?.saved;change(key,'saved',value);hiDeskNotice=value?'Saved on this device.':'Removed from saved ideas.';redraw()});
+ root.querySelectorAll('[data-hi-hide]').forEach(b=>b.onclick=()=>{change(b.dataset.hiHide,'hidden',true);hiDeskNotice='Idea hidden. Restore it from Hidden ideas at the bottom.';redraw()});
+ root.querySelectorAll('[data-hi-restore]').forEach(b=>b.onclick=()=>{change(b.dataset.hiRestore,'hidden',false);hiDeskNotice='Idea restored.';redraw()});
+ root.querySelectorAll('[data-hi-view]').forEach(b=>b.onclick=()=>{hiDeskView=b.dataset.hiView;hiDeskNotice='';render();window.scrollTo({top:0,behavior:'instant'})});
+ root.querySelectorAll('[data-hi-jump]').forEach(b=>b.onclick=()=>{const e=document.getElementById(b.dataset.hiJump);if(e){e.querySelector('details').open=true;e.scrollIntoView({block:'start',behavior:'instant'})}});
+}
+
 function haloExpansion(){
  const out=(u,n)=>'<a target="_blank" rel="noopener noreferrer" href="'+u+'">'+n+' ↗</a>';
  const safe=x=>SV(esc(String(x))),src='Research checked 16 Oct 2026';
@@ -430,7 +462,7 @@ function haloCompose(html){
 
   if(search){const box=search.closest('section')||search;const finder=document.createElement('details');finder.className='halo-finder';finder.innerHTML='<summary>Find something <span aria-hidden="true">+</span></summary>';grid?grid.after(finder):box.before(finder);finder.append(box);}
  }
- if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
+ if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();haloInsightDesk(main);main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
  const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights')rail.append(insightLink);
  if(detail){const hero=main.querySelector('.hero,.glass');if(hero)hero.classList.add('halo-detail-focus');}
  return t.innerHTML;
@@ -448,6 +480,7 @@ function haloRender(){
  haloTransition=transition;transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});transition.finished.catch(()=>{}).finally(()=>{if(haloTransition!==transition)return;haloTransition=null;document.querySelectorAll('[data-halo-morph]').forEach(e=>{e.style.viewTransitionName='';e.removeAttribute('data-halo-morph')})});
 }
 function bindHalo(){
+ bindInsightDesk();
  if(!haloOn())return;
  root.querySelectorAll('[data-hi-route]').forEach(b=>b.onclick=()=>{tab=b.dataset.hiRoute;if(tab==='best')tsChannel='retail';if(tab==='stock')sv='retail';detail=null;render();window.scrollTo(0,0)});
  const pair=root.querySelector('.halo-pair');if(pair){
