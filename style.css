@@ -641,3 +641,104 @@ body.lay-halo .halo-detail-header h1,body.lay-halo .halo-detail-header h1.hl{fon
 body.lay-halo .halo-detail-header p{max-width:none}
 :root[data-th=halo-dark] .lay-halo #halo-explore{box-shadow:0 7px 20px #081a3122,inset 0 1px #b7c9dd42}
 @media(max-width:350px){body.lay-halo .halo-rail{gap:7px}body.lay-halo .halo-brand{font-size:9px;letter-spacing:.12em;gap:6px}body.lay-halo .halo-detail-header h1,body.lay-halo .halo-detail-header h1.hl{font-size:37px}}
+
+:root[data-th=halo-onyx] body.lay-halo{color-scheme:dark;background:#101010;color:#f5f3ef;--bg1:#101010;--bg2:#171717;--mid:#1a1a1a;--ink:#f5f3ef;--ink2:#c6c4c1;--glass:#1b1b1b;--edge:#2a2a29;--shadow:0 10px 30px #0d0d0c44;--accent:#ddc38b;--g1:#f3dfb4;--g2:#b99a60;--btn:#e9d09a;--ok:#a4d9c2;--warn:#efcf8c;--bad:#f0b2b7;--low:#f0b2b7;--tint:180,201,228;--sf:#181818;--sfh:#1f1f1f}
+:root[data-th=halo-onyx] .lay-halo .app{background:radial-gradient(ellipse at 105% 10%,#90774b24,transparent 45%),radial-gradient(ellipse at 0 5%,#2c2b2b44,transparent 40%),linear-gradient(155deg,#101010,#1a1919 65%,#111111)}
+:root[data-th=halo-onyx] .lay-halo .glass{background:linear-gradient(145deg,#222121c9,#171616c9);border-color:#8381804f;box-shadow:0 8px 24px #0d0d0c25,inset 0 1px 0 #bebcb91f!important}
+:root[data-th=halo-onyx] .lay-halo header h1,:root[data-th=halo-onyx] .lay-halo .halo-section-id,:root[data-th=halo-onyx] .lay-halo .ts-product>summary>b{color:#f8f5f2}
+:root[data-th=halo-onyx] .lay-halo header h1 span:not(.dt){color:#cac9c6}
+:root[data-th=halo-onyx] .lay-halo header p,:root[data-th=halo-onyx] .lay-halo .halo-eyebrow,:root[data-th=halo-onyx] .lay-halo .halo-brand small,:root[data-th=halo-onyx] .lay-halo h2,:root[data-th=halo-onyx] .lay-halo .halo-panel h2,:root[data-th=halo-onyx] .lay-halo .note,:root[data-th=halo-onyx] .lay-halo .sub,:root[data-th=halo-onyx] .lay-halo .osku,:root[data-th=halo-onyx] .lay-halo .line small,:root[data-th=halo-onyx] .lay-halo .tile span{color:#ceccc9}
+:root[data-th=halo-onyx] .lay-halo .halo-settings,:root[data-th=halo-onyx] .lay-halo .halo-refresh,:root[data-th=halo-onyx] .lay-halo header #bk{color:#ead5aa;border-color:#a9a7a541;background:#2423236b}
+:root[data-th=halo-onyx] .lay-halo .asof{color:#d0cecb;background:#1a1a1a70;border-color:#9594924f}
+:root[data-th=halo-onyx] .lay-halo .asof.stale{color:#f1d89f;background:#6a522c55;border-color:#c3a26766}
+:root[data-th=halo-onyx] .lay-halo .halo-kpi.halo-online{background:radial-gradient(ellipse at 100% 0,#9f9d9b36,transparent 70%),linear-gradient(125deg,#252424,#1d1c1c);color:#f8e9c8;border-color:#a3a19f77;box-shadow:0 13px 30px #0b0b0a30,inset 0 1px #e6e4e126!important}
+:root[data-th=halo-onyx] .lay-halo .halo-kpi.halo-retail{background:linear-gradient(120deg,#4a4434,#36382f);color:#f4e4bc;border-color:#b79e665e}
+:root[data-th=halo-onyx] .lay-halo .halo-combined{background:linear-gradient(130deg,#222121bb,#1d1d1daa)}
+:root[data-th=halo-onyx] .lay-halo .halo-combined .halo-source-pair{color:#cfcdca;border-color:#b5b4b133}
+:root[data-th=halo-onyx] .lay-halo .halo-panel{background:#21202055;border-color:#908e8c38}
+:root[data-th=halo-onyx] .lay-halo .halo-panel>.glass{background:#24242366}
+:root[data-th=halo-onyx] .lay-halo .halo-section-id>span{color:#d5d3d0;border-color:#a7a5a34f}
+:root[data-th=halo-onyx] .lay-halo .line,:root[data-th=halo-onyx] .lay-halo .split,:root[data-th=halo-onyx] .lay-halo .ts-product[open]>summary{border-color:#b6b4b129}
+:root[data-th=halo-onyx] .lay-halo .st{color:#d9d6d3;background:#a6a5a225}
+:root[data-th=halo-onyx] .lay-halo .st.complete{color:#b5e5cf;background:#78b39522}
+:root[data-th=halo-onyx] .lay-halo .st.pending_verification{color:#f4d69b;background:#d8b97028}
+:root[data-th=halo-onyx] .lay-halo .st.cancelled{color:#ffc1c7;background:#c8758120}
+:root[data-th=halo-onyx] .lay-halo .pills button,:root[data-th=halo-onyx] .lay-halo .thm button{background:#21212080;color:#dddad7;border-color:#9b9a984d}
+:root[data-th=halo-onyx] .lay-halo .pills button.on{background:#e2c88f!important;color:#181717!important;border-color:#e9d5aa;box-shadow:none}
+:root[data-th=halo-onyx] .lay-halo .thm button.on{border-color:#e0c794;box-shadow:inset 0 0 0 1px #e0c794}
+:root[data-th=halo-onyx] .lay-halo .search{background:#171716aa;border-color:#91908e5c}
+:root[data-th=halo-onyx] .lay-halo input,:root[data-th=halo-onyx] .lay-halo .search input{color:#f2f0ec}
+:root[data-th=halo-onyx] .lay-halo input::placeholder{color:#c1bfbc}
+:root[data-th=halo-onyx] .lay-halo .btn.alt{background:#242323!important;color:#f1efec;border-color:#92908e55}
+:root[data-th=halo-onyx] .lay-halo .ts-product[open]{background:#201f1f}
+:root[data-th=halo-onyx] .lay-halo .pmrow{background:#2423235c}
+:root[data-th=halo-onyx] .lay-halo .halo-dock{background:#181818ea;border-color:#a8a7a466;box-shadow:0 12px 34px #0d0d0d3f,inset 0 1px #d2d0cd36!important}
+:root[data-th=halo-onyx] .lay-halo .halo-dock button{color:#c7c5c2}
+:root[data-th=halo-onyx] .lay-halo .halo-dock button.on{color:#f5dfb3!important;background:linear-gradient(145deg,#2f2f2e,#252424)!important;box-shadow:inset 0 1px #e3ca9044}
+:root[data-th=halo-onyx] .lay-halo .fold>summary{color:#d8d6d3}
+:root[data-th=halo-onyx] .lay-halo .halo-coverage,:root[data-th=halo-onyx] .lay-halo .halo-archive{background:#201f1f55;border-color:#9f9d9b55}
+:root[data-th=halo-onyx] .lay-halo .halo-coverage>summary,:root[data-th=halo-onyx] .lay-halo .halo-archive>summary{color:#e5e3df}
+:root[data-th=halo-onyx] .lay-halo .halo-coverage>summary small,:root[data-th=halo-onyx] .lay-halo .halo-archive>summary small{color:#cbc9c6}
+:root[data-th=halo-onyx] .lay-halo .halo-coverage>section{background:transparent}
+:root[data-th=halo-onyx] .lay-halo .chip{color:#edd6a4!important;background:#d0b47526!important}
+:root[data-th=halo-onyx] .lay-halo .app{background:radial-gradient(ellipse at 110% 20%,#c6a16c1c,transparent 40%),radial-gradient(ellipse at -15% 5%,#35353466,transparent 38%),linear-gradient(155deg,#101010,#1b1b1a 65%,#111111)}
+:root[data-th=halo-onyx] .lay-halo .glass{background:linear-gradient(135deg,#272626c9,#181818c9);border-color:#9a98964f;box-shadow:0 14px 30px #0b0b0b29,inset 0 1px #d4d2cf2b!important}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis .halo-kpi.halo-online{background:radial-gradient(ellipse at 100% 0,#aaa8a63d,transparent 70%),linear-gradient(130deg,#272726,#1e1d1d);border-color:#a9a7a466;box-shadow:0 22px 35px #0b0b0b44,inset 0 1px #d5d2cf4d!important}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis .halo-kpi.halo-retail{background:linear-gradient(135deg,#5a503b,#3c4036);border-color:#c4af7c77;box-shadow:0 15px 28px #0e0e0d33,inset 0 1px #f4dfaa33!important;color:#f8e9c5}
+:root[data-th=halo-onyx] .lay-halo .halo-settings,:root[data-th=halo-onyx] .lay-halo .halo-refresh{background:linear-gradient(130deg,#2e2d2daa,#1d1c1c80);border-color:#aeadaa66;box-shadow:0 10px 20px #0c0c0c26,inset 0 1px #d9d7d433}
+:root[data-th=halo-onyx] .lay-halo .halo-section-id>span{background:#dbc28d24;color:#ecd9b1}
+:root[data-th=halo-onyx] .lay-halo .halo-panel{background:linear-gradient(150deg,#2a2a2955,#20202022);border-color:#9b999740;box-shadow:inset 0 1px #dfddda22}
+:root[data-th=halo-onyx] .lay-halo .halo-dock{background:linear-gradient(140deg,#222221eb,#171717ea);box-shadow:0 20px 45px #0b0b0b55,inset 0 1px #cbc9c655,inset 0 -1px #3d3d3c26!important}
+:root[data-th=halo-onyx] .lay-halo .halo-dock button.on{background:linear-gradient(140deg,#383736,#272726)!important;box-shadow:0 6px 13px #0e0e0d40,inset 0 1px #e2cea56b}
+:root[data-th=halo-onyx] .lay-halo .app{background:radial-gradient(ellipse at 110% 20%,#c7a97214,transparent 40%),radial-gradient(ellipse at -35% 18%,#3232315c,transparent 45%),linear-gradient(145deg,#121211,#1a1a19 70%,#121211)}
+:root[data-th=halo-onyx] .lay-halo .glass,:root[data-th=halo-onyx] .lay-halo .ts-product[open],:root[data-th=halo-onyx] .lay-halo .halo-panel,:root[data-th=halo-onyx] .lay-halo .halo-panel>.glass,:root[data-th=halo-onyx] .lay-halo .halo-combined,:root[data-th=halo-onyx] .lay-halo .halo-coverage,:root[data-th=halo-onyx] .lay-halo .halo-archive,:root[data-th=halo-onyx] .lay-halo .search,:root[data-th=halo-onyx] .lay-halo .pmrow{background:transparent;border-color:#abaaa733;box-shadow:none!important}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis.halo-focus-strip .halo-kpi{background:transparent;border:0;box-shadow:none!important;color:#f5e6c5}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis.halo-focus-strip .halo-kpi::before{background:radial-gradient(ellipse at var(--halo-touch-x,75%) var(--halo-touch-y,50%),#aeacaa2b,#d8b67a08 45%,transparent 72%)}
+:root[data-th=halo-onyx] .lay-halo .halo-focus-strip .halo-kpi>b{color:#f3e7cc}
+:root[data-th=halo-onyx] .lay-halo .halo-focus-strip .halo-kpi>span:not(.halo-arrow),:root[data-th=halo-onyx] .lay-halo .halo-focus-strip .asof,:root[data-th=halo-onyx] .lay-halo .halo-scene-nav button,:root[data-th=halo-onyx] .lay-halo .halo-finder>summary{color:#cfcdca}
+:root[data-th=halo-onyx] .lay-halo .halo-focus-strip .halo-kpi .halo-focus-open{color:#e6cf9d!important}
+:root[data-th=halo-onyx] .lay-halo .halo-scene-nav,:root[data-th=halo-onyx] .lay-halo .halo-finder{border-color:#abaaa733}
+:root[data-th=halo-onyx] .lay-halo .halo-swipe-hint{color:#bab8b5}
+:root[data-th=halo-onyx] .lay-halo .halo-settings,:root[data-th=halo-onyx] .lay-halo .halo-refresh{background:none;border:0;box-shadow:none;color:#ddc89b}
+:root[data-th=halo-onyx] .lay-halo .asof,:root[data-th=halo-onyx] .lay-halo .asof.stale{background:transparent;box-shadow:none;border-color:#abaaa733}
+:root[data-th=halo-onyx] .lay-halo .pills button{background:transparent!important;color:#c5c3c0;box-shadow:none;border:0;border-bottom:1px solid transparent}
+:root[data-th=halo-onyx] .lay-halo .pills button.on{background:transparent!important;color:#f0dcaf!important;border-bottom-color:#ddc28b;box-shadow:none}
+:root[data-th=halo-onyx] .lay-halo .st{background:transparent!important}
+:root[data-th=halo-onyx] .lay-halo #halo-explore{background:linear-gradient(135deg,#2b2b2ad6,#1a1919ce);border-color:#a9a7a573;box-shadow:0 14px 40px #0d0d0c44,inset 0 1px #cccac742;color:#ecddbc}
+:root[data-th=halo-onyx] .lay-halo #halo-explore small{color:#c4c2bf;border-color:#b0aeac44}
+:root[data-th=halo-onyx] .lay-halo .halo-explore-orb{background:radial-gradient(ellipse at 30% 20%,#ffedbf,#b5ad94 40%,#3c3b3a 70%,#ead1a0)}
+:root[data-th=halo-onyx] .lay-halo .halo-map{background:linear-gradient(145deg,#222221e8,#171717ed);border-color:#aaa9a66b;color:#e4d3ae}
+:root[data-th=halo-onyx] .lay-halo .halo-map-choices button{color:#f2efec;border-color:#9f9d9b33}
+:root[data-th=halo-onyx] .lay-halo .halo-map-choices button>small,:root[data-th=halo-onyx] .lay-halo .halo-map-foot{color:#c5c3c0}
+:root[data-th=halo-onyx] .lay-halo .halo-map-choices button>i{color:#dac28d}
+:root[data-th=halo-onyx] .lay-halo .halo-source-selector button{color:#b7b5b2}
+:root[data-th=halo-onyx] .lay-halo .halo-source-selector button[aria-pressed=true]{color:#f0dbad;border-bottom-color:#d7bd83}
+:root[data-th=halo-onyx] .lay-halo .halo-source-selector>span{color:#bbb9b6}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis.halo-focus-strip .halo-kpi::before{background:radial-gradient(ellipse at var(--halo-touch-x,55%) var(--halo-touch-y,46%),#b6b4b129,#d7b06c0c 48%,transparent 71%)}
+:root[data-th=halo-onyx] .lay-halo #halo-explore{box-shadow:0 7px 20px #0d0d0c22,inset 0 1px #cccac742}
+:root[data-th=halo-onyx] body.lay-halo{background:#101011;--bg1:#101011;--bg2:#1b1a18;--mid:#22211f;--ink:#f2f0eb;--ink2:#c6c1b6;--accent:#dfc48b;--tint:213,207,194;--sf:#242321;--sfh:#34312c}
+:root[data-th=halo-onyx] .lay-halo .app{background:radial-gradient(ellipse at 110% 18%,#b3935b12,transparent 42%),radial-gradient(ellipse at -30% 20%,#ffffff08,transparent 45%),linear-gradient(145deg,#101011,#191918 70%,#101011)}
+:root[data-th=halo-onyx] .lay-halo .halo-map{background:linear-gradient(145deg,#2c2b28ed,#171718f2);border-color:#b7aa8a55}
+:root[data-th=halo-onyx] .lay-halo #halo-explore{background:linear-gradient(135deg,#35332fd6,#1d1d1cce);border-color:#b9ab8d66;box-shadow:0 7px 20px #00000033,inset 0 1px #dfd3bb33}
+:root[data-th=halo-onyx] .lay-halo .halo-explore-orb{background:radial-gradient(ellipse at 30% 20%,#fff0c9,#c1ac7b 40%,#59564f 70%,#ead1a0)}
+:root[data-th=halo-onyx] .lay-halo .halo-kpis.halo-focus-strip .halo-kpi::before{background:radial-gradient(ellipse at var(--halo-touch-x,55%) var(--halo-touch-y,46%),#dbd3bd12,#d7b06c06 48%,transparent 71%)}
+:root[data-th=halo-onyx] .lay-halo .halo-map::backdrop{background:#08080866;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* Halo motion: native scroll and compositor-only transforms/opacity. */
+body.lay-halo .halo-focus-strip{overscroll-behavior-x:contain;--halo-touch-x:55%;--halo-touch-y:46%}
+body.lay-halo .halo-kpis.halo-focus-strip .halo-kpi::before{transform:translate3d(var(--halo-glow-x,0px),var(--halo-glow-y,0px),0);transition:transform .18s ease-out,opacity .2s}
+body.lay-halo .pills button,body.lay-halo button{transition-property:transform,opacity;transition-duration:.16s}
+body.lay-halo #halo-explore{backdrop-filter:none;-webkit-backdrop-filter:none}
+body.lay-halo .halo-map{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 -12px 55px #10182035}
+body.lay-halo .halo-map::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none}
+body.lay-halo .halo-map[open]{animation:haloMapIn .32s cubic-bezier(.16,1,.3,1)}
+body.lay-halo main.anim>*{animation:haloSculpt .32s cubic-bezier(.16,1,.3,1) both;animation-delay:0s}
+body.lay-halo .ts-product[open]>section{animation:haloSculpt .24s cubic-bezier(.16,1,.3,1)}
+::view-transition-group(root){animation:none}
+::view-transition-old(root){animation:haloOld .16s ease both}
+::view-transition-new(root){animation:haloNew .32s cubic-bezier(.16,1,.3,1) both}
+@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}body.lay-halo .halo-map[open]{animation:none!important}}
+:root[data-th=halo-onyx] .lay-halo .halo-map::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-th=halo] .lay-halo .halo-map{background:linear-gradient(145deg,#eaf1fb,#d9e5f4)}
+:root[data-th=halo-dark] .lay-halo .halo-map{background:linear-gradient(145deg,#29445d,#1a2e49)}
+:root[data-th=halo-onyx] .lay-halo .halo-map{background:linear-gradient(145deg,#2c2b28,#171718)}
