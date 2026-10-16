@@ -788,3 +788,22 @@ body.lay-halo .halo-kpis.halo-pair .halo-kpi .eyebrow{min-height:30px}
 body.lay-halo .halo-kpis.halo-pair .halo-kpi>b{margin-top:0!important}
 @media(max-width:350px){body.lay-halo .halo-kpis.halo-pair .halo-kpi{padding-right:10px!important}body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-retail{padding-left:12px!important;padding-right:0!important}}
 :root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-online,:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-retail{background:transparent!important;box-shadow:none!important;border-top:0!important;border-bottom:0!important}
+
+body.lay-halo .halo-bottom-nav{z-index:90;display:flex;position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(410px,calc(100% - 24px))!important;padding:7px 5px;border:1px solid #8293ac40;border-radius:24px;background:#e7eef9;box-shadow:0 8px 30px #29436920;backdrop-filter:none;-webkit-backdrop-filter:none;gap:2px}
+body.lay-halo .halo-bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 2px;min-height:54px;font-size:10px!important;font-weight:500;border-radius:18px;color:var(--ink2)!important}
+body.lay-halo .halo-bottom-nav button svg{width:20px;height:20px}
+body.lay-halo .halo-bottom-nav button.on{color:var(--ink)!important;background:#d1ddef!important}
+body.lay-halo .halo-bottom-nav .ind{display:none}
+:root[data-th=halo-dark] body.lay-halo .halo-bottom-nav{background:#1c3049;border-color:#94adc33d;box-shadow:0 8px 30px #06132155}
+:root[data-th=halo-dark] body.lay-halo .halo-bottom-nav button.on{background:#3a4e63!important;color:#f2dfb5!important}
+:root[data-th=halo-onyx] body.lay-halo .halo-bottom-nav{background:#202020;border-color:#b8a7823b;box-shadow:0 8px 30px #0006}
+:root[data-th=halo-onyx] body.lay-halo .halo-bottom-nav button.on{background:#3d3830!important;color:#f2dfb5!important}
+body.lay-halo main{padding-bottom:110px!important;touch-action:pan-y pinch-zoom}
+body.lay-halo header{touch-action:pan-y pinch-zoom}
+body.lay-halo #totop{bottom:104px}
+body.lay-halo .halo-scene-nav{margin-bottom:18px}
+body.lay-halo main.anim>*{animation-duration:.52s}
+::view-transition-old(root){animation-duration:.28s}
+::view-transition-new(root){animation-duration:.52s;animation-timing-function:cubic-bezier(.22,.7,.25,1)}
+body.noanim::view-transition-old(root),body.noanim::view-transition-new(root){animation:none!important}
+@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}}
