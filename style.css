@@ -876,3 +876,33 @@ body.lay-halo .hi-baseline-grid div{display:grid;grid-template-columns:1fr auto;
 body.lay-halo .hi-baseline-grid small{grid-column:1/-1;color:var(--ink2);font-size:9px}
 body.lay-halo .hi-jump{gap:16px;flex-wrap:wrap}
 body.lay-halo #hi-expansion{margin-top:22px;scroll-margin-top:25px}
+body.lay-halo .hi-choice{display:flex;gap:12px;margin-top:12px}
+body.lay-halo .hi-choice button,body.lay-halo .hi-hidden-drawer button{border:1px solid var(--edge);border-radius:18px;background:transparent;color:var(--ink);font-size:10px;min-height:38px;padding:8px 14px}
+body.lay-halo .hi-choice button[aria-pressed=true]{background:#bd9b5422;border-color:#bd9b5455}
+body.lay-halo .hi-desk-tools{margin:15px 0 22px}
+body.lay-halo .hi-desk-tools>div:first-child{display:flex;gap:8px}
+body.lay-halo .hi-desk-tools button{background:transparent;border:1px solid var(--edge);border-radius:18px;color:var(--ink);padding:8px 14px;min-height:38px;font-size:11px}
+body.lay-halo .hi-desk-tools button[aria-pressed=true]{background:#bd9b5420;border-color:#bd9b5460}
+body.lay-halo .hi-desk-tools>p,body.lay-halo .hi-desk-notice{font-size:9px;line-height:1.6;color:var(--ink2);margin:9px 0}
+body.lay-halo .hi-top-moves{border:1px solid var(--edge);border-radius:17px;padding:18px 15px;margin:15px 0 23px;background:#bd9b5405}
+body.lay-halo .hi-top-moves h2{font-size:25px;letter-spacing:-.04em;margin:11px 0}
+body.lay-halo .hi-top-moves>p{font-size:11px;line-height:1.6;color:var(--ink2);margin-bottom:15px}
+body.lay-halo .hi-top-moves>div button{display:flex;align-items:center;width:100%;text-align:left;gap:13px;padding:14px 0;border:0;border-top:1px solid var(--edge);border-radius:0;background:none;color:var(--ink)}
+body.lay-halo .hi-top-moves button>span{font-size:9px;color:#bd9b54;align-self:flex-start;margin-top:3px}
+body.lay-halo .hi-top-moves button>div{flex:1;min-width:0}
+body.lay-halo .hi-top-moves button b{font-size:13px;font-weight:500;line-height:1.5;display:block}
+body.lay-halo .hi-top-moves button small{font-size:8px;line-height:1.7;color:var(--ink2);display:block;margin-top:5px}
+body.lay-halo .hi-top-moves button i{font-style:normal}
+body.lay-halo .hi-top-source{font-size:8px;color:var(--ink2);line-height:1.8;display:block;margin-top:10px}
+body.lay-halo .hi-hidden-drawer{padding:15px 0;border-top:1px solid var(--edge);margin-top:18px}
+body.lay-halo .hi-hidden-drawer>summary{font-size:11px;min-height:40px;cursor:pointer}
+body.lay-halo .hi-hidden-drawer>div{display:flex;gap:12px;align-items:center;padding:10px 0;font-size:11px;line-height:1.6}
+body.lay-halo .hi-hidden-drawer>div>span{flex:1}
+body.lay-halo .hi-empty{font-size:12px;line-height:1.7;padding:15px;border:1px solid var(--edge);border-radius:12px}
+body.lay-halo .hi-card[hidden]{display:none!important}
+body.lay-halo .hi-desk .hi-intro{padding-bottom:12px}
+body.lay-halo .hi-desk .hi-intro h2{font-size:22px;line-height:1.25;margin:7px 0}
+body.lay-halo .hi-desk .hi-intro>p,body.lay-halo .hi-desk .hi-method{display:none}
+body.lay-halo .hi-desk .hi-desk-tools{margin:13px 0}
+body.lay-halo .hi-desk [hidden]{display:none!important}
+body.lay-halo .hi-top-moves button .hi-top-proof{font-size:9px;color:var(--ink)}
