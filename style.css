@@ -906,3 +906,104 @@ body.lay-halo .hi-desk .hi-intro>p,body.lay-halo .hi-desk .hi-method{display:non
 body.lay-halo .hi-desk .hi-desk-tools{margin:13px 0}
 body.lay-halo .hi-desk [hidden]{display:none!important}
 body.lay-halo .hi-top-moves button .hi-top-proof{font-size:9px;color:var(--ink)}
+
+/* Readability pass: presentation only. Keep source values, coverage and controls intact. */
+:root[data-th] body.lay-halo{font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%;--ink2:#435771}
+:root[data-th=halo-dark] body.lay-halo{--ink2:#c5d3e1}
+:root[data-th=halo-onyx] body.lay-halo{--ink2:#d0cbc0}
+:root[data-th] body.lay-halo .app{font-size:16px;line-height:1.55;padding-left:22px;padding-right:22px}
+:root[data-th] body.lay-halo header h1{font-size:38px;line-height:1.12;letter-spacing:-.035em}
+:root[data-th] body.lay-halo h2{font-size:15px;line-height:1.5;letter-spacing:.035em}
+:root[data-th] body.lay-halo .halo-brand{font-size:13px;letter-spacing:.1em}
+:root[data-th] body.lay-halo .halo-brand small{font-size:10px;letter-spacing:.09em}
+:root[data-th] body.lay-halo :is(header p,.note,.sub,.osku,.ometa,.line small,.tile span,.split span,.asof,.halo-source-pair,.halo-pair-source,.halo-swipe-hint,.halo-pair-controls>span,.halo-source-selector>span,.halo-map-foot,.halo-coverage summary small,.halo-archive summary small,.ts-pending){font-size:13px!important;line-height:1.65!important;color:var(--ink2);opacity:1!important}
+:root[data-th] body.lay-halo :is(.halo-eyebrow,.eyebrow,.halo-section-id,.halo-panel h2,.fold>summary,.halo-coverage>summary,.halo-archive>summary){font-size:14px!important;line-height:1.6!important;letter-spacing:.025em}
+:root[data-th] body.lay-halo :is(.line,.chtop,.otop,.ometa,.osku){font-size:15px;line-height:1.65}
+:root[data-th] body.lay-halo .line{gap:14px;padding-top:16px;padding-bottom:16px;align-items:flex-start}
+:root[data-th] body.lay-halo .line>div{min-width:0}
+:root[data-th] body.lay-halo .line>b{flex:none;font-size:16px;line-height:1.5;max-width:48%;text-align:right;white-space:normal;overflow-wrap:anywhere}
+:root[data-th] body.lay-halo .line :is(span,small){overflow-wrap:anywhere}
+:root[data-th] body.lay-halo :is(.ts-product>summary,.ts-product>summary>span){font-size:16px;line-height:1.5}
+:root[data-th] body.lay-halo .ts-product>summary{gap:12px;min-height:66px;padding-top:16px;padding-bottom:16px}
+:root[data-th] body.lay-halo .ts-product>summary>b{font-size:17px;line-height:1.5}
+:root[data-th] body.lay-halo .ts-product>summary small{font-size:13px;line-height:1.65;opacity:1}
+:root[data-th] body.lay-halo .order{padding:18px 16px;margin-bottom:4px}
+:root[data-th] body.lay-halo .otop{gap:12px;flex-wrap:wrap}
+:root[data-th] body.lay-halo .otop>b{font-size:16px}
+:root[data-th] body.lay-halo .st{font-size:12px;line-height:1.5;padding:5px 9px}
+:root[data-th] body.lay-halo .osku{margin:9px 0 12px;overflow-wrap:anywhere}
+:root[data-th] body.lay-halo .ometa{gap:10px;flex-wrap:wrap}
+:root[data-th] body.lay-halo .ometa>b{font-size:18px}
+:root[data-th] body.lay-halo :is(.pills button,.halo-scene-nav button,.halo-source-selector button,.halo-pair-controls button,.halo-finder>summary){font-size:14px!important;line-height:1.5;min-height:44px}
+:root[data-th] body.lay-halo :is(.halo-map-choices button>small,.halo-map>p){font-size:13px;line-height:1.65}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .eyebrow{font-size:14px!important;min-height:36px;letter-spacing:.01em}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>span{font-size:13px!important;line-height:1.65!important;opacity:1!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .halo-pair-count{font-size:14px!important;min-height:46px}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>span[style*="opacity"]{font-size:12px!important;min-height:44px}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .asof{min-height:76px}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .asof small{font-size:12px!important;line-height:1.6}
+:root[data-th] body.lay-halo .halo-pair[data-pair-mode=activity] .halo-kpi .halo-pair-count{font-size:23px!important}
+:root[data-th] body.lay-halo .tile{padding:18px 16px;gap:6px}
+:root[data-th] body.lay-halo .tile>b{line-height:1.2}
+:root[data-th] body.lay-halo .split{gap:12px;row-gap:18px}
+:root[data-th] body.lay-halo .split>b,:root[data-th] body.lay-halo .split div>b{font-size:21px;line-height:1.4}
+:root[data-th] body.lay-halo .search input{font-size:16px!important;min-height:48px;line-height:1.5}
+:root[data-th] body.lay-halo .btn{font-size:15px;min-height:46px;line-height:1.5}
+:root[data-th] body.lay-halo .halo-bottom-nav button{font-size:11.5px!important;line-height:1.3;gap:5px;min-height:56px}
+:root[data-th] body.lay-halo .halo-bottom-nav button svg{width:21px;height:21px}
+:root[data-th] body.lay-halo :is(a,button,input,summary):focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+:root[data-th] body.lay-halo .hi-intro h2{font-size:30px;line-height:1.2;letter-spacing:-.035em}
+:root[data-th] body.lay-halo :is(.hi-intro>p,.hi-section-title p,.hi-top-moves>p,.hi-desk-tools>p,.hi-exp-verdict,.hi-disclaimer,.hi-visible-source,.hi-top-source){font-size:13px!important;line-height:1.65;color:var(--ink2)}
+:root[data-th] body.lay-halo :is(.hi-section-title>small,.hi-overline,.hi-method,.hi-kicker,.hi-effort){font-size:11px!important;line-height:1.55;letter-spacing:.055em}
+:root[data-th] body.lay-halo .hi-card{padding:24px 0;scroll-margin-top:18px}
+:root[data-th] body.lay-halo .hi-card h2{font-size:26px;line-height:1.25;letter-spacing:-.025em;margin:14px 0}
+:root[data-th] body.lay-halo .hi-card h2 button{all:unset;display:flex;gap:14px;align-items:flex-start;cursor:pointer;width:100%;font:inherit;color:inherit}
+:root[data-th] body.lay-halo .hi-card h2 button>span{flex:1;min-width:0}
+:root[data-th] body.lay-halo .hi-card h2 button>i{font-style:normal;font-size:21px;line-height:1.5;color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-summary{font-size:16px;line-height:1.7;color:var(--ink);margin-bottom:18px}
+:root[data-th] body.lay-halo .hi-card details>summary{font-size:15px!important;line-height:1.5;min-height:52px;gap:12px;border-top:1px solid var(--edge);font-weight:500}
+:root[data-th] body.lay-halo .hi-card>.hi-reader>summary{border:1px solid var(--edge);padding:7px 14px;border-radius:10px;box-sizing:border-box;margin:6px 0 16px;background:#88888809}
+:root[data-th] body.lay-halo .hi-reader[open]>summary{border-color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-reader[open]>summary>b{transform:rotate(45deg)}
+:root[data-th] body.lay-halo .hi-reader-body{padding:4px 0 10px}
+:root[data-th] body.lay-halo .hi-reader-body>p{font-size:14px;line-height:1.65;color:var(--ink2)}
+:root[data-th] body.lay-halo :is(.hi-proof p,.hi-next p,.hi-measure,.hi-public-card p,.hi-depth p,.hi-depth li){font-size:16px!important;line-height:1.75!important;color:var(--ink)}
+:root[data-th] body.lay-halo :is(.hi-proof small,.hi-next small){font-size:11px;line-height:1.6;letter-spacing:.055em;color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-next{margin:14px 0 22px;padding:15px 16px}
+:root[data-th] body.lay-halo .hi-depth ol,:root[data-th] body.lay-halo .hi-depth ul{padding-left:22px;margin:14px 0 22px}
+:root[data-th] body.lay-halo .hi-depth li{padding-left:4px;margin-bottom:13px}
+:root[data-th] body.lay-halo .hi-depth{padding:0 0 5px}
+:root[data-th] body.lay-halo .hi-links :is(a,button),:root[data-th] body.lay-halo .hi-public-card a{font-size:14px!important;line-height:1.65!important;min-height:44px;box-sizing:border-box;padding:11px 0;display:block}
+:root[data-th] body.lay-halo .hi-choice button,:root[data-th] body.lay-halo .hi-desk-tools button,:root[data-th] body.lay-halo .hi-hidden-drawer button{font-size:13px!important;line-height:1.5;min-height:44px}
+:root[data-th] body.lay-halo .hi-top-moves h2{font-size:25px;line-height:1.25;letter-spacing:-.025em}
+:root[data-th] body.lay-halo .hi-top-moves button b{font-size:16px!important;line-height:1.5}
+:root[data-th] body.lay-halo .hi-top-moves button small{font-size:12px!important;line-height:1.6}
+:root[data-th] body.lay-halo .hi-top-moves{margin:28px 0 8px}
+:root[data-th] body.lay-halo .hi-jump{flex-wrap:wrap;gap:8px 20px;padding:12px 0}
+:root[data-th] body.lay-halo .hi-jump a{font-size:14px;line-height:1.5;min-height:44px;display:flex;align-items:center}
+:root[data-th] body.lay-halo .hi-exp-summary{display:grid;grid-template-columns:1fr;gap:0;padding:0;margin:16px 0 8px}
+:root[data-th] body.lay-halo .hi-exp-summary button{display:flex;justify-content:space-between;align-items:center;gap:12px;background:none;border:0;border-bottom:1px solid var(--edge);text-align:left;color:var(--ink);font-size:15px;line-height:1.5;min-height:54px;padding:12px 0}
+:root[data-th] body.lay-halo .hi-exp-summary button small{display:block;font-size:12px;line-height:1.6;color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-store-baseline{margin:24px 0;padding:20px 16px}
+:root[data-th] body.lay-halo .hi-store-baseline summary{font-size:15px;line-height:1.5;min-height:52px}
+:root[data-th] body.lay-halo .hi-baseline-grid small{font-size:12px;line-height:1.6}
+@media(max-width:350px){:root[data-th] body.lay-halo .app{padding-left:18px;padding-right:18px}:root[data-th] body.lay-halo .line{gap:10px}:root[data-th] body.lay-halo .line>b{max-width:44%}:root[data-th] body.lay-halo .hi-card h2{font-size:24px}:root[data-th] body.lay-halo .halo-pair-controls{flex-wrap:wrap}:root[data-th] body.lay-halo .halo-pair-controls>span{font-size:12px!important}:root[data-th] body.lay-halo .hi-intro h2{font-size:28px}}
+:root[data-th] body.lay-halo .hi-intro h2{font-size:25px;line-height:1.3;margin:5px 0}
+:root[data-th] body.lay-halo .hi-section-title h2,:root[data-th] body.lay-halo .hi-public-card h2{font-size:25px;line-height:1.3;letter-spacing:-.025em;text-transform:none}
+:root[data-th] body.lay-halo .hi-exp-summary{border:0;border-radius:0}
+:root[data-th] body.lay-halo .hi-exp-summary button>span{border:0;background:none;padding:0;border-radius:0}
+:root[data-th] body.lay-halo .hi-depth[open]>summary b{transform:rotate(45deg)}
+:root[data-th] body.lay-halo .hi-hidden-drawer>summary,:root[data-th] body.lay-halo .hi-hidden-drawer>div{font-size:14px;line-height:1.65}
+:root[data-th] body.lay-halo .hi-desk-notice,:root[data-th] body.lay-halo .hi-empty{font-size:14px;line-height:1.65}
+:root[data-th] body.lay-halo .hi-baseline-grid div{font-size:15px;line-height:1.6}
+:root[data-th] body.lay-halo .halo-pair .eyebrow small,:root[data-th] body.lay-halo .pills button small{font-size:12px!important;opacity:1}
+:root[data-th] body.lay-halo .halo-insights-link{font-size:13px;min-height:44px}
+:root[data-th] body.lay-halo .asof small{font-size:12px!important;opacity:1!important;line-height:1.6}
+:root[data-th] body.lay-halo main svg text{font-size:14px!important}
+:root[data-th] body.lay-halo .hi-ranking-method{border-bottom:1px solid var(--edge);margin:0 0 12px}
+:root[data-th] body.lay-halo .hi-ranking-method>summary{font-size:13px;line-height:1.6;min-height:46px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-ranking-method>summary b{font-weight:400;font-size:19px}
+:root[data-th] body.lay-halo .hi-ranking-method>p{font-size:14px;line-height:1.7;color:var(--ink2);margin:12px 0 20px}
+:root[data-th] body.lay-halo :is(.hi-section-title>small,.hi-overline,.hi-method,.hi-kicker,.hi-effort,.hi-proof small,.hi-next small,.hi-public-card>small,.hi-top-moves button>span){font-size:12px!important;line-height:1.6;letter-spacing:.035em}
+:root[data-th] body.lay-halo .hi-card h2 button{min-height:44px}
+:root[data-th] body.lay-halo .line>b>small{display:block;font-weight:400;margin-top:3px}
