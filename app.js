@@ -310,6 +310,7 @@ function topRetailGroups(rows){
  return out;
 }
 function topOnlineGroups(rows){
+ rows=rows.flatMap(p=>{if(!p||!Array.isArray(p.skus)||!/^Dressjet (Men Comfort Casual Shirt|Spread Collar Casual Linen Shirt)$/.test(p.name||p.key||''))return [p];return p.skus.map(z=>{const sku=String(z.sku||''),size=z.size&&String(z.size),stem=size&&(sku.endsWith('-'+size)||sku.endsWith('_'+size))?sku.slice(0,-size.length-1):sku.replace(/[-_](XXXL|XXL|2XL|XL|XS|S|M|L)$/,'');return {key:stem||sku,name:stem||sku,units:z.units,revenue:z.revenue,skus:[z]}})});
  const groups=new Map();for(const p of rows){if(!p||typeof p!=='object')continue;let key=p.key||p.name,name=p.name||p.key,S=Array.isArray(p.skus)?p.skus:[];
  const m=String(name||'').match(/^(.+?)[ -]+(XXXL|XXL|XL|XS|S|M|L)$/);if(m&&S.length&&S.every(z=>String(z.sku||'').endsWith(m[2]))){key='sku:'+S[0].sku.slice(0,-m[2].length).replace(/[-_]$/,'');name=m[1];S=S.map(z=>({...z,size:z.size||m[2]}));}
  let g=groups.get(key);if(!g){g={key,name,units:0,revenue:0,skus:[]};groups.set(key,g);}for(const f of ['units','revenue']){const v=p[f];g[f]=g[f]===null||v===null||v===undefined||v===''||!Number.isFinite(Number(v))?null:g[f]+Number(v);}g.skus.push(...S);
