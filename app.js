@@ -502,7 +502,7 @@ function haloCompose(html){
  const names={today:'Today',orders:'Orders',best:'Sellers',stock:'Stock',retail:'Retail'},hints={today:'The day, in one view.',orders:'Every order. Every detail.',best:'The pieces they love.',stock:'Ready for what comes next.',retail:'Every store, in view.'};
  const tabs=Object.keys(names),index=tabs.indexOf(tab);
  if(!detail){const scene=document.createElement('div');scene.className='halo-scene-nav';scene.innerHTML=(index>0?'<button data-t="'+tabs[index-1]+'" aria-label="Previous section: '+names[tabs[index-1]]+'">&#8592; '+names[tabs[index-1]]+'</button>':'<span></span>')+'<span aria-hidden="true"></span>'+(index<tabs.length-1?'<button data-t="'+tabs[index+1]+'" aria-label="Next section: '+names[tabs[index+1]]+'">'+names[tabs[index+1]]+' &#8594;</button>':'<span></span>');head.after(scene);}
- if(nav){nav.classList.add('halo-bottom-nav');nav.setAttribute('aria-label','Main sections');nav.querySelectorAll('button[data-t]').forEach(b=>{const key=b.dataset.t;b.innerHTML=haloIcon(key)+'<span>'+names[key]+'</span>';b.setAttribute('aria-current',key===tab&&detail!=='halo:Insights'?'page':'false');b.classList.toggle('on',key===tab&&detail!=='halo:Insights');});const ib=document.createElement('button');ib.dataset.d='halo:Insights';ib.className='halo-insights-tab'+(detail==='halo:Insights'?' on':'');ib.setAttribute('aria-current',detail==='halo:Insights'?'page':'false');ib.setAttribute('aria-label','Insights');ib.innerHTML=haloIcon('insights')+'<span>Insights</span>';nav.append(ib);}
+ if(nav){nav.classList.add('halo-bottom-nav');nav.setAttribute('aria-label','Main sections');nav.querySelectorAll('button[data-t]').forEach(b=>{const key=b.dataset.t;b.innerHTML=haloIcon(key)+'<span>'+names[key]+'</span>';b.setAttribute('aria-current',key===tab&&detail!=='halo:Insights'?'page':'false');b.classList.toggle('on',key===tab&&detail!=='halo:Insights');});const ib=document.createElement('button');ib.dataset.d='halo:Insights';ib.className='halo-insights-tab'+(detail==='halo:Insights'?' on':'');ib.setAttribute('aria-current',detail==='halo:Insights'?'page':'false');ib.setAttribute('aria-label','Insights');ib.innerHTML=haloIcon('insights')+'<span>Insights</span>';nav.append(ib);nav.classList.add('halo-menu-panel');nav.id='halo-destination-menu';nav.setAttribute('aria-label','Destinations');nav.setAttribute('inert','');const menu=document.createElement('button');menu.type='button';menu.className='halo-menu-toggle';menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-controls','halo-destination-menu');menu.setAttribute('aria-label','Open navigation menu');menu.innerHTML='<span class="halo-menu-symbol" aria-hidden="true"><i></i><i></i></span><span class="halo-menu-word">Menu</span>';nav.after(menu);const veil=document.createElement('div');veil.className='halo-menu-veil';veil.setAttribute('aria-hidden','true');nav.before(veil);}
  if(!detail&&tab==='today'){
   const grid=main.querySelector('.halo-kpis'),search=main.querySelector('.search');
   if(grid){
@@ -536,7 +536,7 @@ function haloRender(){
  haloTransition=transition;transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});transition.finished.catch(()=>{}).finally(()=>{if(haloTransition!==transition)return;haloTransition=null;document.querySelectorAll('[data-halo-morph]').forEach(e=>{e.style.viewTransitionName='';e.removeAttribute('data-halo-morph')})});
 }
 function bindHalo(){
- bindInsightDesk();atelierBind();
+ bindInsightDesk();atelierBind();bindFloatingMenu();
  if(!haloOn())return;
  root.querySelectorAll('[data-hi-route]').forEach(b=>b.onclick=()=>{tab=b.dataset.hiRoute;if(tab==='best')tsChannel='retail';if(tab==='stock')sv='retail';detail=null;render();window.scrollTo(0,0)});
  const pair=root.querySelector('.halo-pair');if(pair){
@@ -549,6 +549,20 @@ function bindHalo(){
  root.onpointerdown=e=>{const target=e.target.closest('[data-d]');if(target&&!target.closest('dialog')){document.querySelectorAll('.halo-morph-from').forEach(x=>x.classList.remove('halo-morph-from'));target.classList.add('halo-morph-from');haloMorph=true;}else haloMorph=false;};
  if(!haloClickGuard){haloClickGuard=true;root.addEventListener('click',e=>{if(performance.now()<haloClickUntil){e.stopImmediatePropagation();e.preventDefault();haloClickUntil=0;}},true)}
 
+}
+
+function bindFloatingMenu(){
+ if(!haloOn())return;
+ const menu=root.querySelector('.halo-menu-toggle'),panel=root.querySelector('.halo-menu-panel'),veil=root.querySelector('.halo-menu-veil');
+ if(!menu||!panel)return;
+ const set=(open,focus=false)=>{document.body.classList.toggle('halo-menu-open',open);menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu');panel.toggleAttribute('inert',!open);if(open&&focus)panel.querySelector('button[aria-current=page],button')?.focus({preventScroll:true});if(!open&&focus)menu.focus({preventScroll:true});};
+ set(false);
+ menu.onclick=()=>set(menu.getAttribute('aria-expanded')!=='true');
+ menu.onkeydown=e=>{if(['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();set(true,true)}};
+ if(veil)veil.onclick=()=>set(false,true);
+ panel.addEventListener('click',e=>{if(e.target.closest('button'))set(false)},true);
+ panel.addEventListener('keydown',e=>{const bs=[...panel.querySelectorAll('button')],i=bs.indexOf(document.activeElement);if(['ArrowRight','ArrowLeft'].includes(e.key)){e.preventDefault();e.stopPropagation();bs[(i+(e.key==='ArrowRight'?1:-1)+bs.length)%bs.length].focus()}});
+ if(!window.__haloMenuGlobal){window.__haloMenuGlobal=1;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('halo-menu-open')){e.preventDefault();e.stopImmediatePropagation();root.querySelector('.halo-menu-toggle')?.click();root.querySelector('.halo-menu-toggle')?.focus({preventScroll:true})}},true);document.addEventListener('click',e=>{if(document.body.classList.contains('halo-menu-open')&&!e.target.closest('.halo-menu-panel,.halo-menu-toggle'))root.querySelector('.halo-menu-toggle')?.click()},true)}
 }
 
 /* Motion layer (JS half). Tags A-JS-nn. Cheap: transform/opacity/text only. */
