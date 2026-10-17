@@ -1052,7 +1052,7 @@ body.lay-halo .hi-top-moves button .hi-top-proof{font-size:9px;color:var(--ink)}
 :root[data-th] body.lay-halo .halo-combined{padding:20px 18px!important;border:1px solid var(--atelier-line);border-radius:20px;background:var(--atelier-gold-wash);margin:18px 0}
 :root[data-th] body.lay-halo .halo-source-pair{margin-bottom:0;color:var(--ink2)}
 /* 30-37. Tactile surfaces, action desks and search. */
-:root[data-th] body.lay-halo main .glass:not(.halo-kpi):not(.halo-combined):not(.search){border:1px solid var(--atelier-line);border-radius:20px;background:var(--atelier-paper);box-shadow:var(--atelier-shadow),inset 0 1px 0 var(--atelier-glint)!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-th] body.lay-halo main .glass:not(.halo-kpi):not(.halo-combined):not(.search){backdrop-filter:none;-webkit-backdrop-filter:none}
 :root[data-th] body.lay-halo .halo-panel{border-top:0;padding:6px 0;margin:28px 0}
 :root[data-th] body.lay-halo .halo-section-id{padding:0 0 14px;align-items:center;gap:11px;color:var(--ink2)}
 :root[data-th] body.lay-halo .halo-section-id>span{width:28px;height:28px;display:inline-grid;place-items:center;background:var(--atelier-gold-wash);border:1px solid var(--atelier-line);border-radius:9px;font-size:11px;color:var(--atelier-gold);letter-spacing:0}
@@ -1197,3 +1197,33 @@ body.lay-halo.noanim *,body.lay-halo.noanim *::before,body.lay-halo.noanim *::af
 @keyframes atelierIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 :root:has(body.lay-halo.noanim)::view-transition-old(root),:root:has(body.lay-halo.noanim)::view-transition-new(root){animation:none!important}
 @media(prefers-reduced-motion:reduce){:root:has(body.lay-halo)::view-transition-old(root),:root:has(body.lay-halo)::view-transition-new(root){animation:none!important}}
+
+/* Open Air round (post-PR42 feedback): remove raised card frames; open layout with spacing and hairlines. */
+:root[data-th] body.lay-halo .halo-kpis.halo-pair{border:0;border-radius:0;background:transparent;box-shadow:none;padding:4px 0 24px;margin:2px 0 28px;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .halo-pair-controls{margin-bottom:20px}
+:root[data-th] body.lay-halo .halo-pair-controls>div{border:0;background:none;padding:0;gap:22px}
+:root[data-th] body.lay-halo .halo-pair-controls button{padding:9px 2px;border-radius:0;border-bottom:2px solid transparent;min-height:44px}
+:root[data-th] body.lay-halo .halo-pair-controls button[aria-pressed=true]{background:none;box-shadow:none;border-bottom-color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .order{border:0;border-radius:0;background:transparent;box-shadow:none;padding:18px 2px;margin-bottom:0;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .ol{gap:0}
+:root[data-th] body.lay-halo .tile{border:0;background:transparent;box-shadow:none!important;padding:16px 2px;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .ts-product{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;margin:0;border-bottom:1px solid var(--atelier-line)!important}
+:root[data-th] body.lay-halo .ts-product>summary{padding:17px 2px!important}
+:root[data-th] body.lay-halo .ts-product[open]>summary{border-bottom:1px solid var(--atelier-line);background:transparent}
+:root[data-th] body.lay-halo .ts-product>section{padding:6px 2px 16px}
+:root[data-th] body.lay-halo .hi-card{border:0;border-radius:0;background:transparent;box-shadow:none;padding:28px 0;margin:0;border-top:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .hi-exp-summary{border:0;border-radius:0;background:transparent;padding:0;margin-bottom:10px}
+:root[data-th] body.lay-halo .hi-top-moves{border:0;border-radius:0;background:transparent;padding:24px 0;margin:20px 0;border-top:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo :is(.hi-store-baseline,.hi-public-card){border:0;border-radius:0;background:transparent;padding:22px 0;border-top:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .hi-empty{background:transparent;border:0;padding:18px 0}
+body.lay-halo .halo-swipe-surface{touch-action:pan-y}
+/* Directional, fluid swipe-to-Insights transitions. */
+html:has(body.lay-halo.swipe-l)::view-transition-old(root){animation:airOldL .3s cubic-bezier(.3,.7,.4,1) both!important}
+html:has(body.lay-halo.swipe-l)::view-transition-new(root){animation:airNewL .46s cubic-bezier(.16,1,.3,1) both!important}
+html:has(body.lay-halo.swipe-r)::view-transition-old(root){animation:airOldR .3s cubic-bezier(.3,.7,.4,1) both!important}
+html:has(body.lay-halo.swipe-r)::view-transition-new(root){animation:airNewR .46s cubic-bezier(.16,1,.3,1) both!important}
+@keyframes airOldL{to{opacity:0;transform:translate3d(-11%,0,0)}}
+@keyframes airNewL{from{opacity:0;transform:translate3d(16%,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes airOldR{to{opacity:0;transform:translate3d(11%,0,0)}}
+@keyframes airNewR{from{opacity:0;transform:translate3d(-16%,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@media(prefers-reduced-motion:reduce){html:has(body.lay-halo.swipe-l)::view-transition-old(root),html:has(body.lay-halo.swipe-l)::view-transition-new(root),html:has(body.lay-halo.swipe-r)::view-transition-old(root),html:has(body.lay-halo.swipe-r)::view-transition-new(root){animation:none!important}}
