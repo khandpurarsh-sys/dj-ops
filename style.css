@@ -1656,3 +1656,19 @@ body.lay-halo .app{animation:none}
 :root[data-th] body.lay-halo .ts-range-about summary{padding:7px 0;min-height:26px}
 :root[data-th] body.lay-halo .ts-range-coverage{padding:0!important;margin:8px 0 12px!important}
 :root[data-th] body.lay-halo .ts-range-list{padding:0!important;margin:0!important}
+/* Seller controls: restrained gold tabs and a separate channel switch. */
+:root[data-th] body.lay-halo .ts-ranges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:0 0 9px;margin:0 0 20px;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .ts-ranges button{position:relative;min-width:0;min-height:46px;padding:8px 4px;background:transparent!important;color:var(--ink2)!important;border:0;border-radius:10px;box-shadow:none;font-size:14px;font-weight:500}
+:root[data-th] body.lay-halo .ts-ranges button.on{color:var(--atelier-gold)!important;background:var(--atelier-gold-wash)!important;font-weight:650}
+:root[data-th] body.lay-halo .ts-ranges button.on:after{content:'';position:absolute;bottom:-10px;left:25%;right:25%;height:2px;background:var(--atelier-gold);border-radius:2px}
+:root[data-th] body.lay-halo .ts-channels{display:inline-flex;gap:3px;padding:4px;border:1px solid var(--atelier-line);border-radius:15px;background:var(--atelier-wash);margin:0 0 18px}
+:root[data-th] body.lay-halo .ts-channels button{min-width:98px;min-height:44px;padding:8px 16px;border:0;border-radius:11px;background:transparent!important;color:var(--ink2)!important;box-shadow:none;font-size:14px}
+:root[data-th] body.lay-halo .ts-channels button.on{color:var(--atelier-gold)!important;background:var(--atelier-solid)!important;box-shadow:0 1px 4px #0000000b;font-weight:650}
+/* Six equally weighted destinations, including Insights. */
+:root[data-th] body.lay-halo .halo-bottom-nav{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px!important;padding-left:4px;padding-right:4px}
+:root[data-th] body.lay-halo .halo-bottom-nav button{min-width:0!important;width:100%;min-height:56px!important;padding:7px 1px!important;gap:5px}
+:root[data-th] body.lay-halo .halo-bottom-nav button span{font-size:11.5px!important;letter-spacing:-.02em}
+:root[data-th] body.lay-halo .halo-bottom-nav button svg{width:19px;height:19px}
+
+:root[data-th] body.lay-halo .ts-ranges{overflow:visible;scrollbar-width:none;min-height:0}
+:root[data-th] body.lay-halo .ts-channels{overflow:visible;scrollbar-width:none}
