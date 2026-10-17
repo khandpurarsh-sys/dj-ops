@@ -1007,3 +1007,193 @@ body.lay-halo .hi-top-moves button .hi-top-proof{font-size:9px;color:var(--ink)}
 :root[data-th] body.lay-halo :is(.hi-section-title>small,.hi-overline,.hi-method,.hi-kicker,.hi-effort,.hi-proof small,.hi-next small,.hi-public-card>small,.hi-top-moves button>span){font-size:12px!important;line-height:1.6;letter-spacing:.035em}
 :root[data-th] body.lay-halo .hi-card h2 button{min-height:44px}
 :root[data-th] body.lay-halo .line>b>small{display:block;font-weight:400;margin-top:3px}
+
+/* Dressjet Atelier: presentation only. Source data, scales and arithmetic stay untouched. */
+/* 01-08. A small, shared material and type system. */
+:root[data-th] body.lay-halo{--atelier-ground:#f2f5f9;--atelier-paper:#ffffffc7;--atelier-solid:#fff;--atelier-wash:#e8edf4;--atelier-gold:#8c682e;--atelier-gold-wash:#b28c4320;--atelier-line:#182e511c;--atelier-glint:#ffffffed;--atelier-shadow:0 10px 30px #152d4e09,0 2px 5px #152d4e04;--atelier-nav:#f7f9f4e8;--ink:#172f51;--ink2:#4d5e74;--edge:var(--atelier-line);background:var(--atelier-ground);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss01";text-rendering:optimizeLegibility}
+:root[data-th=halo-dark] body.lay-halo{--atelier-ground:#102039;--atelier-paper:#1b3048e8;--atelier-solid:#1c314a;--atelier-wash:#263c54;--atelier-gold:#e4c58b;--atelier-gold-wash:#d8b5741c;--atelier-line:#afc4da26;--atelier-glint:#d5e5ff17;--atelier-shadow:0 12px 30px #030b171f,0 2px 5px #030b1715;--atelier-nav:#172b41ed;--ink:#edf3fa;--ink2:#c1cedd}
+:root[data-th=halo-onyx] body.lay-halo{--atelier-ground:#101011;--atelier-paper:#1d1d1fe8;--atelier-solid:#1e1e20;--atelier-wash:#29292b;--atelier-gold:#e0c38d;--atelier-gold-wash:#d8b5741b;--atelier-line:#bcb7aa28;--atelier-glint:#f2e7d51a;--atelier-shadow:0 12px 30px #0003,0 2px 5px #0002;--atelier-nav:#1e1e21ed;--ink:#f3f1ed;--ink2:#cecac2}
+:root[data-th] body.lay-halo .app{background:radial-gradient(ellipse 85% 520px at 100% -80px,var(--atelier-gold-wash),transparent),var(--atelier-ground);max-width:680px;min-height:100svh;padding-bottom:130px}
+:root[data-th] body.lay-halo ::selection{background:var(--atelier-gold-wash);color:var(--ink)}
+:root[data-th] body.lay-halo :is(.big,.tile>b,.line>b,.halo-kpi>b,.split b,.ometa>b,.ts-product>summary>b){font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.025em}
+:root[data-th] body.lay-halo :is(h1,h2,.hi-summary,.ts-product>summary>span){text-wrap:pretty}
+:root[data-th] body.lay-halo main :is(section,article,details){scroll-margin-top:20px}
+/* 09-16. Brand and header chrome. */
+:root[data-th] body.lay-halo .halo-rail{padding-top:calc(env(safe-area-inset-top) + 20px);padding-bottom:26px;gap:10px}
+:root[data-th] body.lay-halo .halo-brand{gap:10px;font-size:12px;letter-spacing:.13em}
+:root[data-th] body.lay-halo .halo-brand img{width:34px;height:34px;border-radius:50%;box-shadow:0 0 0 1px var(--atelier-glint),0 3px 12px #10274818}
+:root[data-th] body.lay-halo .halo-settings{order:3;border:1px solid var(--atelier-line);background:var(--atelier-paper);border-radius:16px;box-shadow:inset 0 1px 0 var(--atelier-glint);color:var(--ink);padding:10px}
+:root[data-th] body.lay-halo .halo-insights-link{margin-left:auto;display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 13px;background:var(--atelier-gold-wash);border:1px solid var(--atelier-line);border-radius:16px;font-size:13px;color:var(--ink);font-weight:550}
+:root[data-th] body.lay-halo header{padding:0 0 20px;gap:14px}
+:root[data-th] body.lay-halo header h1{font-size:40px;letter-spacing:-.045em;font-weight:600;line-height:1.12;color:var(--ink)}
+:root[data-th] body.lay-halo header h1 .halo-title-dot{color:var(--atelier-gold);font-weight:600}
+:root[data-th] body.lay-halo header p{margin-top:10px;color:var(--ink2)}
+:root[data-th] body.lay-halo .halo-refresh{border-radius:16px;width:44px;height:44px;border:1px solid var(--atelier-line);background:var(--atelier-paper);box-shadow:inset 0 1px 0 var(--atelier-glint);color:var(--ink);padding:11px}
+:root[data-th] body.lay-halo header #bk{background:var(--atelier-paper);border:1px solid var(--atelier-line);border-radius:14px;color:var(--ink);box-shadow:none}
+/* 17-22. Navigational hierarchy and controls. */
+:root[data-th] body.lay-halo .halo-scene-nav{border-color:var(--atelier-line);padding-bottom:12px;margin-bottom:24px;gap:8px}
+:root[data-th] body.lay-halo .halo-scene-nav button{color:var(--ink);font-size:13px!important;font-weight:550;padding:8px 0;border-radius:12px}
+:root[data-th] body.lay-halo .halo-swipe-hint{font-size:12px!important;letter-spacing:0;color:var(--ink2);text-align:center}
+:root[data-th] body.lay-halo .halo-pair-controls{margin-bottom:16px;gap:8px}
+:root[data-th] body.lay-halo .halo-pair-controls>div{border:1px solid var(--atelier-line);border-radius:15px;background:var(--atelier-wash);gap:3px;padding:3px}
+:root[data-th] body.lay-halo .halo-pair-controls button{padding:7px 13px;border:0;border-radius:11px;min-height:40px;font-size:13px!important;color:var(--ink2)}
+:root[data-th] body.lay-halo .halo-pair-controls button[aria-pressed=true]{background:var(--atelier-solid);color:var(--ink);box-shadow:0 2px 6px #0d284b0b;font-weight:600}
+:root[data-th] body.lay-halo .halo-pair-controls>span{font-size:12px!important;white-space:normal;max-width:90px;text-align:right;line-height:1.5!important}
+/* 23-29. A paired ledger, with a deliberate shared glass frame. */
+:root[data-th] body.lay-halo .halo-kpis.halo-pair{padding:18px 16px 16px;border:1px solid var(--atelier-line);border-radius:24px;background:var(--atelier-paper);box-shadow:var(--atelier-shadow),inset 0 1px 0 var(--atelier-glint);gap:0;margin-bottom:20px;position:relative}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi{padding:0 12px 0 0!important;gap:8px}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-retail{padding:0 0 0 14px!important;border-left:1px solid var(--atelier-line)!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .eyebrow{font-size:12px!important;letter-spacing:.04em;min-height:34px;font-weight:650}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>b{font-size:clamp(24px,7.2vw,38px)!important;line-height:1.2;letter-spacing:-.045em;color:var(--ink);font-weight:550}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .halo-pair-count{font-size:13px!important;min-height:40px}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .halo-pair-open{font-size:13px!important;font-weight:550;color:var(--atelier-gold)!important;min-height:32px;padding:2px 0}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi :is(.asof,.halo-pair-source){border-top:1px solid var(--atelier-line);padding-top:12px;min-height:92px;line-height:1.65!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .asof small{font-size:12px!important;line-height:1.6}
+:root[data-th] body.lay-halo .halo-combined{padding:20px 18px!important;border:1px solid var(--atelier-line);border-radius:20px;background:var(--atelier-gold-wash);margin:18px 0}
+:root[data-th] body.lay-halo .halo-source-pair{margin-bottom:0;color:var(--ink2)}
+/* 30-37. Tactile surfaces, action desks and search. */
+:root[data-th] body.lay-halo main .glass:not(.halo-kpi):not(.halo-combined):not(.search){border:1px solid var(--atelier-line);border-radius:20px;background:var(--atelier-paper);box-shadow:var(--atelier-shadow),inset 0 1px 0 var(--atelier-glint)!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-th] body.lay-halo .halo-panel{border-top:0;padding:6px 0;margin:28px 0}
+:root[data-th] body.lay-halo .halo-section-id{padding:0 0 14px;align-items:center;gap:11px;color:var(--ink2)}
+:root[data-th] body.lay-halo .halo-section-id>span{width:28px;height:28px;display:inline-grid;place-items:center;background:var(--atelier-gold-wash);border:1px solid var(--atelier-line);border-radius:9px;font-size:11px;color:var(--atelier-gold);letter-spacing:0}
+:root[data-th] body.lay-halo :is(.halo-coverage,.halo-archive,.halo-finder){border:1px solid var(--atelier-line);border-radius:18px;background:var(--atelier-paper);margin:14px 0;padding:0 14px}
+:root[data-th] body.lay-halo :is(.halo-coverage,.halo-archive,.halo-finder)>summary{min-height:56px;list-style:none;gap:14px;padding:8px 0;box-sizing:border-box;color:var(--ink);font-weight:550}
+:root[data-th] body.lay-halo :is(.halo-coverage,.halo-archive,.halo-finder)[open]>summary{border-bottom:1px solid var(--atelier-line);margin-bottom:12px}
+:root[data-th] body.lay-halo .halo-finder>section{padding:0 0 14px}
+:root[data-th] body.lay-halo .search{display:flex;align-items:center;gap:8px;border:1px solid var(--atelier-line);border-radius:16px;padding:0 12px;background:var(--atelier-solid);box-shadow:0 2px 8px #10274804!important;position:relative}
+:root[data-th] body.lay-halo .search:focus-within{outline:2px solid var(--atelier-gold);outline-offset:2px}
+:root[data-th] body.lay-halo .search input{padding:13px 0;min-width:0;flex:1;width:100%;background:transparent;border:0;box-shadow:none;outline:none!important;color:var(--ink);min-height:48px;font-size:16px!important}
+:root[data-th] body.lay-halo .search input::placeholder{color:var(--ink2);opacity:.9}
+:root[data-th] body.lay-halo .atelier-search-icon{width:18px;height:18px;color:var(--ink2);flex:none}
+:root[data-th] body.lay-halo .atelier-clear{border:0;background:var(--atelier-wash);color:var(--ink);border-radius:12px;width:44px;min-height:44px;padding:10px;flex:none;font-size:19px}
+:root[data-th] body.lay-halo .atelier-clear[hidden]{display:none}
+/* 38-43. Filters and action buttons. */
+:root[data-th] body.lay-halo .pills{gap:8px;padding:8px 0 13px;scrollbar-width:thin;scrollbar-color:var(--atelier-line) transparent;scroll-padding-inline:2px}
+:root[data-th] body.lay-halo .pills button{border:1px solid var(--atelier-line);border-radius:13px;padding:9px 13px;min-height:44px;background:var(--atelier-paper)!important;color:var(--ink2);font-size:13px!important;line-height:1.55;box-shadow:none;display:inline-flex;align-items:center;gap:6px;font-weight:500}
+:root[data-th] body.lay-halo .pills button.on{background:var(--ink)!important;color:var(--atelier-ground)!important;border-color:var(--ink);font-weight:600}
+:root[data-th] body.lay-halo .pills button small{padding:1px 5px;border-radius:6px;background:#88888818;color:inherit!important;font-size:12px!important}
+:root[data-th] body.lay-halo .btn{border-radius:15px;min-height:48px;font-weight:600;box-shadow:none;background:var(--ink);color:var(--atelier-ground);border:1px solid transparent}
+:root[data-th] body.lay-halo .btn.alt{background:var(--atelier-paper);color:var(--ink);border:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo button:disabled{opacity:.48;cursor:not-allowed;transform:none!important}
+/* 44-51. Rows, orders, sellers, stock and charts. */
+:root[data-th] body.lay-halo .list{overflow:hidden}
+:root[data-th] body.lay-halo .list>.line{padding:17px 16px;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .list>.line:last-child{border-bottom:0}
+:root[data-th] body.lay-halo .line small{display:inline-block;margin-top:4px}
+:root[data-th] body.lay-halo main .order{margin:0 0 12px;padding:18px!important;position:relative}
+:root[data-th] body.lay-halo .order .otop>b{font-weight:650;letter-spacing:-.01em}
+:root[data-th] body.lay-halo .order .osku{padding:10px 0 13px;margin:4px 0 0;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .order .ometa{padding-top:13px;align-items:flex-end;gap:10px}
+:root[data-th] body.lay-halo .order .ometa>span{flex:1;min-width:140px}
+:root[data-th] body.lay-halo .order .ometa>b{font-size:20px;line-height:1.3;font-weight:600}
+:root[data-th] body.lay-halo .st{border:1px solid var(--atelier-line);border-radius:8px;font-weight:600;letter-spacing:.01em;padding:4px 8px;background:var(--atelier-wash);color:var(--ink)}
+:root[data-th] body.lay-halo .st.cancelled{color:#a2303d;background:#ffe5e7;border-color:#a2303d2b}
+:root[data-th=halo-dark] body.lay-halo .st.cancelled,:root[data-th=halo-onyx] body.lay-halo .st.cancelled{color:#ffb8c0;background:#70303a55;border-color:#ffb8c033}
+:root[data-th] body.lay-halo .ts-product{border:1px solid var(--atelier-line)!important;border-radius:18px!important;background:var(--atelier-paper)!important;box-shadow:0 3px 12px #10274804!important;overflow:hidden;margin:10px 0}
+:root[data-th] body.lay-halo .ts-product>summary{padding:17px 16px!important;list-style:none;gap:12px}
+:root[data-th] body.lay-halo .ts-product[open]>summary{border-bottom:1px solid var(--atelier-line);background:var(--atelier-gold-wash)}
+:root[data-th] body.lay-halo .ts-product>section{padding:4px 16px 12px}
+:root[data-th] body.lay-halo .ts-product .line{padding-top:14px;padding-bottom:14px}
+:root[data-th] body.lay-halo :is(.bar,.ts-bar){height:5px;border-radius:8px;background:var(--atelier-wash);overflow:hidden}
+:root[data-th] body.lay-halo :is(.bar,.ts-bar)>i{border-radius:8px;background:linear-gradient(90deg,var(--atelier-gold),#c2a86e)!important}
+:root[data-th] body.lay-halo .chrow{padding:17px 16px;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .chrow:last-child{border-bottom:0}
+:root[data-th] body.lay-halo :is(.tile,.hero){border-radius:20px}
+:root[data-th] body.lay-halo .tile{padding:20px 16px;gap:7px}
+:root[data-th] body.lay-halo .low{color:var(--bad)!important;font-weight:650}
+:root[data-th] body.lay-halo main svg:not(.atelier-search-icon){overflow:visible}
+:root[data-th] body.lay-halo main svg text{font-family:inherit!important;font-variant-numeric:tabular-nums;fill:var(--ink2)}
+:root[data-th] body.lay-halo :is(.note,.halo-source-pair){text-wrap:pretty}
+/* 52-60. Insights gets an editorial card stack. */
+:root[data-th] body.lay-halo .hi-intro{border-bottom:1px solid var(--atelier-line);padding-bottom:18px}
+:root[data-th] body.lay-halo .hi-jump{gap:8px;padding:14px 0 8px}
+:root[data-th] body.lay-halo .hi-jump a{padding:7px 12px;border:1px solid var(--atelier-line);border-radius:12px;min-height:44px;box-sizing:border-box;background:var(--atelier-paper);color:var(--ink);font-size:13px}
+:root[data-th] body.lay-halo .hi-section-title{padding:24px 0 8px}
+:root[data-th] body.lay-halo .hi-section-title>small{color:var(--atelier-gold);font-weight:600}
+:root[data-th] body.lay-halo .hi-exp-summary{background:var(--atelier-paper);border:1px solid var(--atelier-line);border-radius:20px;padding:4px 16px;overflow:hidden;margin-bottom:16px}
+:root[data-th] body.lay-halo .hi-exp-summary button{padding:14px 0;min-height:68px}
+:root[data-th] body.lay-halo .hi-exp-summary button:last-child{border-bottom:0}
+:root[data-th] body.lay-halo .hi-exp-summary button>b{color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .hi-card{border:1px solid var(--atelier-line);border-radius:22px;padding:22px 18px;margin:18px 0;background:var(--atelier-paper);box-shadow:var(--atelier-shadow),inset 0 1px 0 var(--atelier-glint)}
+:root[data-th] body.lay-halo .hi-kicker{gap:12px}
+:root[data-th] body.lay-halo .hi-kicker i{border-color:var(--atelier-line);background:var(--atelier-gold-wash);color:var(--atelier-gold);padding:5px 9px;letter-spacing:.025em;border-radius:8px;font-weight:600}
+:root[data-th] body.lay-halo .hi-card h2{margin:18px 0 14px;font-size:26px;line-height:1.27;letter-spacing:-.035em;font-weight:550}
+:root[data-th] body.lay-halo .hi-card h2 button>i{border:1px solid var(--atelier-line);border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-size:18px;flex:none;background:var(--atelier-gold-wash);color:var(--atelier-gold);margin-top:2px}
+:root[data-th] body.lay-halo .hi-effort{border:1px solid var(--atelier-line);background:var(--atelier-wash);padding:7px 9px;border-radius:8px}
+:root[data-th] body.lay-halo .hi-card>.hi-reader>summary{background:var(--atelier-solid);border:1px solid var(--atelier-line);border-radius:13px;padding:10px 13px;min-height:50px;font-weight:600}
+:root[data-th] body.lay-halo .hi-reader[open]>summary{border-color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .hi-reader-body{padding-top:8px}
+:root[data-th] body.lay-halo .hi-depth>summary{font-weight:550}
+:root[data-th] body.lay-halo .hi-depth[open]>summary{color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .hi-next{border-left:2px solid var(--atelier-gold);border-radius:0 14px 14px 0;background:var(--atelier-gold-wash);padding:16px}
+:root[data-th] body.lay-halo .hi-links :is(a,button){text-underline-offset:5px;text-decoration-thickness:1px}
+:root[data-th] body.lay-halo :is(.hi-choice button,.hi-desk-tools button,.hi-hidden-drawer button){border-radius:13px;background:var(--atelier-solid);border-color:var(--atelier-line);font-weight:550;gap:8px}
+:root[data-th] body.lay-halo :is(.hi-choice button,.hi-desk-tools button)[aria-pressed=true]{color:var(--ink);background:var(--atelier-gold-wash);border-color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .hi-top-moves{border:1px solid var(--atelier-line);border-radius:22px;background:var(--atelier-gold-wash);padding:20px 17px;margin:24px 0}
+:root[data-th] body.lay-halo .hi-top-moves button>span{width:26px;height:26px;flex:none;border:1px solid var(--atelier-line);border-radius:8px;background:var(--atelier-paper);display:grid;place-items:center;font-weight:600;color:var(--atelier-gold);font-size:12px;line-height:1}
+:root[data-th] body.lay-halo :is(.hi-store-baseline,.hi-public-card){border:1px solid var(--atelier-line);border-radius:20px;background:var(--atelier-paper);padding:18px 16px}
+:root[data-th] body.lay-halo .hi-empty{background:var(--atelier-paper);border-color:var(--atelier-line);border-radius:18px}
+/* 61-69. A restrained floating dock and interaction system. One blur layer only. */
+:root[data-th] body.lay-halo .halo-bottom-nav{width:min(430px,calc(100% - 24px))!important;border:1px solid var(--atelier-line);border-radius:25px;background:var(--atelier-nav);padding:6px;gap:2px;box-shadow:0 10px 30px #0a1b3220,inset 0 1px 0 var(--atelier-glint);backdrop-filter:none;-webkit-backdrop-filter:none;bottom:max(10px,env(safe-area-inset-bottom))}
+@supports(backdrop-filter:blur(12px)){:root[data-th] body.lay-halo .halo-bottom-nav{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}}
+:root[data-th] body.lay-halo .halo-bottom-nav button{border-radius:18px;min-height:58px;padding:7px 2px;font-size:11px!important;font-weight:550;position:relative;color:var(--ink2)!important}
+:root[data-th] body.lay-halo .halo-bottom-nav button svg{width:21px;height:21px;stroke-width:1.65;opacity:.8}
+:root[data-th] body.lay-halo .halo-bottom-nav button.on{background:var(--atelier-gold-wash)!important;color:var(--ink)!important;box-shadow:inset 0 1px 0 var(--atelier-glint)}
+:root[data-th] body.lay-halo .halo-bottom-nav button.on svg{opacity:1;stroke-width:1.9;color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .halo-bottom-nav button.on::after{content:'';position:absolute;bottom:3px;width:10px;height:2px;border-radius:2px;background:var(--atelier-gold)}
+:root[data-th] body.lay-halo #totop{background:var(--atelier-solid);border:1px solid var(--atelier-line);border-radius:15px;color:var(--ink);box-shadow:var(--atelier-shadow);min-height:44px;min-width:44px;bottom:102px}
+:root[data-th] body.lay-halo :is(button,a,summary,[role=button]){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:root[data-th] body.lay-halo :is(button,[role=button],summary){transition:transform .16s cubic-bezier(.2,.7,.2,1),opacity .16s ease;cursor:pointer}
+:root[data-th] body.lay-halo :is(button,[role=button]):active{transform:scale(.975);opacity:.82}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi:active{transform:scale(.98)!important}
+:root[data-th] body.lay-halo :is(a,button,input,summary,[tabindex]):focus-visible{outline:2px solid var(--atelier-gold);outline-offset:3px}
+:root[data-th] body.lay-halo .atelier-skip{position:fixed;top:8px;left:16px;z-index:120;transform:translateY(-150%);background:var(--ink);color:var(--atelier-ground);border-radius:12px;padding:10px 16px;min-height:44px;box-sizing:border-box;text-decoration:none}
+:root[data-th] body.lay-halo .atelier-skip:focus{transform:none}
+:root[data-th] body.lay-halo .empty{padding:28px 20px!important;text-align:center;line-height:1.75!important;color:var(--ink2);font-size:15px}
+:root[data-th] body.lay-halo .atelier-empty-mark{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 15px;border:1px solid var(--atelier-line);border-radius:14px;background:var(--atelier-gold-wash);color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .atelier-empty-mark svg{width:20px;height:20px}
+:root[data-th] body.lay-halo main.anim>*{animation-duration:.32s;animation-delay:0s}
+:root[data-th] body.lay-halo .hi-depth[open]>*:not(summary){animation:atelierReveal .22s ease both}
+@keyframes atelierReveal{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(hover:hover){:root[data-th] body.lay-halo :is(button,summary,[role=button]):hover{opacity:.8}:root[data-th] body.lay-halo .order:hover{border-color:var(--atelier-gold)}}
+@media(max-width:350px){:root[data-th] body.lay-halo .app{padding-inline:16px}:root[data-th] body.lay-halo .halo-brand{font-size:11px;gap:7px;letter-spacing:.08em}:root[data-th] body.lay-halo .halo-brand img{width:30px;height:30px}:root[data-th] body.lay-halo .halo-rail{gap:7px}:root[data-th] body.lay-halo .halo-insights-link{padding:8px 10px;font-size:12px}:root[data-th] body.lay-halo .halo-kpis.halo-pair{padding:16px 12px}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>b{font-size:24px!important}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi{padding-right:10px!important}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-retail{padding-left:10px!important}:root[data-th] body.lay-halo .hi-card{padding:20px 15px}:root[data-th] body.lay-halo .hi-card h2{font-size:24px}:root[data-th] body.lay-halo .halo-scene-nav{gap:5px}:root[data-th] body.lay-halo .halo-swipe-hint{font-size:12px!important;max-width:117px}:root[data-th] body.lay-halo .pills{gap:6px}:root[data-th] body.lay-halo .pills button{padding-inline:11px}}
+@media(min-width:640px){:root[data-th] body.lay-halo .app{padding-inline:32px}:root[data-th] body.lay-halo .halo-kpis.halo-pair{padding:24px}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi{padding-right:24px!important}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi.halo-retail{padding-left:24px!important}}
+body.lay-halo.noanim *,body.lay-halo.noanim *::before,body.lay-halo.noanim *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){body.lay-halo *,body.lay-halo *::before,body.lay-halo *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-transparency:reduce){:root[data-th] body.lay-halo .halo-bottom-nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--atelier-solid)}}
+@media(forced-colors:active){:root[data-th] body.lay-halo :is(.glass,.hi-card,.halo-bottom-nav,.ts-product,button){border:1px solid ButtonText!important}:root[data-th] body.lay-halo .halo-bottom-nav button.on{outline:2px solid Highlight}:root[data-th] body.lay-halo .atelier-search-icon{color:ButtonText}}
+/* Finish details: scan-friendly states and generous card separation. */
+:root[data-th] body.lay-halo .ts-product{margin:0 0 12px!important}
+:root[data-th] body.lay-halo .st.verify{background:var(--atelier-gold-wash);border-color:var(--atelier-line);color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .st.processing{background:var(--atelier-wash);border-color:var(--atelier-line);color:var(--ink)}
+:root[data-th] body.lay-halo .st.delivered{background:#28735b16;color:#226349;border-color:#28735b33}
+:root[data-th=halo-dark] body.lay-halo .st.delivered,:root[data-th=halo-onyx] body.lay-halo .st.delivered{background:#69d1a81a;color:#a5dfc6;border-color:#69d1a833}
+:root[data-th] body.lay-halo .halo-pair-controls>span{max-width:none;white-space:nowrap}
+/* PR41readability floor: styling must not buy space by shrinking existing controls. */
+:root[data-th] body.lay-halo .halo-brand{font-size:13px}
+:root[data-th] body.lay-halo .halo-scene-nav button{font-size:14px!important}
+:root[data-th] body.lay-halo .halo-swipe-hint{font-size:13px!important}
+:root[data-th] body.lay-halo .halo-pair-controls button{font-size:14px!important;min-height:44px}
+:root[data-th] body.lay-halo .halo-pair-controls>span{font-size:13px!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .eyebrow{font-size:14px!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi .halo-pair-count{font-size:14px!important}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>b{font-size:clamp(25px,7.5vw,43px)!important}
+:root[data-th] body.lay-halo .pills button,:root[data-th] body.lay-halo .hi-jump a{font-size:14px!important}
+:root[data-th] body.lay-halo .halo-bottom-nav button{font-size:11.5px!important}
+:root[data-th] body.lay-halo header #bk{min-width:58px;min-height:44px;padding:10px 12px;font-size:14px}
+@media(max-width:350px){:root[data-th] body.lay-halo .halo-brand{font-size:13px;letter-spacing:.045em}:root[data-th] body.lay-halo .halo-brand img{width:28px;height:28px}:root[data-th] body.lay-halo .halo-swipe-hint{max-width:104px}:root[data-th] body.lay-halo .halo-insights-link{font-size:13px;padding-inline:9px}:root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-kpi>b{font-size:24px!important}:root[data-th] body.lay-halo .halo-pair-controls>span{font-size:12px!important}}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair[data-pair-mode=activity] .halo-kpi .halo-pair-count{font-size:23px!important;min-height:52px;letter-spacing:-.035em;line-height:1.35}
+:root[data-th] body.lay-halo .halo-kpis.halo-pair[data-pair-mode=activity] .halo-kpi>b{font-size:22px!important}
+:root[data-th] body.lay-halo .hi-card h2 button>i{font-size:21px}
+/* Keep navigation anchored while a page changes. No long, overlapping page ghosts. */
+:root[data-th] body.lay-halo .halo-bottom-nav{view-transition-name:atelier-dock}
+:root[data-th] body.lay-halo .halo-rail{view-transition-name:atelier-rail}
+:root:has(body.lay-halo)::view-transition-group(atelier-dock),:root:has(body.lay-halo)::view-transition-group(atelier-rail){animation:none}
+:root:has(body.lay-halo)::view-transition-old(atelier-dock),:root:has(body.lay-halo)::view-transition-old(atelier-rail){animation:none;opacity:0}
+:root:has(body.lay-halo)::view-transition-new(atelier-dock),:root:has(body.lay-halo)::view-transition-new(atelier-rail){animation:none;mix-blend-mode:normal}
+:root:has(body.lay-halo)::view-transition-old(root){animation:atelierOut .08s ease both;mix-blend-mode:normal}
+:root:has(body.lay-halo)::view-transition-new(root){animation:atelierIn .22s cubic-bezier(.2,.7,.2,1) both;mix-blend-mode:normal}
+@keyframes atelierOut{to{opacity:0}}
+@keyframes atelierIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+:root:has(body.lay-halo.noanim)::view-transition-old(root),:root:has(body.lay-halo.noanim)::view-transition-new(root){animation:none!important}
+@media(prefers-reduced-motion:reduce){:root:has(body.lay-halo)::view-transition-old(root),:root:has(body.lay-halo)::view-transition-new(root){animation:none!important}}

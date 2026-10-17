@@ -346,6 +346,24 @@ function topSalesToday(){
  return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Sizes and colours share a row only when the product identity is verified. Uncertain style or colour matches stay separate. Retail and Online are never added together.</p>';
 }
 
+// Only progressive, device-local UI enhancements. No fetching, credentials or source mutation.
+function atelierCompose(f,main){
+ main.id='atelier-main';main.tabIndex=-1;
+ const skip=document.createElement('a');skip.href='#atelier-main';skip.className='atelier-skip';skip.textContent='Skip to content';f.prepend(skip);
+ const searchIcon='<svg class="atelier-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>';
+ main.querySelectorAll('.search').forEach(box=>{const input=box.querySelector('input');if(!input)return;box.insertAdjacentHTML('afterbegin',searchIcon);if(!input.getAttribute('aria-label'))input.setAttribute('aria-label',input.placeholder||'Search');input.setAttribute('enterkeyhint','search');if(input.id){const clear=document.createElement('button');clear.type='button';clear.className='atelier-clear';clear.dataset.atelierClear=input.id;clear.setAttribute('aria-label','Clear search');clear.textContent='×';clear.hidden=!input.value;box.append(clear);}});
+ main.querySelectorAll('[data-d],[data-pg]').forEach(el=>{if(el.matches('button,a,input,select,textarea')||el.querySelector('button,a,input,select,textarea,summary,[data-d]'))return;el.tabIndex=0;el.setAttribute('role','button');});
+ main.querySelectorAll('.empty').forEach(el=>{const mark=document.createElement('span');mark.className='atelier-empty-mark';mark.setAttribute('aria-hidden','true');mark.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="m4 8 8-4 8 4v11H4zM4 8l8 4 8-4M12 12v7"/></svg>';el.prepend(mark);});
+ main.querySelectorAll('.pills button').forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('on'))));
+}
+function atelierBind(){
+ if(!haloOn())return;
+ root.querySelectorAll('[data-atelier-clear]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();const input=document.getElementById(b.dataset.atelierClear);if(!input)return;const id=input.id;input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById(id)?.focus();});
+ root.querySelectorAll('.search input').forEach(input=>input.addEventListener('input',()=>{const b=root.querySelector('[data-atelier-clear="'+input.id+'"]');if(b)b.hidden=!input.value;}));
+ root.querySelectorAll('[data-d],[data-pg]').forEach(el=>{if(el.getAttribute('role')!=='button')return;el.onkeydown=e=>{if(e.target!==el||!['Enter',' '].includes(e.key))return;e.preventDefault();el.click();};});
+ const skip=root.querySelector('.atelier-skip');if(skip)skip.onclick=e=>{e.preventDefault();const main=root.querySelector('#atelier-main');main?.focus({preventScroll:true});main?.scrollIntoView({block:'start',behavior:'instant'});};
+}
+
 const hiReaderFolds={};
 function hiDeepenCard(el,key){
  const original=el.querySelector(':scope>details');if(!original)return;
@@ -493,7 +511,7 @@ function haloCompose(html){
    const banner=[...f.children].find(e=>e.classList.contains('asof'));
    if(banner){const label=banner.querySelector('span');if(label)label.textContent='Online read: '+String(data.snapshot.at||'time unavailable').replace(/^Read\s+/i,'');grid.querySelector('.halo-online').append(banner);}
    const r=grid.querySelector('.halo-retail');const retailMeta=[...r.children].find(el=>el.tagName==='SPAN'&&el.textContent.includes('incl. GST'));if(retailMeta)retailMeta.textContent='incl. GST';const stamp=document.createElement('p');stamp.className='halo-pair-source';stamp.textContent='Retail read: '+retailTime(data.retail);r.append(stamp);
-   const control=document.createElement('div');control.className='halo-pair-controls';control.innerHTML='<div><button data-pair-mode="revenue" aria-pressed="'+(haloPairMode==='revenue')+'">Revenue</button><button data-pair-mode="activity" aria-pressed="'+(haloPairMode==='activity')+'">Activity</button></div><span>Tap to change emphasis</span>';grid.before(control);
+   const control=document.createElement('div');control.className='halo-pair-controls';control.innerHTML='<div><button data-pair-mode="revenue" aria-pressed="'+(haloPairMode==='revenue')+'">Revenue</button><button data-pair-mode="activity" aria-pressed="'+(haloPairMode==='activity')+'">Activity</button></div><span>Choose focus</span>';grid.before(control);
    const p=head.querySelector('p');if(p)p.textContent=new Date(IST()+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});head.classList.add('halo-pair-header');
   }
 
@@ -502,6 +520,7 @@ function haloCompose(html){
  if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();haloInsightDesk(main);main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
  const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights')rail.append(insightLink);
  if(detail){const hero=main.querySelector('.hero,.glass');if(hero)hero.classList.add('halo-detail-focus');}
+ atelierCompose(f,main);
  return t.innerHTML;
 }
 let haloTransition=null,haloMorph=false,haloRenderedRoute=null;
@@ -517,7 +536,7 @@ function haloRender(){
  haloTransition=transition;transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});transition.finished.catch(()=>{}).finally(()=>{if(haloTransition!==transition)return;haloTransition=null;document.querySelectorAll('[data-halo-morph]').forEach(e=>{e.style.viewTransitionName='';e.removeAttribute('data-halo-morph')})});
 }
 function bindHalo(){
- bindInsightDesk();
+ bindInsightDesk();atelierBind();
  if(!haloOn())return;
  root.querySelectorAll('[data-hi-route]').forEach(b=>b.onclick=()=>{tab=b.dataset.hiRoute;if(tab==='best')tsChannel='retail';if(tab==='stock')sv='retail';detail=null;render();window.scrollTo(0,0)});
  const pair=root.querySelector('.halo-pair');if(pair){
