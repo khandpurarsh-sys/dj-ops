@@ -338,7 +338,7 @@ function topOnlineGroups(rows){
 let tsChannel='retail';
 function topSalesToday(){
  const T=data&&data.topSellers,C=T&&T[tsChannel],retail=tsChannel==='retail',rawRows=C&&Array.isArray(C.products)?C.products:[],date=T&&T.date;
- const rows=retail?topRetailGroups(rawRows):topOnlineGroups(rawRows);
+ const rows=pgTodayRows(rawRows,tsChannel);
  const num=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
  const money=v=>num(v)===null?'Revenue unknown':inr(num(v));
  const pending=v=>retail&&num(v)>0?' <small class="ts-pending">'+SV(String(num(v))+' pending')+'</small>':'';
@@ -357,11 +357,50 @@ function topSalesToday(){
  const norm=rows.map((p,i)=>({p,i,name:String(!retail&&p.name&&p.key&&/^(Dressjet Men Comfort Casual Shirt|Dressjet Spread Collar Casual Linen Shirt)$/.test(p.name)?p.key:(p.name||p.style||p.key||'Product identity unavailable')),rev:num(p.revenue),units:num(p.units)}));
  const known=norm.filter(x=>x.rev!==null).sort((a,b)=>b.rev-a.rev||(b.units||0)-(a.units||0)||a.name.localeCompare(b.name));
  const unknown=norm.filter(x=>x.rev===null).sort((a,b)=>a.name.localeCompare(b.name));
- const product=(x,rank)=>{const p=x.p,S=Array.isArray(p.skus)?p.skus:[],label=rank?rank+'. ':'';return '<details class="glass ts-product" style="margin-bottom:10px"><summary style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;list-style:none"><span style="flex:1;min-width:0;overflow-wrap:anywhere">'+SV(esc(label+x.name))+'<br><small>'+SV(count(x.units))+' · '+S.length+' SKU'+(S.length===1?'':'s')+pending(p.pendingUnits)+'</small></span><b style="text-align:right;max-width:45%;overflow-wrap:anywhere">'+SV(money(x.rev))+(retail&&num(p.pendingUnits)>0&&x.rev!==null?'<br><small>posted</small>':'')+' <small>⌄</small></b></summary><section class="list" style="padding:0 16px 10px">'+(S.length?S.map(z=>'<div class="line"><span style="min-width:0;overflow-wrap:anywhere;flex:1;padding-right:12px">'+SV(esc(z.sku||[p.style||p.key,z.size].filter(Boolean).join(' ')||'SKU identity unavailable'))+'<br><small>'+SV(count(z.units))+(z.colour?' · '+esc(z.colour):'')+(z.size?' · '+esc(z.size):'')+pending(z.pendingUnits)+'</small></span><b style="text-align:right;max-width:45%;overflow-wrap:anywhere">'+SV(money(z.revenue))+'</b></div>').join(''):'<p class="note">SKU breakdown unavailable.</p>')+'</section></details>'};
- if(!retail){h+='<p class="note" style="text-align:left;padding:0 0 8px">Ranked by units. Revenue is an order-attributed amount only where supplied for single-item orders; it may include shipping or COD fees. Unknown is not zero.</p>'+norm.sort((a,b)=>(b.units??-Infinity)-(a.units??-Infinity)||a.name.localeCompare(b.name)).map((x,i)=>product(x,i+1)).join('');return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Online product groups use exact source style stems. Retail is kept separate.</p>';}
+ const product=(x,rank)=>{const p=x.p,S=Array.isArray(p.skus)?p.skus:[],label=rank?rank+'. ':'';return '<details class="glass ts-product" style="margin-bottom:10px"><summary style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;list-style:none"><span style="flex:1;min-width:0;overflow-wrap:anywhere">'+SV(esc(label+x.name))+'<br><small>'+SV(count(x.units))+' · '+S.length+' SKU'+(S.length===1?'':'s')+(p._unresolved?' · source family unresolved':'')+pending(p.pendingUnits)+'</small></span><b style="text-align:right;max-width:45%;overflow-wrap:anywhere">'+SV(money(x.rev))+(x.rev===null&&p.knownRevenue?'<br><small>'+SV('known '+inr(p.knownRevenue))+'</small>':'')+(retail&&num(p.pendingUnits)>0&&x.rev!==null?'<br><small>posted</small>':'')+' <small>⌄</small></b></summary><section class="list" style="padding:0 16px 10px">'+(S.length?S.map(z=>'<div class="line"><span style="min-width:0;overflow-wrap:anywhere;flex:1;padding-right:12px">'+SV(esc(z.sku||[p.style||p.key,z.size].filter(Boolean).join(' ')||'SKU identity unavailable'))+'<br><small>'+SV(count(z.units))+(z.colour?' · '+esc(z.colour):'')+(z.size?' · '+esc(z.size):'')+pending(z.pendingUnits)+'</small></span><b style="text-align:right;max-width:45%;overflow-wrap:anywhere">'+SV(money(z.revenue))+'</b></div>').join(''):'<p class="note">SKU breakdown unavailable.</p>')+'</section></details>'};
+ if(!retail){h+='<p class="note" style="text-align:left;padding:0 0 8px">Ranked by units. Revenue is an order-attributed amount only where supplied for single-item orders; it may include shipping or COD fees. Unknown is not zero.</p>'+norm.sort((a,b)=>(b.units??-Infinity)-(a.units??-Infinity)||a.name.localeCompare(b.name)).map((x,i)=>product(x,i+1)).join('');return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Online groups use exact verified style/colour stems. Unresolved source groups stay as supplied; no estimated SKU split. Retail is separate.</p>';}
  if(known.length)h+='<p class="note" style="text-align:left;padding:0 0 8px">'+(unknown.length?'Products with known revenue':'Ranked by revenue')+' · units shown too. '+(retail?'Retail gross line sales'+(rows.some(p=>num(p.pendingUnits)>0)?'; posted amounts only while pending.':'.'):'Online sales only.')+'</p>'+known.map((x,i)=>product(x,i+1)).join('');
  if(unknown.length)h+='<h2>Revenue unavailable</h2><p class="note" style="text-align:left;padding:0 0 8px">Not ranked by revenue. Units shown; alphabetical order. No order-total splits or estimated SKU revenue.</p>'+unknown.map(x=>product(x,null)).join('');
- return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Sizes and colours share a row only when the product identity is verified. Uncertain style or colour matches stay separate. Retail and Online are never added together.</p>';
+ return h+'<p class="note" style="text-align:left;padding:6px 0 12px">Sizes share a row only when the same exact style/colour family is verified. Mixed or unresolved source groups stay as supplied when their amounts cannot safely be split. Uncertain style or colour matches stay separate. Retail and Online are never added together.</p>';
+}
+
+/* Exact source family identity, never guessed SKU/price allocation. */
+const pgNum=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
+function pgStem(sku,size){
+ sku=String(sku||'').trim();size=String(size||'').trim();if(size&&!/^(XXXS|XXS|XXXL|XXL|2XL|3XL|4XL|5XL|XL|XS|S|M|L|UK-[0-9]{1,2}|[0-9]{1,2})$/.test(size))return null;if(!sku||/\uFFFD/.test(sku))return null;
+ let stem=null;
+ if(size&&sku.endsWith(size)&&sku.length>size.length){stem=sku.slice(0,-size.length).replace(/[ _-]$/,'');}
+ else {const m=sku.match(/^(.*?)[ _-](XXXS|XXS|XXXL|XXL|2XL|3XL|4XL|5XL|XL|XS|S|M|L|UK-[0-9]{1,2})$/);if(m)stem=m[1];}
+ return stem&&stem.length>=3&&!/^\d+$/.test(stem)&&!/^Dressjet (Men Comfort Casual Shirt|Spread Collar Casual Linen Shirt)$/.test(stem)?stem:null;
+}
+function pgVerified(channel){
+ const map=new Map(),rows=data?.topSellers?.[channel]?.products;
+ for(const p of Array.isArray(rows)?rows:[])for(const z of Array.isArray(p.skus)?p.skus:[]){if(!z.size)continue;const sku=String(z.sku||''),stem=pgStem(sku,z.size);if(!stem)continue;if(map.has(sku)&&map.get(sku)!==stem)map.set(sku,null);else if(!map.has(sku))map.set(sku,stem);}
+ return map;
+}
+function pgIdentity(row,channel,verified){
+ const sku=String(row.sku||'').trim();if(verified.has(sku))return verified.get(sku);
+ return pgStem(sku,row.size);
+}
+function pgSum(rows,key){let known=0,unknown=0;for(const r of rows){const n=pgNum(r[key]);if(n===null)unknown++;else known+=n;}return {value:unknown?null:known,known,unknown};}
+function pgRangeRows(rows,channel){
+ const verified=pgVerified(channel),groups=new Map();
+ rows.forEach((r,i)=>{const identity=pgIdentity(r,channel,verified),key=identity?'family:'+identity:'unresolved:'+i;let g=groups.get(key);if(!g){g={key,name:identity||String(r.name||r.sku||'Product identity unavailable'),resolved:!!identity,members:[]};groups.set(key,g);}g.members.push({...r,sourceIndex:i});});
+ return [...groups.values()].map(g=>({...g,qty:pgSum(g.members,'qty'),amt:pgSum(g.members,'amt')}));
+}
+function pgTodayRows(raw,channel){
+ const verified=pgVerified(channel),segments=[];
+ raw.forEach((p,i)=>{
+  if(!p||typeof p!=='object')return;
+  const S=Array.isArray(p.skus)?p.skus:[],families=S.map(z=>pgIdentity(z,channel,verified)),unique=[...new Set(families)];
+  // A single exact family may combine as a whole source product without changing totals.
+  if(S.length&&unique.length===1&&unique[0]){segments.push({...p,_family:unique[0]});return;}
+  // Split a mixed source product only when every SKU amount and unit count explains its totals.
+  const units=pgSum(S,'units'),money=pgSum(S,'revenue'),pu=pgNum(p.units),pr=pgNum(p.revenue);
+  if(S.length&&families.every(Boolean)&&pu!==null&&pr!==null&&units.value===pu&&money.value===pr){S.forEach((z,n)=>segments.push({key:families[n],name:families[n],units:z.units,revenue:z.revenue,pendingUnits:z.pendingUnits,skus:[z],_family:families[n]}));return;}
+  segments.push({...p,_family:null,_unresolved:S.length>0});
+ });
+ const groups=new Map();segments.forEach((p,i)=>{const key=p._family?'family:'+p._family:'source:'+i;let g=groups.get(key);if(!g){g={key,name:p._family||p.name||p.key||'Product identity unavailable',units:0,revenue:0,pendingUnits:0,knownRevenue:0,skus:[],_unresolved:!!p._unresolved};groups.set(key,g);}for(const f of ['units','revenue']){const n=pgNum(p[f]);g[f]=g[f]===null||n===null?null:g[f]+n;}g.knownRevenue+=pgNum(p.revenue)??pgNum(p.knownRevenue)??0;g.pendingUnits+=Math.max(0,pgNum(p.pendingUnits)??pgSum(Array.isArray(p.skus)?p.skus:[],'pendingUnits').known);g.skus.push(...(Array.isArray(p.skus)?p.skus:[]));});return [...groups.values()];
 }
 
 /* Device-local theme choices. Existing Halo modes remain unchanged. */
@@ -839,16 +878,17 @@ function topSalesRange(){
  const source=retail?'Retail SKU range report':'Online Sales dashboard SKU report';
  const stamp=retail?(data['retail'+days+'AsOf']||null):data.sellersAsOf;
  let h=tsRangeControls()+'<div class="pills ts-channels" role="group" aria-label="Sales channel"><button data-ts="retail" class="'+(retail?'on':'')+'">Retail</button><button data-ts="online" class="'+(!retail?'on':'')+'">Online</button></div>';
- h+='<section class="ts-range-source"><b>'+title+' · '+days+'-day report</b><p class="note">'+(stamp?'Read '+esc(stkFmt(stamp)||String(stamp))+(Date.now()-Date.parse(stamp)>75*60000?' · may be stale':''):'Range-report read time unavailable')+'</p><details class="ts-range-about"><summary>Source and coverage</summary><p class="note">'+source+'. Exact start/end dates and full coverage are not supplied. This is not a calendar '+(days===7?'week':days===30?'month':'quarter')+'. Channels stay separate. Unreported SKUs are unknown, not zero. SKU rows stay separate; no guessed product merges.</p></details></section>';
+ h+='<section class="ts-range-source"><b>'+title+' · '+days+'-day report</b><p class="note">'+(stamp?'Read '+esc(stkFmt(stamp)||String(stamp))+(Date.now()-Date.parse(stamp)>75*60000?' · may be stale':''):'Range-report read time unavailable')+'</p><details class="ts-range-about"><summary>Source and coverage</summary><p class="note">'+source+'. Exact start/end dates and full coverage are not supplied. This is not a calendar '+(days===7?'week':days===30?'month':'quarter')+'. Channels stay separate. Unreported SKUs are unknown, not zero. Exact style/colour stems combine sizes. Uncertain identifiers stay separate; no guessed product merges.</p></details></section>';
  if(!Array.isArray(raw))return h+none(title+' '+days+'-day product data is not supplied in this feed. Unknown, not zero. Other ranges remain available.');
  const rows=raw.map((r,i)=>({i,sku:String(r.sku||''),name:String(r.name||r.sku||'Product identity unavailable'),qty:num(r.qty),amt:num(retail?r.amt:r.rev)}));
- const known=rows.filter(r=>r.amt!==null).sort((a,b)=>b.amt-a.amt||a.name.localeCompare(b.name)),unknown=rows.filter(r=>r.amt===null).sort((a,b)=>a.name.localeCompare(b.name));
- const q=tsQuery.trim().toLowerCase(),all=[...known,...unknown],shown=all.filter(r=>!q||(r.name+' '+r.sku).toLowerCase().includes(q));
- h+='<p class="note ts-range-coverage">'+rows.length+' supplied SKU rows · ranked by reported sales</p><div class="glass search"><input id="tsq" type="search" placeholder="Search all supplied SKUs" value="'+esc(tsQuery)+'"></div>';
+ const groups=pgRangeRows(rows,retail?'retail':'online'),known=groups.filter(g=>g.amt.value!==null).sort((a,b)=>b.amt.value-a.amt.value||a.name.localeCompare(b.name)),unknown=groups.filter(g=>g.amt.value===null).sort((a,b)=>a.name.localeCompare(b.name));
+ const q=tsQuery.trim().toLowerCase(),all=[...known,...unknown],shown=all.filter(g=>!q||[g.name,...g.members.map(r=>r.name+' '+r.sku)].join(' ').toLowerCase().includes(q));
+ h+='<p class="note ts-range-coverage">'+groups.length+' product groups from '+rows.length+' supplied SKU rows · ranked by reported sales</p><div class="glass search"><input id="tsq" type="search" placeholder="Search products or any supplied SKU" value="'+esc(tsQuery)+'"></div>';
  if(!rows.length)return h+none('The supplied report contains no SKU rows. Complete sales coverage is not confirmed.');
- if(!shown.length)return h+none('No supplied SKU matches this search.');
- h+='<section class="ts-range-list" aria-label="'+title+' '+days+'-day supplied seller rows">'+shown.map(r=>{const rank=known.indexOf(r);return '<article class="ts-range-row"><div><span>'+SV(esc((rank>=0?(rank+1)+'. ':'')+r.name))+'</span><small>'+SV(r.qty===null?'Units unknown':r.qty.toLocaleString('en-IN')+' units')+(r.name!==r.sku?' · '+SV(esc(r.sku)):'')+'</small></div><b>'+SV(r.amt===null?'Sales unknown':inr(r.amt))+'</b></article>'}).join('')+'</section>';
- return h+'<p class="note">All '+shown.length+' matching rows shown. Negative values are retained as reported. No order-total splits, estimated SKU sales, or extra source reads.</p>';
+ if(!shown.length)return h+none('No supplied product or SKU matches this search.');
+ h+='<section class="ts-range-list" aria-label="'+title+' '+days+'-day supplied product groups">'+shown.map(g=>pgRangeCard(g,known.indexOf(g)+1)).join('')+'</section>';
+ return h+'<p class="note">All '+shown.length+' matching products shown. Each original SKU row stays inside its product. Unknown amounts are not allocated or treated as zero. Different colours, channels and ranges stay separate. Negative values and duplicate source rows are retained.</p>';
+
 }
 function bindSellerRanges(){
  document.querySelectorAll('[data-tsrange]').forEach(b=>b.onclick=()=>{tsRange=b.dataset.tsrange;tsQuery='';render();});
@@ -859,7 +899,9 @@ function sellerRangeExtras(){
  if(tsRange==='today'){
   const orders=(Array.isArray(data.orders)?data.orders:[]).filter(o=>o.status!=='Cancelled'),m=new Map();
   for(const o of orders)for(const i of (o.items||[])){const k=String(i.sku||'');if(!k)continue;const v=m.get(k)||{sku:k,qty:0,unknown:false};if(i.qty===null||i.qty===undefined||i.qty===''||!Number.isFinite(Number(i.qty)))v.unknown=true;else v.qty+=Number(i.qty);m.set(k,v)}
-  return '<details class="halo-archive" data-halo-fold="sellers" '+(haloFolds.sellers?'open':'')+'><summary>Online itemised orders today</summary><div class="glass search"><input id="sq" placeholder="Search itemised order SKUs" value="'+esc(sq)+'"></div><p class="note">Separate order-list view. Only supplied non-cancelled orders; this may be partial. Units only, never estimated SKU revenue.</p>'+[...m.values()].filter(r=>!sq.trim()||r.sku.toLowerCase().includes(sq.trim().toLowerCase())).sort((a,b)=>b.qty-a.qty).map(r=>'<div class="line" data-d="s:'+esc(r.sku)+'"><span>'+SV(esc(r.sku))+'</span><b>'+SV(r.unknown?'Units unknown':r.qty+' units')+'</b></div>').join('')+'</details>';
+  const groups=pgRangeRows([...m.values()].map(r=>({...r,qty:r.unknown?null:r.qty,amt:null})),'online').sort((a,b)=>(b.qty.value??-Infinity)-(a.qty.value??-Infinity));
+  return '<details class="halo-archive" data-halo-fold="sellers" '+(haloFolds.sellers?'open':'')+'><summary>Online itemised orders today</summary><div class="glass search"><input id="sq" placeholder="Search products or itemised order SKUs" value="'+esc(sq)+'"></div><p class="note">Separate order-list view. Only supplied non-cancelled orders; this may be partial. Exact style/colour families combine sizes. Units only, never estimated SKU revenue.</p>'+groups.filter(g=>!sq.trim()||[g.name,...g.members.map(r=>r.sku)].join(' ').toLowerCase().includes(sq.trim().toLowerCase())).map((g,i)=>pgRangeCard(g,i+1,true)).join('')+'</details>';
+
  }
  if(!['week','month'].includes(tsRange))return '';
  const retail=tsChannel==='retail',days=tsRange==='week'?7:30;
@@ -871,6 +913,12 @@ function sellerRangeExtras(){
  const template=document.createElement('template');template.innerHTML=bestBlock();
  template.content.querySelectorAll('[data-bw],[data-bch]').forEach(e=>e.remove());
  return '<details class="halo-archive"><summary>More '+(retail?'Retail':'Online')+' '+days+'-day analysis</summary>'+template.innerHTML+'</details>';
+}
+
+function pgRangeCard(g,rank,unitsOnly=false){
+ const count=s=>s.value===null?'Units unknown'+(s.known?' · '+s.known+' reported':''):s.value.toLocaleString('en-IN')+' units';
+ const money=s=>s.value===null?'Sales unknown'+(s.known?' · known '+inr(s.known):''):inr(s.value);
+ return '<details class="glass ts-product pg-product"><summary style="display:flex;align-items:center;gap:12px;padding:18px 2px;cursor:pointer;list-style:none"><span style="flex:1;min-width:0;overflow-wrap:anywhere">'+SV(esc((rank>0?rank+'. ':'')+productDisplayName(g.name)))+'<br><small>'+SV(count(g.qty))+' · '+g.members.length+' SKU row'+(g.members.length===1?'':'s')+(g.resolved?'':' · kept separate')+'</small></span><b style="max-width:43%;text-align:right;overflow-wrap:anywhere">'+(unitsOnly?'':SV(money(g.amt)))+' <small>⌄</small></b></summary><section class="list" style="padding:0 2px 10px">'+(!g.resolved?'<p class="note">Product family is not verified; this source row is not merged.</p>':'')+g.members.map(r=>'<div class="line"'+(unitsOnly?' data-d="s:'+esc(r.sku)+'"':'')+' style="align-items:flex-start"><span style="min-width:0;flex:1;padding-right:12px;overflow-wrap:anywhere">'+SV(esc(r.sku||'SKU identity unavailable'))+'<br><small>'+SV(r.qty===null?'Units unknown':r.qty.toLocaleString('en-IN')+' units')+'</small></span><b style="max-width:43%;text-align:right;overflow-wrap:anywhere">'+SV(r.amt===null?(unitsOnly?'SKU sales not supplied':'Sales unknown'):inr(r.amt))+'</b></div>').join('')+'</section></details>';
 }
 
 /* Prior-day context is never relabelled today, never declared final, never combined. */
@@ -1076,12 +1124,14 @@ function bestBlock(){const hasR=!!A(data.retailHistory);if(!hasR&&bchn==='retail
  let h=`<h2>Best and slowest</h2><div class="pills">${pill('bw',7,bwin,'7 days')}${pill('bw',30,bwin,'30 days')}${pill('bm','units',bmet,'By units')}${pill('bm','rev',bmet,'By revenue')}${hasR?pill('bch','online',bchn,'Online')+pill('bch','retail',bchn,'Retail'):''}</div>`;
  const rows=sl?Object.values(sl.m):[];
  if(!rows.length){const fb=bchn==='online'?(bwin===7?(data.sellers&&data.sellers.week):(data.sellers&&data.sellers.month)):null;
-  if(A(fb))return h+`<section class="glass list">${fb.slice(0,10).map((r,n)=>`<div class="line"><span>${n+1}. ${SV(esc(r.sku))}</span><b>${r.qty!=null?r.qty+' sold':''}${r.qty!=null&&r.rev?' · ':''}${r.rev?inr(r.rev):''}</b></div>`).join('')}</section><p class="note">Online shows revenue only (units and dead stock are not available online).</p>`;
+  if(A(fb)){const groups=pgRangeRows(fb.map(r=>({...r,qty:pgNum(r.qty),amt:pgNum(r.rev)})),bchn).sort((a,b)=>(b.amt.value??-Infinity)-(a.amt.value??-Infinity));return h+groups.map((g,i)=>pgRangeCard(g,i+1)).join('')+'<p class="note">Online shows reported revenue only; units stay unknown where not supplied.</p>';}
+
   return h+`<section class="glass list"><div class="line"><span>Item-level sales are not available yet for ${bchn==='retail'?'retail':'online'}.</span><b>—</b></div></section>`;}
  const hasAmt=rows.some(r=>r.amt>0),hasQty=rows.some(r=>r.qty>0);const k=(bmet==='rev'&&hasAmt)||!hasQty?'amt':'qty';
- const sorted=rows.slice().sort((p,q)=>nn(q[k])-nn(p[k])||p.sku.localeCompare(q.sku));const fmt=r=>(r.qty!=null?`${r.qty} unit${r.qty===1?'':'s'}`:'')+(r.qty!=null&&r.amt?' · ':'')+(r.amt?inr(r.amt):'');
- const row=(r,n)=>`<div class="line" data-d="s:${esc(r.sku)}"><span>${n!=null?n+'. ':''}${SV(esc(r.sku))}${r.name?'<br><small>'+esc(productDisplayName(r.name))+'</small>':''}</span><b>${fmt(r)}</b></div>`;
- h+=`<section class="glass list"><div class="line" style="border:0"><span><small>Top ${Math.min(8,sorted.length)}${(()=>{const T=sorted.reduce((t,x)=>t+nn(x[k]),0),U=sorted.slice(0,8).reduce((t,x)=>t+nn(x[k]),0);return T>0&&sorted.length>8?' · '+Math.round(U/T*100)+'% of '+(k==='amt'?'revenue':'units'):''})()}</small></span></div>${sorted.slice(0,8).map((r,n)=>row(r,n+1)).join('')}</section>`;
+ const rawRange=data[(bchn==='online'?'online':'retail')+bwin],groupInput=Array.isArray(rawRange)?rawRange.map(r=>({...r,qty:pgNum(r.qty),amt:pgNum(r.amt)})):rows.map(r=>({...r,qty:pgNum(r.qty),amt:pgNum(r.amt)}));
+ const metric=g=>g[k].value,sorted=pgRangeRows(groupInput,bchn).sort((a,b)=>(metric(b)??-Infinity)-(metric(a)??-Infinity)||a.name.localeCompare(b.name));
+ const row=(g,n)=>pgRangeCard(g,n||0);
+ h+=`<section class="glass list"><div class="line" style="border:0"><span><small>Top ${Math.min(8,sorted.length)}${(()=>{const T=sorted.reduce((t,x)=>t+(metric(x)||0),0),U=sorted.slice(0,8).reduce((t,x)=>t+(metric(x)||0),0);return T>0&&sorted.length>8?' · '+Math.round(U/T*100)+'% of '+(k==='amt'?'revenue':'units'):''})()}</small></span></div>${sorted.slice(0,8).map((r,n)=>row(r,n+1)).join('')}</section>`;
  const bot=sorted.length>8?sorted.slice(-Math.min(8,sorted.length-8)).reverse():[];if(bot.length)h+=`<section class="glass list" style="margin-top:12px"><div class="line" style="border:0"><span><small>Slowest that still sold</small></span></div>${bot.map(r=>row(r)).join('')}</section>`;
  const stk=bchn==='online'?onStockRows():rtStockRows();
  if(bwin===30){const s30=sl,full=s30.span>0&&s30.cov>=s30.span;

@@ -1923,3 +1923,5 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-th] body .app .halo-brand img.brand-wordmark{width:104px;height:24px;object-fit:contain}
 :root[data-th] body .app .halo-brand{background:transparent!important;border-radius:0!important;box-shadow:none!important;overflow:visible}
 :root[data-th] body .app .halo-brand::after{display:none!important;content:none!important;animation:none!important}
+/* Range selection remains readable on the original pale Halo ground. */
+:root[data-th=halo]:not([data-halo-palette]:not([data-halo-palette=""])) body.lay-halo .ts-ranges button.on{color:#76521c!important}
