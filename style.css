@@ -1814,6 +1814,18 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 @media(max-width:350px){:root[data-th] body.lay-halo .hi-clean .hi-card>h2,:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button span span{font-size:24px}}
 
 /* Additional Halo palettes. Color only: no geometry, motion, fetching or data rules. */
+:root[data-th=halo][data-halo-palette=clubwine]{background:#f8f1ed}
+:root[data-th=halo][data-halo-palette=clubwine] body.lay-halo{--atelier-ground:#f8f1ed;--atelier-paper:#fffbf5;--atelier-solid:#fffbf5;--atelier-wash:#eee0dc;--atelier-gold:#84384f;--atelier-gold-wash:#e8cbc233;--atelier-line:#d4bfc4;--atelier-glint:#48202c10;--atelier-nav:#fffbf5;--ink:#48202c;--ink2:#765661;--edge:#d4bfc4;--bg1:#f8f1ed;--bg2:#eee0dc;--mid:#eee0dc;--glass:#fffbf5;--sf:#fffbf5;--sfh:#eee0dc;--accent:#84384f;--g1:#84384f;--g2:#84384f;--btn:#48202c;--gold:#84384f;--ok:#246044;--warn:#7e521b;--bad:#a02f43;--low:var(--bad);color:#48202c;background:#f8f1ed;color-scheme:light}
+.halo-theme-swatch[data-swatch=clubwine-light]{background:linear-gradient(135deg,#f8f1ed 0 48%,#48202c 49% 76%,#84384f 77%)}
+:root[data-th=halo-dark][data-halo-palette=clubwine]{background:#1a080f}
+:root[data-th=halo-dark][data-halo-palette=clubwine] body.lay-halo{--atelier-ground:#1a080f;--atelier-paper:#2a111c;--atelier-solid:#2a111c;--atelier-wash:#3a1e2a;--atelier-gold:#e6bf8a;--atelier-gold-wash:#54253933;--atelier-line:#603b4d;--atelier-glint:#fbf0ea10;--atelier-nav:#2a111c;--ink:#fbf0ea;--ink2:#d9bec7;--edge:#603b4d;--bg1:#1a080f;--bg2:#3a1e2a;--mid:#3a1e2a;--glass:#2a111c;--sf:#2a111c;--sfh:#3a1e2a;--accent:#e6bf8a;--g1:#e6bf8a;--g2:#e6bf8a;--btn:#fbf0ea;--gold:#e6bf8a;--ok:#b9e3cc;--warn:#f2d39b;--bad:#ffbec6;--low:var(--bad);color:#fbf0ea;background:#1a080f;color-scheme:dark}
+.halo-theme-swatch[data-swatch=clubwine-dark]{background:linear-gradient(135deg,#1a080f 0 48%,#fbf0ea 49% 76%,#e6bf8a 77%)}
+:root[data-th=halo][data-halo-palette=club]{background:#f6f1e6}
+:root[data-th=halo][data-halo-palette=club] body.lay-halo{--atelier-ground:#f6f1e6;--atelier-paper:#fffdf5;--atelier-solid:#fffdf5;--atelier-wash:#e6e5d8;--atelier-gold:#795b24;--atelier-gold-wash:#d1d7bc33;--atelier-line:#c2cbbd;--atelier-glint:#17372f10;--atelier-nav:#fffdf5;--ink:#17372f;--ink2:#52675d;--edge:#c2cbbd;--bg1:#f6f1e6;--bg2:#e6e5d8;--mid:#e6e5d8;--glass:#fffdf5;--sf:#fffdf5;--sfh:#e6e5d8;--accent:#795b24;--g1:#795b24;--g2:#795b24;--btn:#17372f;--gold:#795b24;--ok:#246044;--warn:#7e521b;--bad:#a02f43;--low:var(--bad);color:#17372f;background:#f6f1e6;color-scheme:light}
+.halo-theme-swatch[data-swatch=club-light]{background:linear-gradient(135deg,#f6f1e6 0 48%,#17372f 49% 76%,#795b24 77%)}
+:root[data-th=halo-dark][data-halo-palette=club]{background:#081610}
+:root[data-th=halo-dark][data-halo-palette=club] body.lay-halo{--atelier-ground:#081610;--atelier-paper:#10261c;--atelier-solid:#10261c;--atelier-wash:#1a3327;--atelier-gold:#dcbc7f;--atelier-gold-wash:#25453433;--atelier-line:#385244;--atelier-glint:#f4efe010;--atelier-nav:#10261c;--ink:#f4efe0;--ink2:#c3d0bf;--edge:#385244;--bg1:#081610;--bg2:#1a3327;--mid:#1a3327;--glass:#10261c;--sf:#10261c;--sfh:#1a3327;--accent:#dcbc7f;--g1:#dcbc7f;--g2:#dcbc7f;--btn:#f4efe0;--gold:#dcbc7f;--ok:#b9e3cc;--warn:#f2d39b;--bad:#ffbec6;--low:var(--bad);color:#f4efe0;background:#081610;color-scheme:dark}
+.halo-theme-swatch[data-swatch=club-dark]{background:linear-gradient(135deg,#081610 0 48%,#f4efe0 49% 76%,#dcbc7f 77%)}
 :root[data-th=halo][data-halo-palette=burgundy]{background:#faf4f2}
 :root[data-th=halo][data-halo-palette=burgundy] body.lay-halo{--atelier-ground:#faf4f2;--atelier-paper:#fffcfa;--atelier-solid:#fffcfa;--atelier-wash:#f1e2e1;--atelier-gold:#8a354e;--atelier-gold-wash:#ead2cb33;--atelier-line:#d8c0c4;--atelier-glint:#461c2a10;--atelier-nav:#fffcfa;--ink:#461c2a;--ink2:#70535c;--edge:#d8c0c4;--bg1:#faf4f2;--bg2:#f1e2e1;--mid:#f1e2e1;--glass:#fffcfa;--sf:#fffcfa;--sfh:#f1e2e1;--accent:#8a354e;--g1:#8a354e;--g2:#8a354e;--btn:#461c2a;--gold:#8a354e;--ok:#246044;--warn:#7e521b;--bad:#a02f43;--low:var(--bad);color:#461c2a;background:#faf4f2;color-scheme:light}
 .halo-theme-swatch[data-swatch=burgundy-light]{background:linear-gradient(135deg,#faf4f2 0 48%,#461c2a 49% 76%,#8a354e 77%)}
@@ -1873,3 +1885,19 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-halo-palette]:not([data-halo-palette=""]) body.lay-halo .topb{background:var(--atelier-wash);color:var(--ink)}
 :root[data-halo-palette]:not([data-halo-palette=""]) body.lay-halo .hi-intro h2 span{color:var(--atelier-gold)}
 :root[data-halo-palette]:not([data-halo-palette=""]) body.lay-halo h2{color:var(--ink)}
+
+/* A static woven band behind the brand rail, never behind reading rows. */
+:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) body.lay-halo{--check-navy:#17395213;--check-green:#365c4712;--check-wine:#753a401c;--check-thread:#96783d23}
+:root[data-th=halo-dark]:is([data-halo-palette=club],[data-halo-palette=clubwine]) body.lay-halo{--check-navy:#5f83a123;--check-green:#8da88c12;--check-wine:#b66f7429;--check-thread:#d2b47325}
+:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) .lay-halo .halo-rail::before{content:'';position:absolute;inset:0 -22px 12px;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 19px,var(--check-navy) 19px 35px,transparent 35px 47px,var(--check-wine) 47px 49px,transparent 49px 64px),repeating-linear-gradient(90deg,transparent 0 19px,var(--check-green) 19px 35px,transparent 35px 47px,var(--check-wine) 47px 49px,transparent 49px 64px),repeating-linear-gradient(0deg,transparent 0 11px,var(--check-thread) 11px 12px,transparent 12px 64px),repeating-linear-gradient(90deg,transparent 0 11px,var(--check-thread) 11px 12px,transparent 12px 64px);box-shadow:inset 0 -1px var(--atelier-line)}
+:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) .lay-halo .halo-brand img{box-shadow:0 0 0 3px var(--atelier-ground)}
+.halo-theme-swatch[data-swatch=club-light]{background:repeating-linear-gradient(0deg,transparent 0 9px,#183f3133 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#18394a33 9px 15px,transparent 15px 24px),#f6f1e6}
+.halo-theme-swatch[data-swatch=club-dark]{background:repeating-linear-gradient(0deg,transparent 0 9px,#baaa6f33 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#93aea033 9px 15px,transparent 15px 24px),#081610}
+@media(max-width:350px){:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) .lay-halo .halo-rail::before{left:-16px;right:-16px}}
+@media(min-width:640px){:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) .lay-halo .halo-rail::before{left:-32px;right:-32px}}
+@media(forced-colors:active){:root:is([data-halo-palette=club],[data-halo-palette=clubwine]) .lay-halo .halo-rail::before{display:none}}
+
+:root[data-halo-palette=clubwine] body.lay-halo{--check-navy:#3c355d13;--check-green:#6c3b4812;--check-wine:#7b2c431c;--check-thread:#96783d23}
+:root[data-th=halo-dark][data-halo-palette=clubwine] body.lay-halo{--check-navy:#8c6b9e1a;--check-green:#a5586d20;--check-wine:#bb7e8b24;--check-thread:#d2b47325}
+.halo-theme-swatch[data-swatch=clubwine-light]{background:repeating-linear-gradient(0deg,transparent 0 9px,#6f283b33 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#55354a33 9px 15px,transparent 15px 24px),#f8f1ed}
+.halo-theme-swatch[data-swatch=clubwine-dark]{background:repeating-linear-gradient(0deg,transparent 0 9px,#c2829633 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#9b708733 9px 15px,transparent 15px 24px),#1a080f}
