@@ -521,7 +521,7 @@ function haloCompose(html){
  const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights')rail.append(insightLink);
  if(detail){const hero=main.querySelector('.hero,.glass');if(hero)hero.classList.add('halo-detail-focus');}
  
- rolloverCompose(main);atelierCompose(f,main);
+ rolloverCompose(main);yesterdayCompose(f,main,head);atelierCompose(f,main);
  return t.innerHTML;
 }
 let haloTransition=null,haloMorph=false,haloRenderedRoute=null;
@@ -538,7 +538,7 @@ function haloRender(){
  haloTransition=transition;transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});transition.finished.catch(()=>{}).finally(()=>{if(haloTransition!==transition)return;haloTransition=null;document.querySelectorAll('[data-halo-morph]').forEach(e=>{e.style.viewTransitionName='';e.removeAttribute('data-halo-morph')})});
 }
 function bindHalo(){
- bindInsightDesk();atelierBind();bindFloatingMenu();
+ bindInsightDesk();atelierBind();bindFloatingMenu();bindYesterday();
  if(!haloOn())return;
  root.querySelectorAll('[data-hi-route]').forEach(b=>b.onclick=()=>{tab=b.dataset.hiRoute;if(tab==='best')tsChannel='retail';if(tab==='stock')sv='retail';detail=null;render();window.scrollTo(0,0)});
  const pair=root.querySelector('.halo-pair');if(pair){
@@ -816,6 +816,64 @@ function rolloverCompose(main){
  if(stale||!rr){const msg=document.createElement('p');msg.className='rollover-status';msg.setAttribute('role','status');msg.textContent=stale&&!rr?'Today has not been read yet. These dashes are unknown, not zero.':(stale?'Online':'Retail')+' has not been read for today. Unknown, not zero.';const controls=main.querySelector('.halo-pair-controls');(controls||pair).before(msg);}
  const older=priorDayContext();if(older)pair.insertAdjacentHTML('afterend',older);
 }
+
+/* A dated revenue view. No new source reads, no mixed-source grand total. */
+let overviewDay='today';
+const ydNumber=v=>v===null||v===undefined||!['number','string'].includes(typeof v)||(typeof v==='string'&&!v.trim())||!Number.isFinite(Number(v))?null:Number(v);
+const ydDate=d=>new Date(d+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'short',year:'numeric'});
+const ydSum=(a,k)=>Array.isArray(a)&&a.length&&a.every(x=>ydNumber(x[k])!==null)?a.reduce((s,x)=>s+ydNumber(x[k]),0):null;
+function yesterdayRecord(retail){
+ const day=addD(IST(),-1),history=retail?data.retailHistory:data.history,found=(Array.isArray(history)?history:[]).filter(x=>x&&x.d===day),h=found.length===1?found[0]:null;
+ const s=retail?data.retail:data.snapshot;
+ const read=Date.parse(s&&s.readAt||''),readDay=Number.isFinite(read)?new Date(read+19800000).toISOString().slice(0,10):null;
+ const snapshot=s&&s.day===day&&(!retail||readDay===day);
+ if(snapshot){
+  const amount=retail?ydSum(s.stores,'sales'):ydNumber(s.revenue);
+  const archived=h&&ydNumber(h.rev),conflict=amount!==null&&archived!==null&&amount!==archived;
+  return {day,amount,kind:'snapshot',time:retail?retailTime(s):s.at||s.readAt||'time unavailable',count:retail?ydSum(s.stores,'bills'):ydNumber(s.orderCount),units:retail?ydSum(s.stores,'units'):ydNumber(s.items),rows:retail?(s.stores||[]).map(x=>({name:x.name,amount:ydNumber(x.sales),count:ydNumber(x.bills),units:ydNumber(x.units)})):null,conflict,history:h};
+ }
+ if(h)return {day,amount:ydNumber(h.rev),kind:'history',time:null,count:ydNumber(retail?h.bills:h.orders),units:ydNumber(retail?h.units:h.items),rows:retail&&h.by?Object.entries(h.by).map(([name,v])=>({name,amount:ydNumber(v.rev),count:ydNumber(v.bills),units:ydNumber(v.units)})):null,history:h,partial:h.partial===true};
+ return {day,amount:null,kind:'missing',time:null,count:null,units:null,rows:null};
+}
+function yesterdayCard(retail){
+ const r=yesterdayRecord(retail),channel=retail?'Retail':'Online',money=v=>v===null?'Unavailable':inr(v),count=v=>v===null?'Unknown':Number(v).toLocaleString('en-IN');
+ let h='<article class="yd-card" id="yd-'+channel.toLowerCase()+'" data-yd-channel="'+channel.toLowerCase()+'"><div class="yd-card-label"><h2>'+channel+'</h2><span>'+(r.kind==='snapshot'?'Last reading':r.kind==='history'?'Dated history':'Not supplied')+'</span></div><b class="yd-amount">'+SV(money(r.amount))+'</b>';
+ if(r.kind==='missing')return h+'<p class="yd-caveat">No '+channel.toLowerCase()+' record is supplied for '+esc(ydDate(r.day))+'. This is unknown, not zero.</p></article>';
+ h+='<div class="yd-metrics"><span><b>'+SV(count(r.count))+'</b><small>'+(retail?'bills':'orders')+'</small></span><span><b>'+SV(count(r.units))+'</b><small>'+(retail?'units':'items')+'</small></span></div>';
+ if(r.kind==='snapshot')h+='<p class="yd-caveat">Snapshot only · not confirmed final</p><p class="yd-source">Read '+esc(String(r.time).replace(/^Read\s+/i,''))+'</p>';
+ else h+='<p class="yd-caveat">'+(r.partial?'Partial dated record · coverage incomplete':'Dated history record · finality not supplied')+'</p>';
+ if(r.conflict)h+='<p class="yd-caveat">The dated history has a different amount. This view shows the source snapshot, without merging the two.</p>';
+ if(retail){
+  h+='<div class="yd-breakdown"><h3>By store</h3>';
+  if(r.rows&&r.rows.length)r.rows.forEach(x=>{h+='<div class="yd-store"><span>'+SV(esc(x.name||'Store name unavailable'))+'<small>'+SV(count(x.count))+' bills · '+SV(count(x.units))+' units</small></span><b>'+SV(money(x.amount))+'</b></div>'});
+  else h+='<p class="yd-source">Store breakdown not supplied for this date.</p>';
+  h+='</div>';
+ }else{
+  // Channel grid payments are a separate measure, never used to force the revenue headline.
+  const history=r.history,ch=history&&history.ch;
+  h+='<details class="yd-breakdown yd-channel-details"><summary>Channel amounts <span>Separate measure +</span></summary><p class="yd-source">These are the channel amounts stored with this dated record. They may use a different basis from the revenue above. They are not added to it.</p>';
+  if(ch&&typeof ch==='object'&&Object.keys(ch).length){Object.entries(ch).forEach(([name,v])=>{const amt=ydNumber(typeof v==='object'&&v!==null?v.amt:v);h+='<div class="yd-store"><span>'+esc(name)+'</span><b>'+SV(money(amt))+'</b></div>'});if(history.chNote)h+='<p class="yd-source">'+esc(history.chNote)+'</p>';}
+  else h+='<p class="yd-source">No dated channel breakdown supplied.</p>';
+  h+='</details>';
+ }
+ const dayBefore=addD(r.day,-1),history=retail?data.retailHistory:data.history,prev=(Array.isArray(history)?history:[]).filter(x=>x&&x.d===dayBefore);
+ // Do not turn an intraday snapshot versus a full-day record into a growth percentage.
+ if(r.kind==='history'&&!r.partial&&!r.conflict&&prev.length===1&&prev[0].partial!==true&&ydNumber(prev[0].rev)!==null){h+='<details class="yd-previous"><summary>Previous dated record</summary><div class="yd-store"><span>'+esc(ydDate(dayBefore))+'</span><b>'+SV(inr(ydNumber(prev[0].rev)))+'</b></div><p class="yd-source">Both are recorded history amounts. No live growth claim or same-time comparison.</p></details>';}
+ return h+'</article>';
+}
+function yesterdayCompose(f,main,head){
+ if(detail||tab!=='today')return;
+ const day=addD(IST(),-1),nav=document.createElement('div');nav.className='yd-view-tabs';nav.setAttribute('aria-label','Overview day');nav.innerHTML='<button data-overview-day="today" aria-pressed="'+(overviewDay==='today')+'">Today</button><button data-overview-day="yesterday" aria-pressed="'+(overviewDay==='yesterday')+'">Yesterday <small>'+esc(new Date(day+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'}))+'</small></button>';
+ if(overviewDay==='yesterday'){
+  const glance=[false,true].map(retail=>{const r=yesterdayRecord(retail),channel=retail?'Retail':'Online';return '<a href="#yd-'+channel.toLowerCase()+'"><span>'+channel+'</span><b>'+SV(r.amount===null?'Unavailable':inr(r.amount))+'</b><small>'+(r.kind==='snapshot'?'Snapshot · finality unconfirmed':r.kind==='history'?'Dated history':'Not supplied')+' ↘</small></a>'}).join('');
+  main.innerHTML='<section class="yd-view" aria-label="Yesterday revenue"><div class="yd-intro"><span>REVENUE BY SOURCE</span><h2>'+esc(ydDate(day))+'</h2><p>Online and Retail stay separate. Each amount belongs to this date only.</p></div><div class="yd-glance">'+glance+'</div>'+yesterdayCard(false)+yesterdayCard(true)+'</section>';
+  head.querySelector('h1').textContent='Yesterday.';const sub=head.querySelector('p');if(sub)sub.textContent='Revenue · '+ydDate(day);
+ }else{
+  const context=main.querySelector('.prior-day-context');if(context){const b=document.createElement('button');b.className='yd-open';b.dataset.overviewDay='yesterday';b.textContent="Open yesterday's revenue ↗";context.prepend(b);}
+ }
+ main.prepend(nav);
+}
+function bindYesterday(){document.querySelectorAll('[data-overview-day]').forEach(b=>b.onclick=()=>{overviewDay=b.dataset.overviewDay;render();window.scrollTo(0,0)})}
 
 function render(){return haloRender()}
 function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
