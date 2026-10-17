@@ -686,13 +686,7 @@ let lastTab=curTab();
 addEventListener('scroll',()=>{scrollMem[lastTab]=scrollY},{passive:true});/*B081*/
 function restoreScroll(){const t=curTab();if(t!==lastTab){const y=scrollMem[t];lastTab=t;if(y>0)requestAnimationFrame(()=>scrollTo(0,Math.min(y,document.body.scrollHeight-innerHeight)));}}/*B082*/
 
-/* B083 floating back-to-top after a long scroll */
-let btt;
-addEventListener('scroll',()=>{
- if(scrollY>700){if(!btt){btt=document.createElement('button');btt.className='bj-top';btt.type='button';btt.setAttribute('aria-label','Back to top');btt.textContent='↑';btt.onclick=()=>scrollTo({top:0,behavior:RM()?'auto':'smooth'});document.body.append(btt);}btt.classList.add('on')}
- else if(btt)btt.classList.remove('on');
-},{passive:true});
-
+/* B083 use the existing #totop, never create a second top button. */
 /* B084 refresh button shows busy and ignores double taps */
 /* B085 refresh icon spins only while a refresh is running */
 function refreshBusy(){const rf=$('#rf');if(!rf||rf._bj)return;rf._bj=1;rf.addEventListener('click',()=>{rf.classList.add('bj-busy');rf.setAttribute('aria-busy','true');const done=()=>{rf.classList.remove('bj-busy');rf.removeAttribute('aria-busy')};new MutationObserver((mo,o)=>{if($('#rf')!==rf){done();o.disconnect()}}).observe($('#root')||document.body,{childList:true,subtree:true});setTimeout(done,15000);});}
@@ -822,8 +816,8 @@ let overviewDay='today';
 const ydNumber=v=>v===null||v===undefined||!['number','string'].includes(typeof v)||(typeof v==='string'&&!v.trim())||!Number.isFinite(Number(v))?null:Number(v);
 const ydDate=d=>new Date(d+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'short',year:'numeric'});
 const ydSum=(a,k)=>Array.isArray(a)&&a.length&&a.every(x=>ydNumber(x[k])!==null)?a.reduce((s,x)=>s+ydNumber(x[k]),0):null;
-function yesterdayRecord(retail){
- const day=addD(IST(),-1),history=retail?data.retailHistory:data.history,found=(Array.isArray(history)?history:[]).filter(x=>x&&x.d===day),h=found.length===1?found[0]:null;
+function yesterdayRecord(retail,day=addD(IST(),-1)){
+ const history=retail?data.retailHistory:data.history,found=(Array.isArray(history)?history:[]).filter(x=>x&&x.d===day),h=found.length===1?found[0]:null;
  const s=retail?data.retail:data.snapshot;
  const read=Date.parse(s&&s.readAt||''),readDay=Number.isFinite(read)?new Date(read+19800000).toISOString().slice(0,10):null;
  const snapshot=s&&s.day===day&&(!retail||readDay===day);
@@ -837,35 +831,36 @@ function yesterdayRecord(retail){
 }
 function yesterdayCard(retail){
  const r=yesterdayRecord(retail),channel=retail?'Retail':'Online',money=v=>v===null?'Unavailable':inr(v),count=v=>v===null?'Unknown':Number(v).toLocaleString('en-IN');
- let h='<article class="yd-card" id="yd-'+channel.toLowerCase()+'" data-yd-channel="'+channel.toLowerCase()+'"><div class="yd-card-label"><h2>'+channel+'</h2><span>'+(r.kind==='snapshot'?'Last reading':r.kind==='history'?'Dated history':'Not supplied')+'</span></div><b class="yd-amount">'+SV(money(r.amount))+'</b>';
+ let h='<article class="yd-card" id="yd-'+channel.toLowerCase()+'" data-yd-channel="'+channel.toLowerCase()+'"><div class="yd-card-label"><h2>'+channel+'</h2><span>'+(r.kind==='snapshot'?'Last reading':r.kind==='history'?'Dated history':'Not supplied')+'</span></div><button class="yd-amount yd-value-link" data-d="'+esc(ydRoute({retail,day:r.day}))+'" aria-label="Open '+channel+' revenue details">'+SV(money(r.amount))+'<small>View details ↗</small></button>';
  if(r.kind==='missing')return h+'<p class="yd-caveat">No '+channel.toLowerCase()+' record is supplied for '+esc(ydDate(r.day))+'. This is unknown, not zero.</p></article>';
- h+='<div class="yd-metrics"><span><b>'+SV(count(r.count))+'</b><small>'+(retail?'bills':'orders')+'</small></span><span><b>'+SV(count(r.units))+'</b><small>'+(retail?'units':'items')+'</small></span></div>';
+ h+='<div class="yd-metrics" data-d="'+esc(ydRoute({retail,day:r.day}))+'"><span><b>'+SV(count(r.count))+'</b><small>'+(retail?'bills':'orders')+'</small></span><span><b>'+SV(count(r.units))+'</b><small>'+(retail?'units':'items')+'</small></span></div>';
  if(r.kind==='snapshot')h+='<p class="yd-caveat">Snapshot only · not confirmed final</p><p class="yd-source">Read '+esc(String(r.time).replace(/^Read\s+/i,''))+'</p>';
  else h+='<p class="yd-caveat">'+(r.partial?'Partial dated record · coverage incomplete':'Dated history record · finality not supplied')+'</p>';
  if(r.conflict)h+='<p class="yd-caveat">The dated history has a different amount. This view shows the source snapshot, without merging the two.</p>';
  if(retail){
   h+='<div class="yd-breakdown"><h3>By store</h3>';
-  if(r.rows&&r.rows.length)r.rows.forEach(x=>{h+='<div class="yd-store"><span>'+SV(esc(x.name||'Store name unavailable'))+'<small>'+SV(count(x.count))+' bills · '+SV(count(x.units))+' units</small></span><b>'+SV(money(x.amount))+'</b></div>'});
+  if(r.rows&&r.rows.length)r.rows.forEach(x=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({retail:true,day:r.day,store:x.name}))+'"><span>'+SV(esc(x.name||'Store name unavailable'))+'<small>'+SV(count(x.count))+' bills · '+SV(count(x.units))+' units</small></span><b>'+SV(money(x.amount))+' <i>›</i></b></button>'});
   else h+='<p class="yd-source">Store breakdown not supplied for this date.</p>';
   h+='</div>';
  }else{
   // Channel grid payments are a separate measure, never used to force the revenue headline.
   const history=r.history,ch=history&&history.ch;
   h+='<details class="yd-breakdown yd-channel-details"><summary>Channel amounts <span>Separate measure +</span></summary><p class="yd-source">These are the channel amounts stored with this dated record. They may use a different basis from the revenue above. They are not added to it.</p>';
-  if(ch&&typeof ch==='object'&&Object.keys(ch).length){Object.entries(ch).forEach(([name,v])=>{const amt=ydNumber(typeof v==='object'&&v!==null?v.amt:v);h+='<div class="yd-store"><span>'+esc(name)+'</span><b>'+SV(money(amt))+'</b></div>'});if(history.chNote)h+='<p class="yd-source">'+esc(history.chNote)+'</p>';}
+  if(ch&&typeof ch==='object'&&Object.keys(ch).length){Object.entries(ch).forEach(([name,v])=>{const amt=ydNumber(typeof v==='object'&&v!==null?v.amt:v);h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({retail:false,day:r.day,channel:name}))+'"><span>'+esc(name)+'</span><b>'+SV(money(amt))+' <i>›</i></b></button>'});if(history.chNote)h+='<p class="yd-source">'+esc(history.chNote)+'</p>';}
   else h+='<p class="yd-source">No dated channel breakdown supplied.</p>';
   h+='</details>';
  }
  const dayBefore=addD(r.day,-1),history=retail?data.retailHistory:data.history,prev=(Array.isArray(history)?history:[]).filter(x=>x&&x.d===dayBefore);
  // Do not turn an intraday snapshot versus a full-day record into a growth percentage.
- if(r.kind==='history'&&!r.partial&&!r.conflict&&prev.length===1&&prev[0].partial!==true&&ydNumber(prev[0].rev)!==null){h+='<details class="yd-previous"><summary>Previous dated record</summary><div class="yd-store"><span>'+esc(ydDate(dayBefore))+'</span><b>'+SV(inr(ydNumber(prev[0].rev)))+'</b></div><p class="yd-source">Both are recorded history amounts. No live growth claim or same-time comparison.</p></details>';}
+ if(r.kind==='history'&&!r.partial&&!r.conflict&&prev.length===1&&prev[0].partial!==true&&ydNumber(prev[0].rev)!==null){h+='<details class="yd-previous"><summary>Previous dated record</summary><button class="yd-store yd-row-link" data-d="'+esc(ydRoute({retail,day:dayBefore}))+'"><span>'+esc(ydDate(dayBefore))+'</span><b>'+SV(inr(ydNumber(prev[0].rev)))+' ›</b></button><p class="yd-source">Both are recorded history amounts. No live growth claim or same-time comparison.</p></details>';}
  return h+'</article>';
 }
 function yesterdayCompose(f,main,head){
+ if(detail&&detail.startsWith('yd:')){const q=ydDecode(detail);main.innerHTML=ydDetail(q);head.querySelector('h1').textContent=q.bill!==undefined?'Bill / order':q.store||q.channel||(q.retail?'Retail revenue':'Online revenue');const sub=head.querySelector('p');if(sub)sub.textContent=(q.retail?'Retail':'Online')+' · '+ydDate(q.day);main.classList.add('yd-detail');return;}
  if(detail||tab!=='today')return;
  const day=addD(IST(),-1),nav=document.createElement('div');nav.className='yd-view-tabs';nav.setAttribute('aria-label','Overview day');nav.innerHTML='<button data-overview-day="today" aria-pressed="'+(overviewDay==='today')+'">Today</button><button data-overview-day="yesterday" aria-pressed="'+(overviewDay==='yesterday')+'">Yesterday <small>'+esc(new Date(day+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'}))+'</small></button>';
  if(overviewDay==='yesterday'){
-  const glance=[false,true].map(retail=>{const r=yesterdayRecord(retail),channel=retail?'Retail':'Online';return '<a href="#yd-'+channel.toLowerCase()+'"><span>'+channel+'</span><b>'+SV(r.amount===null?'Unavailable':inr(r.amount))+'</b><small>'+(r.kind==='snapshot'?'Snapshot · finality unconfirmed':r.kind==='history'?'Dated history':'Not supplied')+' ↘</small></a>'}).join('');
+  const glance=[false,true].map(retail=>{const r=yesterdayRecord(retail),channel=retail?'Retail':'Online';return '<button data-d="'+esc(ydRoute({retail,day}))+'"><span>'+channel+'</span><b>'+SV(r.amount===null?'Unavailable':inr(r.amount))+'</b><small>'+(r.kind==='snapshot'?'Snapshot · finality unconfirmed':r.kind==='history'?'Dated history':'Not supplied')+' ↗</small></button>'}).join('');
   main.innerHTML='<section class="yd-view" aria-label="Yesterday revenue"><div class="yd-intro"><span>REVENUE BY SOURCE</span><h2>'+esc(ydDate(day))+'</h2><p>Online and Retail stay separate. Each amount belongs to this date only.</p></div><div class="yd-glance">'+glance+'</div>'+yesterdayCard(false)+yesterdayCard(true)+'</section>';
   head.querySelector('h1').textContent='Yesterday.';const sub=head.querySelector('p');if(sub)sub.textContent='Revenue · '+ydDate(day);
  }else{
@@ -873,7 +868,51 @@ function yesterdayCompose(f,main,head){
  }
  main.prepend(nav);
 }
-function bindYesterday(){document.querySelectorAll('[data-overview-day]').forEach(b=>b.onclick=()=>{overviewDay=b.dataset.overviewDay;render();window.scrollTo(0,0)})}
+function bindYesterday(){if(detail&&detail.startsWith('yd:')){const bk=document.querySelector('#bk');if(bk)bk.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const q=ydDecode(detail);if(q.bill!==undefined){delete q.bill;delete q.billSig;detail=ydRoute(q)}else if(q.store||q.channel){delete q.store;delete q.channel;detail=ydRoute(q)}else{detail=null;overviewDay='yesterday';tab='today'};render();window.scrollTo(0,0)},true)}document.querySelectorAll('[data-overview-day]').forEach(b=>b.onclick=()=>{overviewDay=b.dataset.overviewDay;render();window.scrollTo(0,0)})}
+function ydRoute(q){return 'yd:'+encodeURIComponent(JSON.stringify(q))}
+function ydDecode(s){try{return JSON.parse(decodeURIComponent(s.slice(3)))}catch(e){return {day:addD(IST(),-1),retail:false}}}
+function ydBills(q){
+ const r=yesterdayRecord(q.retail,q.day),h=r.history;
+ let rows=[];
+ if(q.retail&&r.kind==='snapshot'){
+  const stores=data.retail.stores||[];
+  stores.forEach(s=>{if(q.store&&s.name!==q.store)return;(Array.isArray(s.billList)?s.billList:[]).forEach(b=>rows.push({...b,store:s.name}))});
+ }else if(h){
+  if(q.retail&&h.by&&q.store){const s=h.by[q.store];rows=s&&Array.isArray(s.billList)?s.billList.map(b=>({...b,store:q.store})):[]}
+  else if(Array.isArray(h.billList))rows=h.billList;
+  else if(q.retail&&h.by)Object.entries(h.by).forEach(([store,s])=>(Array.isArray(s.billList)?s.billList:[]).forEach(b=>rows.push({...b,store})));
+ }
+ if(q.channel)rows=rows.filter(b=>b.ch===q.channel);
+ return rows;
+}
+function ydDetail(q){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(q.day)||q.day>=IST())return '<p class="yd-caveat">No past-date record selected.</p>';
+ const r=yesterdayRecord(q.retail,q.day),money=v=>ydNumber(v)===null?'Unavailable':inr(ydNumber(v)),bills=ydBills(q);
+ if(q.bill!==undefined){
+  const b=bills[q.bill];if(!b||q.billSig!==JSON.stringify([b.no,b.store,b.ch,b.amt,b.time,b.t]))return '<p class="yd-caveat">This bill or order is not supplied in this dated record.</p>';
+  let h='<section class="yd-drill-summary"><h2>'+SV(esc(String(b.no||'Number unavailable')))+'</h2><p class="yd-source">'+esc(ydDate(q.day))+(b.store?' · '+SV(esc(b.store)):'')+(b.ch?' · '+esc(b.ch):'')+'</p><b class="yd-amount">'+SV(money(b.amt))+'</b><p class="yd-caveat">'+(q.retail?'Recorded bill amount':'Recorded order-grid payment · not dashboard revenue')+'</p>'+(b.time?'<p class="yd-source">Time: '+esc(b.time)+'</p>':'')+(b.st?'<p class="yd-source">Status: '+esc(b.st)+'</p>':'')+'</section><h2>Supplied items</h2>';
+  if(Array.isArray(b.items)&&b.items.length)h+=b.items.map(x=>'<div class="yd-store"><span>'+SV(esc(x.sku||x.name||'Item'))+'<small>Quantity: '+SV(ydNumber(x.qty)===null?'Unknown':String(ydNumber(x.qty)))+'</small></span><b>'+SV(money(x.amt))+'</b></div>').join('');
+  else h+='<p class="yd-source">Item detail is not supplied for this bill/order. No item amounts are inferred.</p>';
+  return h;
+ }
+ let amount=r.amount,count=r.count,units=r.units;
+ if(q.store){const row=(r.rows||[]).find(x=>x.name===q.store);amount=row?row.amount:null;count=row?row.count:null;units=row?row.units:null;}
+ if(q.channel){const v=r.history&&r.history.ch&&r.history.ch[q.channel];amount=ydNumber(v&&typeof v==='object'?v.amt:v);count=ydNumber(r.history&&r.history.chOrders&&r.history.chOrders[q.channel]);units=null;}
+ let h='<section class="yd-drill-summary"><p class="yd-source">'+esc(ydDate(q.day))+'</p><b class="yd-amount">'+SV(money(amount))+'</b><p class="yd-caveat">'+(q.channel?'Channel-grid amount · separate from revenue':r.kind==='snapshot'?'Snapshot only · not confirmed final':r.kind==='history'?'Dated history · finality not supplied':'No dated record supplied')+'</p><div class="yd-metrics"><span><b>'+SV(count===null?'Unknown':String(count))+'</b><small>'+(q.retail?'bills':'orders')+'</small></span><span><b>'+SV(units===null?'Unknown':String(units))+'</b><small>'+(q.retail?'units':'items')+'</small></span></div>'+(r.time?'<p class="yd-source">Read '+esc(String(r.time).replace(/^Read\s+/i,''))+'</p>':'')+'</section>';
+ if(r.conflict)h+='<p class="yd-caveat">Dated history has a different amount. This is the source snapshot; the two are not merged.</p>';
+ if(r.partial)h+='<p class="yd-caveat">Partial dated history · coverage incomplete.</p>';
+ if(q.channel&&r.history&&r.history.chNote)h+='<p class="yd-source">'+esc(r.history.chNote)+'</p>';
+ if(q.retail&&!q.store){h+='<h2>By store</h2>';(r.rows||[]).forEach(x=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({...q,store:x.name}))+'"><span>'+SV(esc(x.name))+'</span><b>'+SV(money(x.amount))+' ›</b></button>'})}
+ if(!q.retail&&!q.channel){
+  const ch=r.history&&r.history.ch;h+='<h2>Channel amounts</h2><p class="yd-source">Channel-grid amounts are a separate measure, not added to dashboard revenue.</p>';
+  if(ch&&Object.keys(ch).length)Object.entries(ch).forEach(([name,v])=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({...q,channel:name}))+'"><span>'+esc(name)+'</span><b>'+SV(money(v&&typeof v==='object'?v.amt:v))+' ›</b></button>'});
+  else h+='<p class="yd-source">No dated channel amounts supplied.</p>';
+ }
+ h+='<h2>Supplied '+(q.retail?'bills':'orders')+' ('+bills.length+')</h2><p class="yd-source">This is the list supplied with this exact date, not a claim of complete coverage. It may not add up to the headline.</p>';
+ if(bills.length)bills.forEach((b,i)=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({...q,bill:i,billSig:JSON.stringify([b.no,b.store,b.ch,b.amt,b.time,b.t])}))+'"><span>'+SV(esc(String(b.no||'Number unavailable')))+'<small>'+esc([b.store,b.ch,b.st].filter(Boolean).join(' · '))+'</small></span><b>'+SV(money(b.amt))+' ›</b></button>'});
+ else h+='<p class="yd-caveat">'+(q.retail?'Bill':'Order')+' detail is not supplied for this date'+(q.store?' and store':q.channel?' and channel':'')+'. No other date is substituted.</p>';
+ return h;
+}
 
 function render(){return haloRender()}
 function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}

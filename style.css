@@ -1742,3 +1742,17 @@ body.lay-halo.noanim .halo-menu-symbol i{transition:none!important}
 .yd-glance a{display:flex;flex-direction:column;gap:10px;padding:16px 12px;border:1px solid var(--atelier-line);border-radius:16px;text-decoration:none;background:var(--atelier-wash);color:var(--ink);min-width:0}
 .yd-glance a>span{font-size:14px;font-weight:600}.yd-glance b{font-size:25px;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.yd-glance small{font-size:11px;line-height:1.5;color:var(--ink2)}
 @media(max-width:350px){.yd-glance{gap:8px}.yd-glance a{padding:14px 8px}.yd-glance b{font-size:21px}}
+/* One top arrow. It never competes with the expanded navigation. */
+body.lay-halo .bj-top{display:none!important}
+body.lay-halo #totop{right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70}
+body.lay-halo.halo-menu-open #totop{opacity:0!important;pointer-events:none!important;visibility:hidden!important}
+.yd-value-link,.yd-row-link{color:var(--ink);background:none;border:0;border-radius:0;cursor:pointer;text-align:left;width:100%;font-family:inherit}
+:root[data-th] body.lay-halo .yd-value-link{padding:0;display:block;font-size:38px;line-height:1.2;min-height:60px}
+.yd-value-link small{display:block;font-size:12px;line-height:1.5;font-weight:500;letter-spacing:0;color:var(--atelier-gold);margin-top:10px}
+:root[data-th] body.lay-halo .yd-row-link{border-bottom:1px solid var(--atelier-line);border-radius:0;min-height:58px;padding:16px 0;box-shadow:none}
+.yd-row-link i{font-style:normal;color:var(--atelier-gold);margin-left:4px}
+.yd-glance button{display:flex;flex-direction:column;gap:10px;padding:16px 12px;border:1px solid var(--atelier-line);border-radius:16px;background:var(--atelier-wash);color:var(--ink);min-width:0;text-align:left;cursor:pointer}
+.yd-glance button>span{font-size:14px;font-weight:600}.yd-glance button>small{font-size:11px;line-height:1.5;color:var(--ink2)}
+.yd-drill-summary{padding:0 0 20px!important;border-bottom:1px solid var(--atelier-line)}
+.yd-detail{padding-bottom:20px}.yd-detail>h2{font-size:20px!important;margin-top:26px!important}
+@media(max-width:350px){.yd-glance button{padding:14px 8px}.yd-value-link{font-size:33px!important}}
