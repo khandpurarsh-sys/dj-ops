@@ -348,12 +348,12 @@ function topSalesToday(){
 
 /* Device-local theme choices. Existing Halo modes remain unchanged. */
 function haloThemeInfo(mode){
- const themes={burgundy:['Burgundy','Wine, blush & antique gold'],heritage:['Heritage','Tailored navy, cream & brass'],racing:['Racing Green','Deep green, chalk & brass'],espresso:['Espresso','Coffee, parchment & warm bronze'],slate:['Slate','Blue-grey, porcelain & silver']};
+ const themes={club:['Green Check','Cream, deep green & a woven check'],clubwine:['Burgundy Check','Cream, deep wine & a woven check'],burgundy:['Burgundy','Wine, blush & antique gold'],heritage:['Heritage','Tailored navy, cream & brass'],racing:['Racing Green','Deep green, chalk & brass'],espresso:['Espresso','Coffee, parchment & warm bronze'],slate:['Slate','Blue-grey, porcelain & silver']};
  const legacy={light:{base:'halo',ground:'#f2f5f9'},dark:{base:'halo-dark',ground:'#102039'},onyx:{base:'halo-onyx',ground:'#101011'}};
  if(legacy[mode])return {...legacy[mode],palette:'',mode};
  const key=String(mode||'').replace(/-(light|dark)$/,''),dark=String(mode).endsWith('-dark');
  if(!themes[key]||!new RegExp('^'+key+'-(light|dark)$').test(mode))return {...legacy.light,palette:'',mode:'light'};
- const ground={burgundy:['#faf4f2','#251019'],heritage:['#f7f2e8','#0c2135'],racing:['#f1f4ed','#10271f'],espresso:['#f5eee5','#241b17'],slate:['#eef1f4','#1a222c']}[key][dark?1:0];
+ const ground={club:['#f6f1e6','#081610'],clubwine:['#f8f1ed','#1a080f'],burgundy:['#faf4f2','#251019'],heritage:['#f7f2e8','#0c2135'],racing:['#f1f4ed','#10271f'],espresso:['#f5eee5','#241b17'],slate:['#eef1f4','#1a222c']}[key][dark?1:0];
  return {base:dark?'halo-dark':'halo',palette:key,mode,dark,ground,name:themes[key][0],description:themes[key][1]};
 }
 function haloThemeSettings(main){
@@ -362,7 +362,7 @@ function haloThemeSettings(main){
  existing.classList.add('halo-original-themes');existing.setAttribute('aria-label','Original Halo themes');
  existing.querySelectorAll('[data-hm]').forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('on'))));
  const wrap=document.createElement('div');wrap.className='halo-theme-collection';
- wrap.innerHTML='<p class="halo-theme-help">Five new palettes, each in Light and Dark. Your existing Halo themes stay above. Saved on this device.</p>'+['burgundy','heritage','racing','espresso','slate'].map(key=>{
+ wrap.innerHTML='<p class="halo-theme-help">Seven new palettes, each in Light and Dark. Your existing Halo themes stay above. Saved on this device.</p>'+['burgundy','heritage','racing','espresso','slate','club','clubwine'].map(key=>{
   const info=haloThemeInfo(key+'-light');return '<section class="halo-theme-row"><div><h3>'+info.name+'</h3><p>'+info.description+'</p></div><div class="halo-theme-pair" role="group" aria-label="'+info.name+' theme">'+['light','dark'].map(tone=>{const mode=key+'-'+tone,on=LS.getItem('dj_halo_mode')===mode;return '<button data-hm="'+mode+'" class="'+(on?'on':'')+'" aria-pressed="'+on+'" aria-label="'+info.name+' '+tone+'"><i class="halo-theme-swatch" data-swatch="'+mode+'" aria-hidden="true"></i><span>'+ (tone==='light'?'Light':'Dark')+'</span><b aria-hidden="true">'+(on?'✓':'')+'</b></button>'}).join('')+'</div></section>'}).join('');
  existing.after(wrap);
 }
