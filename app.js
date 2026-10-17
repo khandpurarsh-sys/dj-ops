@@ -579,7 +579,7 @@ function bindInsightDesk(){
 }
 
 /* Presentation-only: one evidence lane at a time, complete detail on demand. */
-let cleanInsightLane='daily';
+let cleanInsightLane='research';
 function cleanInsights(main){
  main.classList.add('hi-clean');
  const intro=main.querySelector('.hi-intro'),tools=main.querySelector('.hi-desk-tools'),jump=main.querySelector('.hi-jump'),top=main.querySelector('.hi-top-moves'),exp=main.querySelector('#hi-expansion'),business=main.querySelector('#hi-business'),pub=main.querySelector('#hi-public'),baseline=main.querySelector('.hi-store-baseline');
@@ -587,7 +587,7 @@ function cleanInsights(main){
  // Retain every original introduction, shortlist, warning and saved-data note, folded once.
  if(intro)readerNote.append(intro);if(jump)readerNote.append(jump);if(top)readerNote.append(top);
  const info=tools?.querySelector(':scope>p');if(info)readerNote.append(info);
- const nav=document.createElement('nav');nav.className='hi-clean-tabs';nav.setAttribute('aria-label','Insight evidence');nav.innerHTML=[['daily','Today'],['research','Next store'],['retail','Retail'],['online','Online']].map(([k,label])=>'<button data-hi-lane="'+k+'" aria-pressed="'+(cleanInsightLane===k)+'">'+label+'</button>').join('');
+ const nav=document.createElement('nav');nav.className='hi-clean-tabs';nav.setAttribute('aria-label','Insight evidence');nav.innerHTML=[['research','Next store'],['daily','Today'],['retail','Retail'],['online','Online']].map(([k,label])=>'<button data-hi-lane="'+k+'" aria-pressed="'+(cleanInsightLane===k)+'">'+label+'</button>').join('');
  main.prepend(nav);if(tools)nav.after(tools);if(tools)tools.after(readerNote);else nav.after(readerNote);
  if(exp){exp.dataset.hiLane='research';const title=exp.querySelector('.hi-section-title');if(title){const original=document.createElement('div');original.className='hi-section-title';['small','h2'].forEach(sel=>{const e=title.querySelector(':scope>'+sel);if(e)original.append(e.cloneNode(true))});readerNote.append(original);title.querySelector('small').textContent='PUBLIC RESEARCH';title.querySelector('h2').remove();}
   const list=exp.querySelector('.hi-exp-summary'),method=exp.querySelector('.hi-ranking-method');if(list&&method)method.append(list);if(method)readerNote.append(method);
