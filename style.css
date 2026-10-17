@@ -1756,3 +1756,59 @@ body.lay-halo.halo-menu-open #totop{opacity:0!important;pointer-events:none!impo
 .yd-drill-summary{padding:0 0 20px!important;border-bottom:1px solid var(--atelier-line)}
 .yd-detail{padding-bottom:20px}.yd-detail>h2{font-size:20px!important;margin-top:26px!important}
 @media(max-width:350px){.yd-glance button{padding:14px 8px}.yd-value-link{font-size:33px!important}}
+/* Insights: one quiet source lane, open rows, detail on demand. */
+:root[data-th] body.lay-halo .hi-clean :is(.hi-card,.hi-top-moves,.hi-public-card,.hi-clean-guide,.hi-desk-tools){border-radius:0;background:transparent;box-shadow:none}
+.hi-clean-lead{padding:4px 0 20px}.hi-clean-lead>p{font-size:25px;font-weight:600;letter-spacing:-.03em;margin:0 0 10px}.hi-clean-lead>span{font-size:14px;line-height:1.6;color:var(--ink2)}
+.hi-clean-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-bottom:1px solid var(--atelier-line);margin:0 0 18px}
+:root[data-th] body.lay-halo .hi-clean-tabs button{min-height:48px;border:0;border-radius:0;padding:8px 2px;color:var(--ink2);background:transparent;font-size:14px;font-weight:500}
+:root[data-th] body.lay-halo .hi-clean-tabs button[aria-pressed=true]{color:var(--atelier-gold);border-bottom:2px solid var(--atelier-gold);font-weight:650}
+:root[data-th] body.lay-halo .hi-clean .hi-desk-tools{padding:0;margin:0 0 14px;border:0;position:static;backdrop-filter:none;-webkit-backdrop-filter:none}
+.hi-clean .hi-desk-tools>div[role=group]{display:flex;gap:18px}
+:root[data-th] body.lay-halo .hi-clean .hi-desk-tools button{min-height:40px;padding:8px 0;border:0;border-radius:0;box-shadow:none;background:transparent;color:var(--ink2);font-size:13px}
+:root[data-th] body.lay-halo .hi-clean .hi-desk-tools button[aria-pressed=true]{color:var(--atelier-gold);font-weight:600}
+.hi-clean-guide{border:0;border-bottom:1px solid var(--atelier-line);padding:0 0 14px;margin:0 0 28px;color:var(--ink2)}
+.hi-clean-guide>summary{min-height:40px;display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:13px;cursor:pointer}.hi-clean-guide[open]>:not(summary){margin-top:16px}
+:root[data-th] body.lay-halo .hi-clean .hi-section-title{padding:0;margin:0 0 18px}
+:root[data-th] body.lay-halo .hi-clean .hi-section-title h2{font-size:27px;margin:10px 0}
+.hi-clean .hi-section-title>small{font-size:10px;letter-spacing:.13em}
+.hi-clean .hi-section-title>p{font-size:13px;line-height:1.6}
+:root[data-th] body.lay-halo .hi-clean .hi-card{padding:22px 0;margin:0;border:0;border-top:1px solid var(--atelier-line)}
+.hi-clean .hi-kicker{margin:0 0 10px}.hi-clean .hi-kicker>span{font-size:10px;letter-spacing:.07em}.hi-clean .hi-kicker>i{display:none}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2{margin:0 0 10px;font-size:22px;line-height:1.25}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2>button{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;width:100%;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button i{border:0;background:none;color:var(--atelier-gold);font-size:20px;min-width:24px}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button span span{font-size:15px;line-height:1.6;color:var(--ink2);font-weight:400}
+:root[data-th] body.lay-halo .hi-clean .hi-brief{font-size:14px;line-height:1.55;margin:0 0 12px;color:var(--ink2)}
+.hi-clean .hi-exp-verdict{font-size:13px;line-height:1.5;margin:0 0 10px;color:var(--ink2)}
+:root[data-th] body.lay-halo .hi-clean .hi-card>.hi-reader{margin:0;padding:0;border:0;border-radius:0;background:none}
+:root[data-th] body.lay-halo .hi-clean .hi-card>.hi-reader>summary{padding:8px 0;min-height:35px;border:0;border-radius:0;background:transparent;color:var(--atelier-gold);font-size:12px;font-weight:500}
+.hi-clean .hi-reader-body{padding:12px 0}.hi-clean-meta{padding:0 0 15px;border-bottom:1px solid var(--atelier-line);margin-bottom:16px}
+.hi-clean .hi-choice{gap:14px}.hi-clean .hi-choice button{background:none!important;box-shadow:none!important;border-radius:0!important}
+:root[data-th] body.lay-halo .hi-clean .hi-depth{background:transparent;border-radius:0;border:0;border-bottom:1px solid var(--atelier-line);margin:0;padding:0}
+:root[data-th] body.lay-halo .hi-clean .hi-depth>summary{font-size:14px;min-height:48px;background:transparent;border:0;padding:10px 0}
+.hi-clean .hi-card[hidden],.hi-clean [data-hi-lane][hidden],.hi-clean #hi-business[hidden]{display:none!important}
+.hi-clean-notes{margin-top:26px}.hi-clean .hi-reader-body :is(p,li){font-size:14px;line-height:1.65}
+/* No nested entry effects or observer-driven number effects on the Insights screen. */
+body.lay-halo .hi-clean *,body.lay-halo .hi-clean *::before,body.lay-halo .hi-clean *::after{animation:none!important;transition:none!important}
+body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
+:root[data-th] body.lay-halo .hi-clean-lead{padding:0 0 12px}
+:root[data-th] body.lay-halo .hi-clean-lead>p{font-size:20px;margin:0;line-height:1.4}
+:root[data-th] body.lay-halo .hi-clean .hi-desk-tools{margin-bottom:5px}
+:root[data-th] body.lay-halo .hi-clean-guide{padding-bottom:8px;margin-bottom:20px}
+:root[data-th] body.lay-halo .hi-clean .hi-section-title{margin-bottom:12px}
+:root[data-th] body.lay-halo .hi-clean .hi-section-title h2{font-size:24px;margin:8px 0}
+:root[data-th] body.lay-halo .hi-clean .hi-ranking-method{margin:6px 0 16px}
+:root[data-th] body.lay-halo .hi-clean .hi-ranking-method>summary{font-size:12px;min-height:30px;padding:4px 0}
+
+:root[data-th] body.lay-halo .hi-clean :is(.hi-desk-tools button,.hi-clean-guide>summary,.hi-ranking-method>summary,.hi-card>.hi-reader>summary){min-height:44px}
+/* Grouping, not smaller type, does the decluttering. */
+:root[data-th] body.lay-halo .hi-clean .hi-section-title h2{font-size:25px}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2{font-size:24px}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button span span{font-size:24px}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button i{font-size:21px}
+:root[data-th] body.lay-halo .hi-clean .hi-brief{font-size:16px}
+:root[data-th] body.lay-halo .hi-clean .hi-kicker>span{font-size:12px}
+:root[data-th] body.lay-halo .hi-clean-guide>summary{font-size:16px}
+:root[data-th] body.lay-halo .hi-clean .hi-ranking-method>summary{font-size:13px}
+:root[data-th] body.lay-halo .hi-clean .hi-card>h2,:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button span span{font-size:26px}
+@media(max-width:350px){:root[data-th] body.lay-halo .hi-clean .hi-card>h2,:root[data-th] body.lay-halo .hi-clean .hi-card>h2 button span span{font-size:24px}}

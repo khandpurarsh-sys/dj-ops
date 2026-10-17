@@ -433,6 +433,53 @@ function bindInsightDesk(){
  root.querySelectorAll('[data-hi-jump]').forEach(b=>b.onclick=()=>{const e=document.getElementById(b.dataset.hiJump);if(e){e.querySelector('details').open=true;const heading=e.querySelector('h2 button');if(heading)heading.setAttribute('aria-expanded','true');e.scrollIntoView({block:'start',behavior:'instant'})}});
 }
 
+/* Presentation-only: one evidence lane at a time, complete detail on demand. */
+let cleanInsightLane='research';
+function cleanInsights(main){
+ main.classList.add('hi-clean');
+ const intro=main.querySelector('.hi-intro'),tools=main.querySelector('.hi-desk-tools'),jump=main.querySelector('.hi-jump'),top=main.querySelector('.hi-top-moves'),exp=main.querySelector('#hi-expansion'),business=main.querySelector('#hi-business'),pub=main.querySelector('#hi-public'),baseline=main.querySelector('.hi-store-baseline');
+ const readerNote=document.createElement('details');readerNote.className='hi-clean-guide';readerNote.innerHTML='<summary>About these ideas &amp; your shortlist <span>+</span></summary>';
+ // Retain every original introduction, shortlist, warning and saved-data note, folded once.
+ if(intro)readerNote.append(intro);if(jump)readerNote.append(jump);if(top)readerNote.append(top);
+ const info=tools?.querySelector(':scope>p');if(info)readerNote.append(info);
+ const nav=document.createElement('nav');nav.className='hi-clean-tabs';nav.setAttribute('aria-label','Insight evidence');nav.innerHTML=[['research','Next store'],['retail','Retail'],['online','Online']].map(([k,label])=>'<button data-hi-lane="'+k+'" aria-pressed="'+(cleanInsightLane===k)+'">'+label+'</button>').join('');
+ main.prepend(nav);if(tools)nav.after(tools);if(tools)tools.after(readerNote);else nav.after(readerNote);
+ if(exp){exp.dataset.hiLane='research';const title=exp.querySelector('.hi-section-title');if(title){const original=document.createElement('div');original.className='hi-section-title';['small','h2'].forEach(sel=>{const e=title.querySelector(':scope>'+sel);if(e)original.append(e.cloneNode(true))});readerNote.append(original);title.querySelector('small').textContent='PUBLIC RESEARCH';title.querySelector('h2').remove();}
+  const list=exp.querySelector('.hi-exp-summary'),method=exp.querySelector('.hi-ranking-method');if(list&&method)method.append(list);if(method)readerNote.append(method);
+ }
+ if(pub){pub.dataset.hiLane='research';const fold=document.createElement('details');fold.className='hi-clean-guide';fold.innerHTML='<summary>Public context &amp; source notes <span>+</span></summary>';while(pub.firstChild)fold.append(pub.firstChild);pub.append(fold);}
+ if(baseline&&business){baseline.dataset.hiLane='retail';business.append(baseline);}
+ main.querySelectorAll('.hi-card').forEach(el=>{
+  const key=el.dataset.hiId,lane=el.dataset.hiKind==='expansion'?'research':key==='idea-wedding-channels'?'online':'retail';el.dataset.hiLane=lane;
+  const reader=el.querySelector('.hi-reader'),body=reader?.querySelector('.hi-reader-body');if(!reader||!body)return;
+  // Title + one sentence in the list. All controls and metadata live inside its reader.
+  const brief=el.querySelector(':scope>.hi-brief,:scope>.hi-summary');
+  const meta=document.createElement('div');meta.className='hi-clean-meta';
+  ['.hi-effort','.hi-visible-source','.hi-choice'].forEach(sel=>{const e=el.querySelector(':scope>'+sel);if(e)meta.append(e)});
+  body.prepend(meta);
+  const verdict=el.querySelector(':scope>.hi-exp-verdict');if(verdict){const short=document.createElement('p');short.className='hi-brief';short.textContent=verdict.textContent;if(brief){reader.before(short);body.prepend(brief);}else reader.before(short);body.prepend(verdict);}
+  const originalSummary=reader.querySelector(':scope>summary');if(originalSummary){originalSummary.textContent='Evidence, plan & actions';originalSummary.setAttribute('aria-label','Details for '+el.querySelector('h2').textContent.trim());}
+ });
+ if(business){const title=business.querySelector('.hi-section-title');if(title){readerNote.append(title.cloneNode(true));title.querySelector('small').textContent=cleanInsightLane==='online'?'ONLINE EVIDENCE':'RETAIL EVIDENCE';const p=title.querySelector('p');if(p)p.textContent=cleanInsightLane==='online'?'Online-led tests. Retail totals are not used as online results.':'Store-led tests. Each source keeps its own read time.';}}
+ // Lane filtering is presentation state, not a change to saved/hidden ideas.
+ [exp,pub].filter(Boolean).forEach(e=>e.hidden=cleanInsightLane!=='research'||hiDeskView==='saved'&&e.id==='hi-public');
+ if(business)business.hidden=cleanInsightLane==='research';
+ main.querySelectorAll('.hi-card').forEach(el=>{const state=hiDeskState()[el.dataset.hiId]||{};el.hidden=el.dataset.hiLane!==cleanInsightLane||!!state.hidden||(hiDeskView==='saved'&&!state.saved)});
+ if(baseline)baseline.hidden=cleanInsightLane!=='retail'||hiDeskView==='saved';
+ const visibleCards=[...main.querySelectorAll('.hi-card')].filter(e=>!e.hidden);if(exp&&hiDeskView==='saved'&&!visibleCards.some(e=>e.dataset.hiLane==='research'))exp.hidden=true;const globalEmpty=main.querySelector('.hi-empty');if(globalEmpty)globalEmpty.remove();if(!visibleCards.length){const empty=document.createElement('p');empty.className='hi-empty';empty.textContent=hiDeskView==='saved'?'No saved ideas in this section. Choose another section or use All ideas.':'No visible ideas in this section. Hidden ideas can be restored below.';readerNote.after(empty);}
+ const disclaimer=main.querySelector('.hi-disclaimer');if(disclaimer){const d=document.createElement('details');d.className='hi-clean-guide hi-clean-notes';d.innerHTML='<summary>Coverage, prices &amp; execution limits <span>+</span></summary>';disclaimer.before(d);d.append(disclaimer);}
+ // Source jumps reveal their destination lane before opening the existing reader.
+ main.querySelectorAll('[data-hi-jump]').forEach(b=>{const e=main.querySelector('#'+CSS.escape(b.dataset.hiJump));if(e)b.dataset.cleanLane=e.dataset.hiLane||'research'});
+}
+function bindCleanInsights(){
+ if(detail!=='halo:Insights')return;
+ root.querySelectorAll('button[data-hi-lane]').forEach(b=>b.onclick=()=>{cleanInsightLane=b.dataset.hiLane;render();window.scrollTo(0,0)});
+ root.querySelectorAll('[data-hi-jump]').forEach(b=>{
+  b.onclick=()=>{const id=b.dataset.hiJump,lane=b.dataset.cleanLane;if(lane&&lane!==cleanInsightLane){cleanInsightLane=lane;render();}const el=document.getElementById(id);if(!el)return;const reader=el.querySelector('.hi-reader');if(reader){reader.open=true;el.querySelector('h2 button')?.setAttribute('aria-expanded',String(reader.open));}el.scrollIntoView({block:'start',behavior:'instant'});};
+ });
+ root.querySelectorAll('.hi-jump a').forEach(a=>a.onclick=e=>{const id=a.getAttribute('href').slice(1),lane=id==='hi-business'?'retail':'research';e.preventDefault();cleanInsightLane=lane;render();document.getElementById(id)?.scrollIntoView({block:'start',behavior:'instant'})});
+}
+
 function haloExpansion(){
  const out=(u,n)=>'<a target="_blank" rel="noopener noreferrer" href="'+u+'">'+n+' ↗</a>';
  const safe=x=>SV(esc(String(x))),src='Research checked 16 Oct 2026';
@@ -517,7 +564,7 @@ function haloCompose(html){
 
   if(search){const box=search.closest('section')||search;const finder=document.createElement('details');finder.className='halo-finder';finder.innerHTML='<summary>Find something <span aria-hidden="true">+</span></summary>';grid?grid.after(finder):box.before(finder);finder.append(box);}
  }
- if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();haloInsightDesk(main);main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
+ if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();haloInsightDesk(main);cleanInsights(main);main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
  const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights')rail.append(insightLink);
  if(detail){const hero=main.querySelector('.hero,.glass');if(hero)hero.classList.add('halo-detail-focus');}
  
@@ -538,7 +585,7 @@ function haloRender(){
  haloTransition=transition;transition.ready.catch(()=>{});transition.updateCallbackDone.catch(()=>{});transition.finished.catch(()=>{}).finally(()=>{if(haloTransition!==transition)return;haloTransition=null;document.querySelectorAll('[data-halo-morph]').forEach(e=>{e.style.viewTransitionName='';e.removeAttribute('data-halo-morph')})});
 }
 function bindHalo(){
- bindInsightDesk();atelierBind();bindFloatingMenu();bindYesterday();
+ bindInsightDesk();bindCleanInsights();atelierBind();bindFloatingMenu();bindYesterday();
  if(!haloOn())return;
  root.querySelectorAll('[data-hi-route]').forEach(b=>b.onclick=()=>{tab=b.dataset.hiRoute;if(tab==='best')tsChannel='retail';if(tab==='stock')sv='retail';detail=null;render();window.scrollTo(0,0)});
  const pair=root.querySelector('.halo-pair');if(pair){
