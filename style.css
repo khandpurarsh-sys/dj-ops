@@ -1629,3 +1629,11 @@ body.lay-halo .halo-map-choices button{width:100%;text-align:left}
 body.bj-offline #rf{opacity:.45}
 @media (prefers-reduced-motion:reduce){.bj-top,.halo-bottom-nav,.bj-skip{transition:none}#rf.bj-busy svg{animation:none}}
 body.noanim .bj-top,body.noanim .halo-bottom-nav,body.noanim .bj-skip{transition:none}
+/* Flash fix: never fade the painted page canvas when the render shell is replaced. */
+html[data-th=halo]{background:#f2f5f9}
+html[data-th=halo-dark]{background:#102039}
+html[data-th=halo-onyx]{background:#101011}
+body.lay-halo .app{animation:none}
+/* Keep the outgoing opaque page beneath the incoming page throughout the dissolve. */
+:root:has(body.lay-halo)::view-transition-old(root){opacity:1!important;animation:none;z-index:1}
+:root:has(body.lay-halo)::view-transition-new(root){z-index:2}
