@@ -1227,3 +1227,405 @@ html:has(body.lay-halo.swipe-r)::view-transition-new(root){animation:airNewR .46
 @keyframes airOldR{to{opacity:0;transform:translate3d(11%,0,0)}}
 @keyframes airNewR{from{opacity:0;transform:translate3d(-16%,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 @media(prefers-reduced-motion:reduce){html:has(body.lay-halo.swipe-l)::view-transition-old(root),html:has(body.lay-halo.swipe-l)::view-transition-new(root),html:has(body.lay-halo.swipe-r)::view-transition-old(root),html:has(body.lay-halo.swipe-r)::view-transition-new(root){animation:none!important}}
+
+/* ===== Motion layer (CSS half). Every rule honours reduced motion via the guard at the end. ===== */
+@keyframes airRise{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes airPop{0%{opacity:0;transform:scale(.86)}70%{transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
+@keyframes airFade{from{opacity:0}to{opacity:1}}
+@keyframes airSlideL{from{opacity:0;transform:translate3d(-14px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes airSlideR{from{opacity:0;transform:translate3d(14px,0,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes airGrowY{from{opacity:0;transform:scaleY(.6);transform-origin:top}to{opacity:1;transform:scaleY(1)}}
+@keyframes airBarX{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1)}}
+@keyframes airDraw{from{stroke-dashoffset:var(--dash,400)}to{stroke-dashoffset:0}}
+@keyframes airSpin{to{transform:rotate(360deg)}}
+@keyframes airPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes airSheen{from{transform:translateX(-130%) skewX(-18deg)}to{transform:translateX(230%) skewX(-18deg)}}
+@keyframes airShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes airShimmer{from{background-position:-200px 0}to{background-position:200px 0}}
+@keyframes airSway{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@keyframes airFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* A01 boot fade-in of the whole app */
+body.lay-halo .app{animation:airFade .45s ease both}
+/* A02 section title rise on enter */
+body.lay-halo main h1,body.lay-halo main h2{animation:airRise .34s cubic-bezier(.16,1,.3,1) both}
+/* A03 scene-nav fade on section change */
+body.lay-halo .halo-scene-nav{animation:airFade .3s ease both}
+/* A04 scene-nav buttons: nudge on press */
+body.lay-halo .halo-scene-nav button{transition:transform .18s cubic-bezier(.2,1.4,.4,1),color .18s}
+body.lay-halo .halo-scene-nav button:active{transform:translateX(3px) scale(.96)}
+/* A05 header brand sheen once on load */
+body.lay-halo .halo-brand{position:relative;overflow:hidden;border-radius:12px}
+body.lay-halo .halo-brand::after{content:'';position:absolute;top:-20%;bottom:-20%;width:45%;background:linear-gradient(90deg,transparent,#ffffff22,transparent);animation:airSheen 1.4s ease .3s both;pointer-events:none}
+/* A06 header refresh: press spring */
+body.lay-halo .halo-refresh{transition:transform .2s cubic-bezier(.2,1.6,.4,1),box-shadow .2s}
+body.lay-halo .halo-refresh:active{transform:scale(.88) rotate(-24deg)}
+/* A07 refresh spinning while checking (class set by JS hook in better.js) */
+body.lay-halo .halo-refresh.spinning svg,body.lay-halo .halo-refresh.spinning{animation:airSpin .8s linear infinite}
+/* A08 header Insights link arrow slide */
+body.lay-halo .halo-insights-link{transition:transform .2s cubic-bezier(.2,1.4,.4,1),background .2s,border-color .2s}
+body.lay-halo .halo-insights-link:active{transform:translateX(4px) scale(.95)}
+/* A09 bottom dock icon bounce on section switch */
+body.lay-halo .halo-bottom-nav button[aria-current=page] svg{animation:airPop .38s cubic-bezier(.2,1.6,.4,1)}
+/* A10 dock button press spring */
+body.lay-halo .halo-bottom-nav button{transition:transform .18s cubic-bezier(.2,1.4,.4,1),background .22s,color .18s}
+body.lay-halo .halo-bottom-nav button:active{transform:scale(.9)}
+/* A11 dock active background soft settle */
+body.lay-halo .halo-bottom-nav button[aria-current=page]{transition:background .3s cubic-bezier(.2,.9,.3,1),color .25s}
+/* A12 swipe hint gentle sway */
+body.lay-halo .halo-swipe-hint{animation:airSway 3.2s ease-in-out 1.2s 2}
+/* A13 pair controls underline: animate the active underline in */
+body.lay-halo .halo-pair-controls button{position:relative;transition:color .22s,border-color .3s cubic-bezier(.2,.9,.3,1)}
+body.lay-halo .halo-pair-controls button[aria-pressed=true]{animation:airFade .25s ease}
+/* A14 pair KPI values cross-fade when Revenue/Activity flips (extends existing JS tween) */
+body.lay-halo .halo-pair .halo-kpi>*{transition:opacity .2s ease}
+/* A15 KPI open-details arrow nudge */
+body.lay-halo .halo-pair-open{transition:transform .2s cubic-bezier(.2,1.4,.4,1),color .2s;display:inline-block}
+body.lay-halo .halo-kpi:active .halo-pair-open{transform:translate(3px,-3px)}
+/* A16 asof stale pulse */
+body.lay-halo .asof.stale{animation:airPulse 2.6s ease-in-out infinite}
+/* A17 pair hairline draw on enter */
+body.lay-halo .halo-kpis.halo-pair{border-bottom-color:var(--atelier-line);animation:airFade .4s ease both}
+/* A18 order rows enter stagger */
+body.lay-halo .ol .order{animation:airRise .4s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*34ms)}
+/* A19 order row press compress */
+body.lay-halo .order{transition:transform .18s cubic-bezier(.2,1.4,.4,1),background .2s}
+body.lay-halo .order:active{transform:scale(.985)}
+/* A20 status chip pop on render */
+body.lay-halo .order .st{animation:airPop .34s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(var(--i,0)*34ms + 90ms)}
+/* A21 tiles enter stagger */
+body.lay-halo .grid2 .tile{animation:airRise .38s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*40ms)}
+/* A22 tile press spring */
+body.lay-halo .tile{transition:transform .2s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .tile:active{transform:scale(.97)}
+/* A23 sellers product rows enter stagger */
+body.lay-halo .ts-product{animation:airRise .36s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*30ms)}
+/* A24 sellers row press */
+body.lay-halo .ts-product>summary{transition:background .2s,opacity .2s,transform .18s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .ts-product>summary:active{transform:scale(.99);opacity:.8}
+/* A25 expander chevron/arrow rotate */
+body.lay-halo details>summary :is(.chev,.arr,[data-arrow]){transition:transform .26s cubic-bezier(.2,.9,.3,1);display:inline-block}
+body.lay-halo details[open]>summary :is(.chev,.arr,[data-arrow]){transform:rotate(90deg)}
+/* A26 ts-product expand: content grow+fade */
+body.lay-halo .ts-product>section{animation:airGrowY .3s cubic-bezier(.16,1,.3,1);transform-origin:top}
+/* A27 ts bar grow */
+body.lay-halo :is(.bar,.ts-bar)>i{animation:airBarX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*40ms + 120ms)}
+/* A28 chart bars grow */
+body.lay-halo main svg rect{animation:airBarX .55s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom;transform-box:fill-box}
+/* A29 chart lines draw */
+body.lay-halo main svg path[stroke]:not([fill]){stroke-dasharray:var(--dash,400);animation:airDraw .8s cubic-bezier(.3,.7,.3,1) both}
+/* A30 chart dots pop */
+body.lay-halo main svg circle{animation:airPop .4s cubic-bezier(.2,1.6,.4,1) both}
+/* A31 chart axis labels fade */
+body.lay-halo main svg text{animation:airFade .5s ease both}
+/* A32 search focus glow */
+body.lay-halo .search{transition:box-shadow .25s,border-color .25s,transform .2s}
+body.lay-halo .search:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--atelier-gold,#ba9b5f) 26%,transparent);border-color:var(--atelier-gold,#ba9b5f)}
+/* A33 search icon settle on focus */
+body.lay-halo .search svg{transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .search:focus-within svg{transform:scale(1.08)}
+/* A34 filter pills: active background settle */
+body.lay-halo .pills button{transition:background .24s cubic-bezier(.2,.9,.3,1),color .2s,border-color .24s,transform .16s}
+body.lay-halo .pills button:active{transform:scale(.94)}
+/* A35 count badges inside pills pop on change */
+body.lay-halo .pills button i,body.lay-halo .pills button .cnt{transition:transform .2s cubic-bezier(.2,1.6,.4,1);display:inline-block}
+body.lay-halo .pills button.on i,body.lay-halo .pills button.on .cnt{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+/* A36 finder (Find something) expand */
+body.lay-halo .halo-finder{transition:border-color .2s}
+body.lay-halo .halo-finder>summary{transition:transform .18s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .halo-finder>summary:active{transform:scale(.985)}
+/* A37 finder plus-to-minus rotate */
+body.lay-halo .halo-finder>summary span[aria-hidden]{transition:transform .3s cubic-bezier(.2,.9,.3,1);display:inline-block}
+body.lay-halo .halo-finder[open]>summary span[aria-hidden]{transform:rotate(45deg)}
+/* A38 finder body slide down */
+body.lay-halo .halo-finder>section,body.lay-halo .halo-finder>.search,body.lay-halo .halo-finder>div:not(summary){animation:airGrowY .3s cubic-bezier(.16,1,.3,1);transform-origin:top}
+/* A39 Insights main sections enter stagger */
+body.lay-halo .hi-main .hi-card{animation:airRise .44s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*55ms)}
+/* A40 Insights jump chips pop stagger */
+body.lay-halo .hi-jump a{animation:airPop .3s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(var(--i,0)*36ms);transition:transform .16s cubic-bezier(.2,1.4,.4,1),border-color .2s}
+body.lay-halo .hi-jump a:active{transform:scale(.93)}
+/* A41 Insights filter pills press + settle */
+body.lay-halo :is(.hi-choice button,.hi-desk-tools button){transition:background .24s cubic-bezier(.2,.9,.3,1),color .2s,border-color .24s,transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo :is(.hi-choice button,.hi-desk-tools button):active{transform:scale(.94)}
+/* A42 Insights content cross-fade on filter switch (container swaps) */
+body.lay-halo .hi-main{animation:airFade .3s ease both}
+/* A43 hi-reader (expander) open grow */
+body.lay-halo .hi-reader>.hi-reader-body,body.lay-halo .hi-reader[open]>:not(summary){animation:airGrowY .28s cubic-bezier(.16,1,.3,1);transform-origin:top}
+/* A44 hi-reader summary press */
+body.lay-halo .hi-reader>summary{transition:background .2s,border-color .24s,transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .hi-reader>summary:active{transform:scale(.98)}
+/* A45 hi-card heading arrow pop on open */
+body.lay-halo .hi-card h2 button>i{transition:transform .3s cubic-bezier(.2,1.2,.4,1),background .2s}
+body.lay-halo .hi-card h2 button:active>i{transform:rotate(45deg) scale(1.1)}
+/* A46 top-moves buttons lift on press */
+body.lay-halo .hi-top-moves button{transition:transform .18s cubic-bezier(.2,1.4,.4,1),opacity .2s}
+body.lay-halo .hi-top-moves button:active{transform:translateX(4px);opacity:.85}
+/* A47 top-moves index badge pop */
+body.lay-halo .hi-top-moves button>span{transition:transform .22s cubic-bezier(.2,1.6,.4,1)}
+body.lay-halo .hi-top-moves button:active>span{transform:scale(1.15)}
+/* A48 hi-next border sweep glow on enter */
+body.lay-halo .hi-next{animation:airSlideL .4s cubic-bezier(.16,1,.3,1) both}
+/* A49 halo-map sheet spring up */
+body.lay-halo .halo-map[open]{animation:haloMapIn .42s cubic-bezier(.16,1.2,.3,1)}
+/* A50 halo-map backdrop fade */
+body.lay-halo .halo-map::backdrop{animation:airFade .3s ease}
+/* A51 halo-map choice cards stagger pop */
+body.lay-halo .halo-map-choices button{animation:airPop .34s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(var(--i,0)*50ms);transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .halo-map-choices button:active{transform:scale(.95)}
+/* A52 settings panel sections enter */
+body.lay-halo .halo-settings section,body.lay-halo [data-d^=set] section{animation:airRise .34s cubic-bezier(.16,1,.3,1) both}
+/* A53 theme chip select pop */
+body.lay-halo .thm button{transition:transform .18s cubic-bezier(.2,1.4,.4,1),border-color .22s,box-shadow .22s}
+body.lay-halo .thm button.on{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+body.lay-halo .thm button:active{transform:scale(.94)}
+/* A54 coverage/archive expanders grow */
+body.lay-halo .halo-coverage>section,body.lay-halo .halo-archive>section{animation:airGrowY .3s cubic-bezier(.16,1,.3,1);transform-origin:top}
+/* A55 fold summaries fade content */
+body.lay-halo .fold>:not(summary){animation:airFade .3s ease}
+/* A56 save/hide/restore action press */
+body.lay-halo :is(.hi-save,.hi-hide,.hi-restore,[data-act]){transition:transform .16s cubic-bezier(.2,1.4,.4,1),opacity .2s,color .2s}
+body.lay-halo :is(.hi-save,.hi-hide,.hi-restore,[data-act]):active{transform:scale(.9)}
+/* A57 saved state check pop */
+body.lay-halo [aria-pressed=true].hi-save,body.lay-halo .saved-tick{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+/* A58 toast/update pill slide-in */
+body.lay-halo #updp{animation:airRise .36s cubic-bezier(.16,1,.3,1)}
+/* A59 update pill attention pulse (2 beats) */
+body.lay-halo #updp{animation:airRise .36s cubic-bezier(.16,1,.3,1),airPulse 2.2s ease-in-out .6s 2}
+/* A60 detail hero focus settle */
+body.lay-halo .halo-detail-focus{animation:airRise .36s cubic-bezier(.16,1,.3,1) both}
+/* A61 detail back button slide-in */
+body.lay-halo #bk{animation:airSlideL .3s cubic-bezier(.16,1,.3,1)}
+/* A62 morph-from element: gentle zoom settle while transitioning */
+body.lay-halo .halo-morph-from{transition:transform .24s cubic-bezier(.2,.9,.3,1),opacity .24s}
+/* A63 skeleton shimmer for loading rows */
+body.lay-halo .skl{background:linear-gradient(90deg,var(--atelier-wash,#8881) 25%,var(--atelier-glint,#fff2) 40%,var(--atelier-wash,#8881) 60%);background-size:400px 100%;animation:airShimmer 1.3s linear infinite;border-radius:8px}
+/* A64 spinner rotate (generic) */
+body.lay-halo .spin{animation:airSpin .8s linear infinite;display:inline-block}
+/* A65 progress indeterminate slide */
+body.lay-halo .prog>i{display:block;height:100%;width:38%;border-radius:8px;background:var(--atelier-gold,#ba9b5f);animation:airProg 1.2s ease-in-out infinite}
+@keyframes airProg{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+/* A66 offline/stale banner slide down */
+body.lay-halo .banner,body.lay-halo .halo-offline{animation:airGrowY .3s cubic-bezier(.16,1,.3,1)}
+/* A67 link underline slide-in on press/hover */
+body.lay-halo .hi-links :is(a,button){background:linear-gradient(currentColor,currentColor) left bottom/0% 1px no-repeat;transition:background-size .28s cubic-bezier(.2,.9,.3,1),color .2s}
+body.lay-halo .hi-links :is(a,button):hover,body.lay-halo .hi-links :is(a,button):active{background-size:100% 1px}
+/* A68 focus ring draw for keyboard users */
+body.lay-halo :focus-visible{outline:2px solid var(--atelier-gold,#ba9b5f);outline-offset:2px;transition:outline-offset .18s}
+/* A69 disabled buttons settle */
+body.lay-halo button:disabled{transition:opacity .25s;opacity:.45}
+/* A70 halo arrow float on KPI focus cards */
+body.lay-halo .halo-kpi .halo-arrow{animation:airFloat 3.4s ease-in-out infinite}
+/* A71 halo-map intro rise */
+body.lay-halo .halo-map-intro{animation:airRise .36s cubic-bezier(.16,1,.3,1)}
+/* A72 halo-map dock (#halo-explore) pop in */
+body.lay-halo #halo-explore{animation:airPop .4s cubic-bezier(.2,1.6,.4,1) .15s both;transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo #halo-explore:active{transform:translateX(-50%) scale(.93)}
+/* A73 Insights section titles: gold kicker fade-slide */
+body.lay-halo .hi-section-title>small{animation:airSlideL .34s cubic-bezier(.16,1,.3,1) both}
+/* A74 store baseline rows enter */
+body.lay-halo .hi-store-baseline{animation:airRise .4s cubic-bezier(.16,1,.3,1) both}
+/* A75 public card enter */
+body.lay-halo .hi-public-card{animation:airRise .4s cubic-bezier(.16,1,.3,1) both}
+/* A76 coverage summary press */
+body.lay-halo .halo-coverage>summary,body.lay-halo .halo-archive>summary{transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .halo-coverage>summary:active,body.lay-halo .halo-archive>summary:active{transform:scale(.985)}
+/* A77 low stock badge pulse once */
+body.lay-halo .low{animation:airPulse 1.8s ease-in-out 1}
+/* A78 press feedback: generic tappable rows */
+body.lay-halo [data-d]{transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo [data-d]:active{transform:scale(.99)}
+/* A79 Insights desk tools drawer slide */
+body.lay-halo .hi-hidden-drawer{animation:airGrowY .3s cubic-bezier(.16,1,.3,1);transform-origin:top}
+/* A80 Insights desk tool button stagger */
+body.lay-halo .hi-desk-tools button{animation:airPop .3s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(var(--i,0)*40ms)}
+/* A81 number flash on value change (JS adds .tick) */
+body.lay-halo .tick{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+/* A82 chart container settle on channel switch */
+body.lay-halo main svg{animation:airFade .35s ease}
+/* A83 empty state fade */
+body.lay-halo .hi-empty{animation:airFade .4s ease}
+/* A84 order detail rows enter */
+body.lay-halo .halo-detail-focus .line{animation:airRise .32s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*26ms)}
+/* A85 long-press-ish hold feedback on rows */
+body.lay-halo .order,body.lay-halo .ts-product>summary{transition-delay:0s}
+/* A86 insights link gold settle */
+body.lay-halo .halo-insights-link:hover{border-color:var(--atelier-gold,#ba9b5f)}
+/* A87 scene nav underline grow for current */
+body.lay-halo .halo-scene-nav [aria-current=page]{transition:border-color .3s}
+/* A88 halo map close: sheet settles (dialog closing class) */
+body.lay-halo .halo-map.closing{animation:airGrowY .2s ease reverse}
+/* A89 selection pop on halo mode buttons */
+body.lay-halo [data-hm]{transition:transform .18s cubic-bezier(.2,1.4,.4,1),border-color .2s}
+body.lay-halo [data-hm]:active{transform:scale(.94)}
+/* A90 halo layout buttons pop */
+body.lay-halo [data-ly]{transition:transform .18s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo [data-ly]:active{transform:scale(.94)}
+/* A91 search input clear/settle */
+body.lay-halo .search input{transition:opacity .2s}
+/* A92 copy/ID tap flash */
+body.lay-halo .copyflash{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+/* A93 KPI glow follow (focus strip) already cheap transform - keep transition */
+body.lay-halo .halo-kpis.halo-focus-strip .halo-kpi::before{transition:transform .16s ease-out,opacity .24s}
+/* A94 Insights saved items list enter */
+body.lay-halo .hi-main .hi-exp-summary button{animation:airRise .3s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0)*30ms)}
+/* A95 rail buttons press */
+body.lay-halo .halo-rail button{transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+body.lay-halo .halo-rail button:active{transform:scale(.92)}
+/* A96 section id marker fade */
+body.lay-halo .halo-section-id{animation:airFade .4s ease}
+/* A97 halo pair source footnote fade */
+body.lay-halo .halo-pair-source,body.lay-halo .asof{animation:airFade .5s ease}
+/* A98 chart bar hover/press emphasis */
+body.lay-halo main svg rect{transition:opacity .2s}
+body.lay-halo main svg rect:active{opacity:.75}
+/* A99 Insights idea save row highlight settle */
+body.lay-halo .hi-card [aria-pressed=true]{transition:background .24s,color .2s,border-color .24s}
+/* A100 back-to-top / scroll-top button pop */
+body.lay-halo #toTop,body.lay-halo .to-top{animation:airPop .3s cubic-bezier(.2,1.6,.4,1)}
+/* ===== Reduced motion guard: kill every animation/transition above ===== */
+@media(prefers-reduced-motion:reduce){body.lay-halo *,body.lay-halo *::before,body.lay-halo *::after{animation:none!important;transition:none!important}}
+body.noanim *,body.noanim *::before,body.noanim *::after{animation:none!important;transition:none!important}
+
+/* ===== 100 improvements / UI betterments (CSS half, B001-B060) ===== */
+/* B001 kill the grey tap flash on phones */
+body.lay-halo,body.lay-halo *{-webkit-tap-highlight-color:transparent}
+/* B002 brand-tinted text selection */
+body.lay-halo ::selection{background:#c9a96b3d;color:inherit}
+/* B003 stop rubber-band chaining into the page from sheets/lists */
+body.lay-halo .halo-map,body.lay-halo .ol,body.lay-halo .pills{overscroll-behavior:contain}
+/* B004 smooth anchor scrolling (motion-safe only) */
+@media(prefers-reduced-motion:no-preference){body.lay-halo{scroll-behavior:smooth}}
+/* B005 anchors land below the sticky header, not under it */
+body.lay-halo main section,body.lay-halo main h2{scroll-margin-top:76px}
+/* B006 real phone viewport height (no jumpy 100vh) */
+body.lay-halo .app{min-height:100dvh}
+/* B007 bottom dock never covers content: safe-area aware padding */
+body.lay-halo main{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+/* B008 one radius scale for small chips */
+:root[data-th] body.lay-halo{--r-chip:10px;--r-row:14px;--r-card:20px}
+/* B009 every list hairline uses the same line color */
+body.lay-halo :is(.line,.split,.chrow){border-color:var(--atelier-line)!important}
+/* B010 balanced headline wrapping */
+body.lay-halo :is(h1,h2,.hi-card h2,.halo-map-intro){text-wrap:balance}
+/* B011 prettier paragraph wrapping in notes and disclosures */
+body.lay-halo :is(p,.note,.sub,.hi-card li){text-wrap:pretty}
+/* B012 tabular numerals on status chips and counts */
+body.lay-halo :is(.st,.cnt,.pills i){font-variant-numeric:tabular-nums}
+/* B013 long SKU/meta text truncates with an ellipsis instead of wrapping ugly */
+body.lay-halo .osku{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* B014 product row titles clamp to two lines */
+body.lay-halo .ts-product>summary>b{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* B015 consistent small-caps rhythm on eyebrows */
+body.lay-halo :is(.eyebrow,.halo-section-id,.hi-section-title>small){letter-spacing:.06em}
+/* B016 dock labels never wrap or squeeze */
+body.lay-halo .halo-bottom-nav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* B017 every icon button keeps a 44px tap target */
+body.lay-halo :is(.halo-refresh,.halo-settings,#bk,.halo-insights-link){min-width:44px;min-height:44px;box-sizing:border-box}
+/* B018 no mouse-focus outlines, only keyboard */
+body.lay-halo :focus:not(:focus-visible){outline:none}
+/* B019 clickable rows show a pointer on desktop */
+@media(hover:hover){body.lay-halo :is(.order,.ts-product>summary,[data-d],.tile,summary){cursor:pointer}}
+/* B020 no accidental text selection on controls */
+body.lay-halo :is(button,.halo-bottom-nav,summary,.pills){user-select:none;-webkit-user-select:none}
+/* B021 kill the 300ms double-tap delay on controls */
+body.lay-halo :is(button,a,summary,[data-d],.tile,.order){touch-action:manipulation}
+/* B022 long lists render cheap offscreen */
+body.lay-halo .ol .order{content-visibility:auto;contain-intrinsic-size:auto 92px}
+/* B023 Insights cards render cheap offscreen */
+body.lay-halo .hi-main .hi-card{content-visibility:auto;contain-intrinsic-size:auto 260px}
+/* B024 brand logo: crisp and not draggable */
+body.lay-halo .halo-brand img{-webkit-user-drag:none;user-select:none}
+/* B025 search inputs at 16px so iOS never zooms */
+body.lay-halo input,body.lay-halo .search input{font-size:16px}
+/* B026 native search field decorations removed */
+body.lay-halo input[type=search]::-webkit-search-decoration,body.lay-halo input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
+/* B027 readable placeholder contrast */
+body.lay-halo input::placeholder{color:var(--ink2);opacity:.75}
+/* B028 horizontal pill rows hide their scrollbar */
+body.lay-halo .pills{scrollbar-width:none}
+body.lay-halo .pills::-webkit-scrollbar{display:none}
+/* B029 thin themed scrollbar for long panels */
+body.lay-halo ::-webkit-scrollbar{width:8px;height:8px}
+body.lay-halo ::-webkit-scrollbar-thumb{background:var(--atelier-line);border-radius:8px}
+/* B030 sticky section headers inside scrolling sheets */
+body.lay-halo .halo-map h2{position:sticky;top:0;background:inherit;padding-top:6px;z-index:2}
+/* B031 print: clean single-column report */
+@media print{body.lay-halo .halo-bottom-nav,body.lay-halo .halo-rail,body.lay-halo .halo-scene-nav,body.lay-halo #halo-explore{display:none!important}body.lay-halo .app{background:#fff;color:#000}}
+/* B032 forced-colors: hairlines stay visible */
+@media(forced-colors:active){body.lay-halo :is(.order,.tile,.ts-product,.hi-card){border-bottom:1px solid ButtonText}}
+/* B033 more-contrast preference: strengthen hairlines and secondary text */
+@media(prefers-contrast:more){:root[data-th] body.lay-halo{--atelier-line:#8888;--ink2:#6b6b6b}:root[data-th=halo-dark] body.lay-halo,:root[data-th=halo-onyx] body.lay-halo{--ink2:#d8d8d8}}
+/* B034 landscape phones: tighter header so content shows */
+@media(orientation:landscape) and (max-height:500px){body.lay-halo header h1{font-size:30px}body.lay-halo .halo-scene-nav{margin-bottom:12px}}
+/* B035 big phones/small tablets: pair columns get more breathing room */
+@media(min-width:430px){body.lay-halo .halo-pair .halo-kpi{padding-right:20px!important}body.lay-halo .halo-pair .halo-retail{padding-left:20px!important}}
+/* B036 consistent vertical rhythm: sections breathe on an 8px scale */
+body.lay-halo main>section{margin-top:8px;margin-bottom:8px}
+/* B037 order meta line: baseline-aligned figures */
+body.lay-halo .ometa{align-items:baseline}
+/* B038 status chips: equal padding, stable height */
+body.lay-halo .st{padding:3px 9px;border-radius:999px;line-height:1.5}
+/* B039 hairline above dock-safe footer text */
+body.lay-halo .halo-source-pair{border-top:1px solid var(--atelier-line);padding-top:10px}
+/* B040 inputs inherit the app font */
+body.lay-halo input,body.lay-halo button{font-family:inherit}
+/* B041 dock: keep above sheets, below dialogs */
+body.lay-halo .halo-bottom-nav{z-index:60}
+/* B042 map sheet never taller than the viewport */
+body.lay-halo .halo-map{max-height:86dvh;overflow:auto}
+/* B043 chart svg never overflows narrow phones */
+body.lay-halo main svg{max-width:100%;height:auto;display:block}
+/* B044 first content section sits closer to the header */
+body.lay-halo .halo-pair-controls{margin-top:2px}
+/* B045 insights jump row wraps gracefully */
+body.lay-halo .hi-jump{flex-wrap:wrap}
+/* B046 kicker chips align center with their headings */
+body.lay-halo .hi-kicker{display:flex;align-items:center;flex-wrap:wrap}
+/* B047 expander summaries: full-width tap area */
+body.lay-halo details>summary{cursor:pointer;list-style:none}
+body.lay-halo details>summary::-webkit-details-marker{display:none}
+/* B048 gold focus ring also on summary keyboard focus */
+body.lay-halo summary:focus-visible{outline:2px solid var(--atelier-gold,#ba9b5f);outline-offset:3px;border-radius:6px}
+/* B049 pair column divider aligns to text not padding */
+body.lay-halo .halo-pair .halo-retail{border-left-color:var(--atelier-line)!important}
+/* B050 activity mode: count line wraps without clipping */
+body.lay-halo .halo-pair-count{line-height:1.35}
+/* B051 inline code/SKU tokens get subtle mono */
+body.lay-halo :is(code,.sku-token){font-family:ui-monospace,Menlo,monospace;font-size:.92em}
+/* B052 dialogs center with margin auto fallback */
+body.lay-halo dialog{max-width:min(92vw,430px)}
+/* B053 no layout shift from the dock: fixed height reserved */
+body.lay-halo .halo-bottom-nav{height:66px}
+/* B054 refresh icon centers exactly */
+body.lay-halo .halo-refresh{display:grid;place-items:center}
+/* B055 sticky Insights filter row on long pages */
+body.lay-halo .hi-desk-tools{position:sticky;top:8px;z-index:5}
+/* B056 subtle elevation for sticky tools */
+body.lay-halo .hi-desk-tools{background:color-mix(in srgb,var(--bg1,#101010) 82%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:4px}
+/* B057 inline SVG icons stroke consistently */
+body.lay-halo button svg{stroke-width:1.7;fill:none;stroke:currentColor}
+/* B058 retail/online tag chips keep one line */
+body.lay-halo .chip{white-space:nowrap}
+/* B059 fold content keeps left rhythm with summary */
+body.lay-halo .fold>section{padding-left:2px}
+/* B060 halo map choices: full-width comfortable rows */
+body.lay-halo .halo-map-choices button{width:100%;text-align:left}
+/* B061 busy refresh icon spins */
+#rf.bj-busy svg{animation:bj-spin 1s linear infinite}
+@keyframes bj-spin{to{transform:rotate(360deg)}}
+/* B083 floating back-to-top */
+.bj-top{position:fixed;right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:50%;border:1px solid var(--edge,rgba(255,255,255,.14));background:var(--glass,rgba(30,26,22,.9));color:var(--gold,#d8b25c);font-size:18px;line-height:1;opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .25s,transform .25s;z-index:60}
+.bj-top.on{opacity:1;pointer-events:auto;transform:none}
+/* B086 offline banner */
+.bj-off{position:sticky;top:0;z-index:80;background:#5a3a1e;color:#ffe9c9;text-align:center;font-size:13px;padding:8px 12px}
+/* B089 dock auto-hide */
+.halo-bottom-nav{transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.halo-bottom-nav.bj-hide{transform:translateY(110%)}
+/* B093 skip link */
+.bj-skip{position:fixed;left:12px;top:-48px;z-index:100;background:var(--gold,#d8b25c);color:#1a1408;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;transition:top .2s}
+.bj-skip:focus{top:12px}
+/* B095 stuck toolbar shadow */
+.hi-tools.bj-stuck,.halo-jump.bj-stuck{box-shadow:0 8px 20px -12px rgba(0,0,0,.55)}
+/* B097 offline body flag dims the refresh affordance */
+body.bj-offline #rf{opacity:.45}
+@media (prefers-reduced-motion:reduce){.bj-top,.halo-bottom-nav,.bj-skip{transition:none}#rf.bj-busy svg{animation:none}}
+body.noanim .bj-top,body.noanim .halo-bottom-nav,body.noanim .bj-skip{transition:none}

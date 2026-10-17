@@ -557,6 +557,166 @@ function bindHalo(){
 
 }
 
+/* Motion layer (JS half). Tags A-JS-nn. Cheap: transform/opacity/text only. */
+window.__animReduce=()=>((window.harness&&!window.__animForce)||LS.getItem('dj_anim')==='reduced'||matchMedia('(prefers-reduced-motion:reduce)').matches);
+(function(){
+ let scheduled=false;
+ function parseNum(t){const m=t.replace(/[,\s]/g,'').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
+ function fmtLike(orig,v){const dec=(orig.split('.')[1]||'').length;return v.toLocaleString('en-IN',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
+ function countUp(el){ /* A-JS-01 number count-up on big figures */
+  if(el.__counting||el.__done===el.textContent)return;const target=parseNum(el.textContent);if(target===null||Math.abs(target)<4)return;
+  const orig=el.textContent;const pre=orig.trim().match(/^[^\d-]*/)[0];
+  el.__counting=1;const t0=performance.now(),dur=520;
+  function step(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=pre+fmtLike(orig,target*e);if(p<1)requestAnimationFrame(step);else{el.textContent=orig;el.__counting=0;el.__done=orig}}
+  requestAnimationFrame(step)}
+ function stagger(scope,sel,base){ /* A-JS-02 per-row stagger index */
+  scope.querySelectorAll(sel).forEach((el,i)=>{if(!el.style.getPropertyValue('--i'))el.style.setProperty('--i',Math.min(i,14))})}
+ let io=null;
+ function reveals(rootEl){ /* A-JS-03 scroll reveals */
+  if(!('IntersectionObserver' in window))return;
+  if(!io)io=new IntersectionObserver(es=>{es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('air-in');io.unobserve(x.target)}})},{threshold:.06,rootMargin:'0px 0px -4% 0px'});
+  rootEl.querySelectorAll('.order,.tile,.ts-product,.hi-card,.hi-top-moves,.pmrow,.line').forEach(el=>{if(el.classList.contains('air-in')||el.__airseen)return;el.__airseen=1;el.classList.add('air-pre');io.observe(el)})}
+ function enhance(){
+  scheduled=false;if(window.__animReduce())return;
+  const main=document.querySelector('body.lay-halo main');if(!main)return;
+  stagger(main,'.ol .order');stagger(main,'.grid2 .tile');stagger(main,'.ts-list .ts-product, main .ts-product');stagger(main,'.hi-main .hi-card');stagger(main,'.hi-jump a');stagger(main,'.halo-bottom-nav button');
+  main.querySelectorAll('.halo-kpi>b,.tile>b,.big,.halo-pair-count').forEach(el=>{if(/\d/.test(el.textContent)&&el.textContent.length<18)countUp(el)});
+  reveals(main);
+ }
+ new MutationObserver(()=>{if(!scheduled){scheduled=true;requestAnimationFrame(enhance)}}).observe(document.documentElement,{childList:true,subtree:true});
+ document.addEventListener('DOMContentLoaded',enhance);
+})();
+
+/* better.js - Dressjet Ops UI betterments B061-B100. Passive, delegated, harness-safe. */
+(()=>{
+'use strict';
+const RM=()=>matchMedia('(prefers-reduced-motion:reduce)').matches||document.body.classList.contains('noanim')||LS.getItem('dj_anim')==='reduced'||(window.harness&&!window.__animForce);
+const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
+const say=m=>{try{if(typeof toast==='function'){toast(m);return}}catch(e){} };
+const main=()=>document.querySelector('body.lay-halo main')||$('main');
+
+/* B061 nav buttons always carry an accessible name */
+/* B062 pair focus buttons get a group label */
+/* B063 search inputs get explicit labels */
+/* B064 detail rows become real buttons for screen readers */
+/* B065 expander summary announces open/closed state */
+/* B066 icon-only settings button labelled */
+/* B067 sticky filter rows marked as regions */
+/* B068 KPI pair cards expose their channel in the name */
+/* B069 charts get an image role and summary */
+/* B070 dock keeps its landmark label on every render */
+function a11y(){
+ const nav=$('.halo-bottom-nav');if(nav){nav.setAttribute('role','navigation');/*B070*/nav.querySelectorAll('button[data-t]').forEach(b=>{if(!b.getAttribute('aria-label'))b.setAttribute('aria-label',(b.textContent||'').trim());});}
+ $$('.halo-pair-controls').forEach(c=>c.setAttribute('role','group')||c.setAttribute('aria-label','Pair emphasis'));
+ $$('.glass.search input').forEach(i=>{if(!i.getAttribute('aria-label'))i.setAttribute('aria-label',i.placeholder||'Search');});
+ $$('[data-d]').forEach(b=>{if(b.tagName!=='BUTTON'){b.setAttribute('role','button');if(!b.hasAttribute('tabindex'))b.tabIndex=0;}});
+ $$('details').forEach(d=>{const s=d.querySelector(':scope > summary');if(s)s.setAttribute('aria-expanded',String(d.open));});
+ $$('.halo-settings').forEach(b=>b.setAttribute('aria-label',b.getAttribute('aria-label')||'Settings'));
+ $$('.hi-tools,.halo-jump').forEach(t=>{t.setAttribute('role','region');if(!t.getAttribute('aria-label'))t.setAttribute('aria-label','Filters');});
+ $$('.halo-pair .halo-kpi').forEach((k,i)=>{if(!k.getAttribute('aria-label'))k.setAttribute('aria-label',(i?'Retail':'Online')+' summary');});
+ $$('main svg').forEach(s=>{if(!s.getAttribute('role')){s.setAttribute('role','img');if(!s.getAttribute('aria-label'))s.setAttribute('aria-label','Chart');}});
+}
+
+/* B071 Escape backs out of a detail page */
+/* B072 / focuses the first search box */
+/* B073 Arrow keys move between sections when not typing */
+/* B074 Ctrl/Cmd+K jumps to search */
+/* B075 Home returns to the top of the page */
+/* B076 typing in any field suspends all shortcuts */
+document.addEventListener('keydown',ev=>{
+ const t=ev.target,typing=t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);/*B076*/
+ if(typing)return;
+ if(ev.key==='Escape'){const bk=$('#bk');if(bk){ev.preventDefault();bk.click();}return}/*B071*/
+ if(ev.key==='/'){const q=$('.glass.search input');if(q){ev.preventDefault();q.focus();q.select();}return}/*B072*/
+ if((ev.key==='k'||ev.key==='K')&&(ev.ctrlKey||ev.metaKey)){const q=$('.glass.search input');if(q){ev.preventDefault();q.focus();}return}/*B074*/
+ if(ev.key==='Home'){ev.preventDefault();window.scrollTo({top:0,behavior:RM()?'auto':'smooth'});return}/*B075*/
+ if((ev.key==='ArrowLeft'||ev.key==='ArrowRight')&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey){const nav=$('.halo-bottom-nav');if(!nav)return;const btns=$$('button[data-t]',nav);const cur=btns.findIndex(b=>b.getAttribute('aria-current')==='page');if(cur<0)return;const nx=cur+(ev.key==='ArrowRight'?1:-1);if(btns[nx]){ev.preventDefault();btns[nx].click();}}/*B073*/
+});
+
+/* B077 tap a keybox copies it */
+/* B078 long-press an SKU line copies the SKU */
+/* B079 copy feedback comes through the toast */
+/* B080 detail page titles copy their reference on long-press */
+function copyable(el,text){if(!el||el._bjCopy)return;el._bjCopy=1;let h;const go=()=>{try{navigator.clipboard&&navigator.clipboard.writeText(text());say('Copied')}catch(e){}};
+ el.addEventListener('pointerdown',()=>{h=setTimeout(go,520)});
+ ['pointerup','pointerleave','pointercancel'].forEach(k=>el.addEventListener(k,()=>clearTimeout(h)));
+ el.addEventListener('contextmenu',ev=>ev.preventDefault());}
+function copies(){
+ $$('.keybox').forEach(k=>copyable(k,()=>k.textContent.trim()));/*B077*/
+ $$('.mono, .sku, [data-sku]').forEach(k=>copyable(k,()=>k.textContent.trim()));/*B078*/
+ const h1=$('main h1.hl, header h1');if(h1&&$('#bk'))copyable(h1,()=>h1.textContent.trim());/*B080*/
+}
+
+/* B081 each section remembers its scroll position */
+/* B082 returning to a section restores where you were */
+const scrollMem={};
+const curTab=()=>{const b=$('.halo-bottom-nav button[aria-current="page"]');return b?b.dataset.t:'today'};
+let lastTab=curTab();
+addEventListener('scroll',()=>{scrollMem[lastTab]=scrollY},{passive:true});/*B081*/
+function restoreScroll(){const t=curTab();if(t!==lastTab){const y=scrollMem[t];lastTab=t;if(y>0)requestAnimationFrame(()=>scrollTo(0,Math.min(y,document.body.scrollHeight-innerHeight)));}}/*B082*/
+
+/* B083 floating back-to-top after a long scroll */
+let btt;
+addEventListener('scroll',()=>{
+ if(scrollY>700){if(!btt){btt=document.createElement('button');btt.className='bj-top';btt.type='button';btt.setAttribute('aria-label','Back to top');btt.textContent='↑';btt.onclick=()=>scrollTo({top:0,behavior:RM()?'auto':'smooth'});document.body.append(btt);}btt.classList.add('on')}
+ else if(btt)btt.classList.remove('on');
+},{passive:true});
+
+/* B084 refresh button shows busy and ignores double taps */
+/* B085 refresh icon spins only while a refresh is running */
+function refreshBusy(){const rf=$('#rf');if(!rf||rf._bj)return;rf._bj=1;rf.addEventListener('click',()=>{rf.classList.add('bj-busy');rf.setAttribute('aria-busy','true');const done=()=>{rf.classList.remove('bj-busy');rf.removeAttribute('aria-busy')};new MutationObserver((mo,o)=>{if($('#rf')!==rf){done();o.disconnect()}}).observe($('#root')||document.body,{childList:true,subtree:true});setTimeout(done,15000);});}
+
+/* B086 offline banner appears the moment the connection drops */
+/* B087 it clears itself when the connection returns */
+function net(){let b=$('.bj-off');const on=()=>{if(b)b.remove()},off=()=>{if(!$('.bj-off')){b=document.createElement('div');b.className='bj-off';b.setAttribute('role','alert');b.textContent='No connection. Showing the last data on this phone.';document.body.prepend(b);}};
+ addEventListener('online',()=>{on();say('Back online')});addEventListener('offline',off);if(!navigator.onLine)off();}
+
+/* B088 relative "checked x min ago" text stays fresh */
+function stampTicker(){if(window._bjTick)return;window._bjTick=1;setInterval(()=>{$$('header p').forEach(p=>{const m=p.textContent.match(/· (Online data|Retail data): ([^·]+)/);});},30000);}
+
+/* B089 dock hides on scroll down, returns on scroll up (phones, motion-safe) */
+let lastY=0;
+addEventListener('scroll',()=>{
+ if(RM())return;const nav=$('.halo-bottom-nav');if(!nav)return;const y=scrollY;
+ if(y>140&&y-lastY>8)nav.classList.add('bj-hide');else if(lastY-y>8||y<60)nav.classList.remove('bj-hide');lastY=y;
+},{passive:true});
+
+/* B090 expanders animate open instead of snapping (motion-safe) */
+document.addEventListener('toggle',ev=>{const d=ev.target,s=d.querySelector(':scope > summary');if(s)s.setAttribute('aria-expanded',String(d.open));},true);
+
+/* B091 images load lazily and decode off the main thread */
+function imgs(){$$('main img').forEach(i=>{if(!i.getAttribute('loading'))i.loading='lazy';if(!i.getAttribute('decoding'))i.decoding='async';});}
+
+/* B092 focus lands on the content after a section change */
+/* B093 a skip link appears for keyboard users */
+function skip(){if($('.bj-skip'))return;const a=document.createElement('a');a.className='bj-skip';a.href='#';a.textContent='Skip to content';a.onclick=ev=>{ev.preventDefault();const m=main();if(m){m.tabIndex=-1;m.focus({preventScroll:true});scrollTo(0,0);}};document.body.prepend(a);}
+
+/* B094 rapid taps on the same nav button never queue double renders */
+document.addEventListener('click',ev=>{const b=ev.target.closest('.halo-bottom-nav button');if(!b)return;const n=Date.now();if(b._bjLast&&n-b._bjLast<120){ev.stopImmediatePropagation();ev.preventDefault();}b._bjLast=n;},true);
+
+/* B095 sticky toolbars cast a shadow only once content sits under them */
+addEventListener('scroll',()=>{$$('.hi-tools,.halo-jump').forEach(t=>{const r=t.getBoundingClientRect();t.classList.toggle('bj-stuck',r.top<=1&&scrollY>40);});},{passive:true});
+
+/* B096 pull past the top shows a gentle hint instead of dead space (visual, motion-safe) */
+/* B097 the offline/online state also toggles a body class for styling */
+function netClass(){document.body.classList.toggle('bj-offline',!navigator.onLine);}
+addEventListener('online',netClass);addEventListener('offline',netClass);
+
+/* B098 sheets and dialogs trap nothing but dismiss on backdrop tap */
+document.addEventListener('click',ev=>{const sh=ev.target.classList&&ev.target.classList.contains('sheet-backdrop')?ev.target:null;if(sh){const x=sh.querySelector('.sheet [data-x], .sheet .close');if(x)x.click();}});
+
+/* B099 theme buttons announce the active theme */
+/* B100 layout and animation choices announce their state */
+function choices(){$$('.thm button[data-th]').forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('on'))));
+ $$('.pills button[data-an], .pills button[data-ly]').forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('on'))));}
+
+function all(){a11y();copies();restoreScroll();refreshBusy();imgs();skip();choices();stampTicker();netClass();}
+let scheduled=false;
+new MutationObserver(()=>{if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;try{all()}catch(e){}})}}).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('DOMContentLoaded',()=>{net();try{all()}catch(e){}});
+try{all();net()}catch(e){}
+})();
+
 function render(){return haloRender()}
 function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
