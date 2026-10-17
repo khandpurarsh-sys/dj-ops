@@ -1901,3 +1901,25 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-th=halo-dark][data-halo-palette=clubwine] body.lay-halo{--check-navy:#8c6b9e1a;--check-green:#a5586d20;--check-wine:#bb7e8b24;--check-thread:#d2b47325}
 .halo-theme-swatch[data-swatch=clubwine-light]{background:repeating-linear-gradient(0deg,transparent 0 9px,#6f283b33 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#55354a33 9px 15px,transparent 15px 24px),#f8f1ed}
 .halo-theme-swatch[data-swatch=clubwine-dark]{background:repeating-linear-gradient(0deg,transparent 0 9px,#c2829633 9px 15px,transparent 15px 24px),repeating-linear-gradient(90deg,transparent 0 9px,#9b708733 9px 15px,transparent 15px 24px),#1a080f}
+
+/* Open data surfaces in every layout and theme. Controls retain their hit areas. */
+:root[data-th] body .app :is(.asof,.glass.list,.glass.empty,.glass.tile,.glass.big,.glass.split,.glass.order,.halo-panel,.halo-detail-focus,.halo-combined,.hi-next,.hi-public-card,.hi-top-moves,.hi-store-baseline,.hi-empty,.hi-exp-summary){background:transparent!important;background-image:none!important;box-shadow:none!important;border-radius:0!important;border:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root[data-th] body .app .asof{padding:10px 0 14px!important;border-bottom:1px solid var(--atelier-line,var(--edge))!important}
+:root[data-th] body .app :is(.glass.list,.glass.empty,.halo-detail-focus,.halo-combined){border-bottom:1px solid var(--atelier-line,var(--edge))!important}
+:root[data-th] body .app :is(.glass.tile,.glass.big,.glass.split,.glass.order){border-bottom:1px solid var(--atelier-line,var(--edge))!important}
+:root[data-th] body .app .halo-panel{border-top:1px solid var(--atelier-line,var(--edge))!important;padding-left:0!important;padding-right:0!important}
+:root[data-th] body .app :is(.halo-panel>.glass,.hi-next,.hi-public-card,.hi-top-moves,.hi-store-baseline,.hi-empty,.hi-exp-summary){padding-left:0!important;padding-right:0!important}
+:root[data-th] body .app :is(.hi-next,.hi-public-card,.hi-top-moves,.hi-store-baseline){border-top:1px solid var(--atelier-line,var(--edge))!important}
+:root[data-th] body .app .glass.list>.line{padding-left:0;padding-right:0}
+:root[data-th] body .app .glass.list>.line[style*="padding-left"]{padding-left:22px}
+:root[data-th] body .app .halo-detail-focus::before{display:none}
+:root[data-th] body .app main .glass:not(.search){background:transparent!important;background-image:none!important;border-radius:0!important;border:0!important;border-bottom:1px solid var(--atelier-line,var(--edge))!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:var(--ink)}
+:root[data-th] body .app main .hero{padding-left:0;padding-right:0}
+/* Original gold artwork, extracted from the existing logo. No navy plate. */
+:root[data-th] body .app :is(.logo.brand-transparent,.halo-brand img.brand-transparent){background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;object-fit:contain}
+:root[data-th] body .app .halo-brand img.brand-transparent{width:34px;height:26px}
+:root[data-th] body .app .halo-brand{color:#d7bf7c}
+:root[data-th] body .app .logo.brand-transparent{width:66px;height:40px}
+:root[data-th] body .app .halo-brand img.brand-wordmark{width:104px;height:24px;object-fit:contain}
+:root[data-th] body .app .halo-brand{background:transparent!important;border-radius:0!important;box-shadow:none!important;overflow:visible}
+:root[data-th] body .app .halo-brand::after{display:none!important;content:none!important;animation:none!important}
