@@ -548,12 +548,12 @@ function bindHalo(){
 
  root.onpointerdown=e=>{const target=e.target.closest('[data-d]');if(target&&!target.closest('dialog')){document.querySelectorAll('.halo-morph-from').forEach(x=>x.classList.remove('halo-morph-from'));target.classList.add('halo-morph-from');haloMorph=true;}else haloMorph=false;};
  if(!haloClickGuard){haloClickGuard=true;root.addEventListener('click',e=>{if(performance.now()<haloClickUntil){e.stopImmediatePropagation();e.preventDefault();haloClickUntil=0;}},true)}
- if(detail&&detail!=='halo:Insights')return;let start=null;
+ if(detail&&detail!=='halo:Insights')return;let start=null,drag=0,dragging=false;
  const surface=document.createElement('div');surface.className='halo-swipe-surface';while(root.firstChild)surface.append(root.firstChild);root.append(surface);
  surface.addEventListener('pointerdown',e=>{if(e.isPrimary===false||e.button>0||e.target.closest('button,input,a,summary,select,textarea,dialog,.tabbar,.pills,.search,[contenteditable]'))return;start={x:e.clientX,y:e.clientY,t:performance.now()};},{passive:true});
- surface.addEventListener('pointermove',e=>{if(start&&Math.abs(e.clientY-start.y)>45)start=null;},{passive:true});
- surface.addEventListener('pointercancel',()=>start=null,{passive:true});
- surface.addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y,dt=performance.now()-start.t;start=null;if(Math.abs(dx)<75||Math.abs(dy)>45||dt>1200)return;if(detail==='halo:Insights'){if(dx<0)return;detail=null;}else{if(dx>0)return;detail='halo:Insights';}haloClickUntil=performance.now()+450;render();window.scrollTo({top:0,behavior:'instant'});},{passive:true});
+ surface.addEventListener('pointermove',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(!dragging){if(Math.abs(dy)>45){start=null;return}if(Math.abs(dx)<12||Math.abs(dx)<=Math.abs(dy))return;if(detail==='halo:Insights'?dx<0:dx>0){start=null;return}dragging=true;surface.style.transition='none'}drag=dx;surface.style.transform='translate3d('+drag+'px,0,0)';},{passive:true});
+ surface.addEventListener('pointercancel',()=>{start=null;if(dragging){dragging=false;drag=0;surface.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';surface.style.transform='translate3d(0,0,0)'}},{passive:true});
+ surface.addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y,dt=performance.now()-start.t;start=null;const wrong=detail==='halo:Insights'?dx<0:dx>0,fast=Math.abs(dx)/Math.max(dt,1)>.5,commit=!wrong&&(Math.abs(dx)>=75||fast)&&Math.abs(dy)<=45&&dt<=1200;if(!commit){if(dragging){dragging=false;drag=0;haloClickUntil=performance.now()+300;surface.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';surface.style.transform='translate3d(0,0,0)'}return}document.body.classList.add(dx<0?'swipe-l':'swipe-r');setTimeout(()=>document.body.classList.remove('swipe-l','swipe-r'),750);if(detail==='halo:Insights'){detail=null;}else{detail='halo:Insights';}haloClickUntil=performance.now()+450;render();window.scrollTo({top:0,behavior:'instant'});},{passive:true});
 
 }
 
