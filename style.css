@@ -1711,3 +1711,6 @@ body.lay-halo.noanim .halo-menu-symbol i{transition:none!important}
 /* Fixed capsule: generic pressed-button scale must never replace its centering. */
 :root[data-th] body.lay-halo .halo-menu-toggle,
 :root[data-th] body.lay-halo .halo-menu-toggle:is(:active,:hover,:focus,:focus-visible){transform:translateX(-50%)!important;opacity:1!important;transition:none!important;-webkit-tap-highlight-color:transparent}
+
+/* Destinations must sit above the outside-dismiss layer, not behind it. */
+:root[data-th] body.lay-halo .halo-menu-panel{z-index:94}
