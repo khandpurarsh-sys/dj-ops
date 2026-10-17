@@ -908,7 +908,14 @@ function ydDetail(q){
   if(ch&&Object.keys(ch).length)Object.entries(ch).forEach(([name,v])=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({...q,channel:name}))+'"><span>'+esc(name)+'</span><b>'+SV(money(v&&typeof v==='object'?v.amt:v))+' ›</b></button>'});
   else h+='<p class="yd-source">No dated channel amounts supplied.</p>';
  }
- h+='<h2>Supplied '+(q.retail?'bills':'orders')+' ('+bills.length+')</h2><p class="yd-source">This is the list supplied with this exact date, not a claim of complete coverage. It may not add up to the headline.</p>';
+ const noun=q.retail?'bills':'orders',expected=ydNumber(count),known=expected!==null&&Number.isInteger(expected)&&expected>=0;
+ h+='<h2>'+ (q.store?SV(esc(q.store))+' · ':'')+(q.retail?'Bills':'Orders')+'</h2>';
+ let coverage;
+ if(!known)coverage=bills.length+' '+noun+' supplied. The total '+(q.store?'for this store and date':'for this date')+' is unavailable, so completeness cannot be confirmed.';
+ else if(bills.length<expected)coverage='Showing '+bills.length+' of '+expected+' '+noun+'. '+(expected-bills.length)+' '+noun+' are missing from the supplied list'+(q.store?' for '+q.store:'')+'. This list is incomplete.';
+ else if(bills.length>expected)coverage=bills.length+' '+noun+' supplied, but the source count is '+expected+'. The records and count disagree. Nothing is removed or merged.';
+ else coverage='Showing all '+expected+' '+noun+' supplied for '+(q.store?q.store+' on ':'this date: ')+ydDate(q.day)+'. The list count matches the recorded '+noun+' count.';
+ h+='<p class="yd-caveat yd-list-coverage">'+esc(coverage)+'</p><p class="yd-source">Every supplied record is listed below, without a display limit. Bill/order payments may use a different basis from the revenue headline.</p>';
  if(bills.length)bills.forEach((b,i)=>{h+='<button class="yd-store yd-row-link" data-d="'+esc(ydRoute({...q,bill:i,billSig:JSON.stringify([b.no,b.store,b.ch,b.amt,b.time,b.t])}))+'"><span>'+SV(esc(String(b.no||'Number unavailable')))+'<small>'+esc([b.store,b.ch,b.st].filter(Boolean).join(' · '))+'</small></span><b>'+SV(money(b.amt))+' ›</b></button>'});
  else h+='<p class="yd-caveat">'+(q.retail?'Bill':'Order')+' detail is not supplied for this date'+(q.store?' and store':q.channel?' and channel':'')+'. No other date is substituted.</p>';
  return h;
