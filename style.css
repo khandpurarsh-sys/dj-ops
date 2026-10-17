@@ -1694,3 +1694,16 @@ body.lay-halo .halo-menu-toggle.is-moving .halo-menu-symbol i{will-change:transf
 body.lay-halo .halo-menu-panel .ind{will-change:auto}
 body.lay-halo.noanim .halo-menu-symbol i{transition:none!important}
 @media(prefers-reduced-motion:reduce){body.lay-halo .halo-menu-symbol i{transition:none!important}}
+/* Midnight rollover: keep today's unknown separate from dated older readings. */
+:root[data-th] body.lay-halo .rollover-status{color:var(--atelier-gold);font-size:14px;line-height:1.55;padding:13px 0 17px;margin:0;border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .prior-day-context{padding:26px 0 20px!important;margin:0 0 20px!important;border:0;border-bottom:1px solid var(--atelier-line);background:transparent}
+.prior-day-title>span{font-size:11px;letter-spacing:.13em;color:var(--atelier-gold);font-weight:650}
+:root[data-th] body.lay-halo .prior-day-title h2{font-size:25px;margin:10px 0 8px;letter-spacing:-.035em}
+:root[data-th] body.lay-halo .prior-day-warning{padding:0!important;margin:0 0 12px!important;text-align:left;line-height:1.5}
+.prior-day-channel{padding:18px 0;border-bottom:1px solid var(--atelier-line)}
+.prior-day-heading{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink2)}
+.prior-day-heading>span:first-child{font-weight:650;color:var(--ink)}
+.prior-day-value{display:block;font-size:27px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:9px 0}
+:root[data-th] body.lay-halo .prior-day-channel .note{margin:0!important;padding:3px 0!important;text-align:left;font-size:13px;line-height:1.5}
+.prior-day-status{color:var(--atelier-gold)!important}
+:root[data-th] body.lay-halo .prior-day-separate{padding:12px 0 0!important;margin:0!important;text-align:left;line-height:1.55}
