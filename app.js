@@ -1095,13 +1095,22 @@ function yesterdayCard(retail){
  if(r.kind==='history'&&!r.partial&&!r.conflict&&prev.length===1&&prev[0].partial!==true&&ydNumber(prev[0].rev)!==null){h+='<details class="yd-previous"><summary>Previous dated record</summary><button class="yd-store yd-row-link" data-d="'+esc(ydRoute({retail,day:dayBefore}))+'"><span>'+esc(ydDate(dayBefore))+'</span><b>'+SV(inr(ydNumber(prev[0].rev)))+' ›</b></button><p class="yd-source">Both are recorded history amounts. No live growth claim or same-time comparison.</p></details>';}
  return h+'</article>';
 }
+function ydCombined(day){
+ const o=yesterdayRecord(false,day),r=yesterdayRecord(true,day),ok=x=>x.amount!==null&&!x.partial&&!x.conflict;
+ const both=ok(o)&&ok(r),tot=both?o.amount+r.amount:null;
+ const why=[];if(o.amount===null)why.push('Online not supplied');else if(o.partial||o.conflict)why.push('Online partial or unconfirmed');
+ if(r.amount===null)why.push('Retail not supplied');else if(r.partial||r.conflict)why.push('Retail partial or unconfirmed');
+ const basis='Online + Retail, incl. GST, '+ydDate(day)+(o.kind==='snapshot'||r.kind==='snapshot'?' · finality unconfirmed':'');
+ const parts='Not a total: '+why.join(', ')+'. '+(o.amount!==null?'Online '+inr(o.amount)+'. ':'')+(r.amount!==null?'Retail '+inr(r.amount)+'.':'');
+ return '<section class="glass yd-combined" style="padding:14px 18px;margin-bottom:12px"><div class="line" style="border:0;padding:0"><span class="eyebrow">Combined yesterday</span><b style="font-family:var(--serif,inherit);font-size:22px">'+(both?SV(inr(tot)):'<small>incomplete</small>')+'</b></div><p class="note" style="margin:6px 0 0;font-size:12px;opacity:.7">'+esc(both?basis:parts)+'</p></section>';
+}
 function yesterdayCompose(f,main,head){
  if(detail&&detail.startsWith('yd:')){const q=ydDecode(detail);main.innerHTML=ydDetail(q);head.querySelector('h1').textContent=q.bill!==undefined?'Bill / order':q.store||q.channel||(q.retail?'Retail revenue':'Online revenue');const sub=head.querySelector('p');if(sub)sub.textContent=(q.retail?'Retail':'Online')+' · '+ydDate(q.day);main.classList.add('yd-detail');return;}
  if(detail||tab!=='today')return;
  const day=addD(IST(),-1),nav=document.createElement('div');nav.className='yd-view-tabs';nav.setAttribute('aria-label','Overview day');nav.innerHTML='<button data-overview-day="today" aria-pressed="'+(overviewDay==='today')+'">Today</button><button data-overview-day="yesterday" aria-pressed="'+(overviewDay==='yesterday')+'">Yesterday <small>'+esc(new Date(day+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'}))+'</small></button>';
  if(overviewDay==='yesterday'){
   const glance=[false,true].map(retail=>{const r=yesterdayRecord(retail),channel=retail?'Retail':'Online';return '<button data-d="'+esc(ydRoute({retail,day}))+'"><span>'+channel+'</span><b>'+SV(r.amount===null?'Unavailable':inr(r.amount))+'</b><small>'+(r.kind==='snapshot'?'Snapshot · finality unconfirmed':r.kind==='history'?'Dated history':'Not supplied')+' ↗</small></button>'}).join('');
-  main.innerHTML='<section class="yd-view" aria-label="Yesterday revenue"><div class="yd-intro"><span>REVENUE BY SOURCE</span><h2>'+esc(ydDate(day))+'</h2><p>Online and Retail stay separate. Each amount belongs to this date only.</p></div><div class="yd-glance">'+glance+'</div>'+yesterdayCard(false)+yesterdayCard(true)+'</section>';
+  main.innerHTML='<section class="yd-view" aria-label="Yesterday revenue"><div class="yd-intro"><span>REVENUE BY SOURCE</span><h2>'+esc(ydDate(day))+'</h2><p>Each amount belongs to this date only. Online and Retail are also shown separately below.</p></div><div class="yd-glance">'+glance+'</div>'+ydCombined(day)+yesterdayCard(false)+yesterdayCard(true)+'</section>';
   head.querySelector('h1').textContent='Yesterday.';const sub=head.querySelector('p');if(sub)sub.textContent='Revenue · '+ydDate(day);
  }else{
   const context=main.querySelector('.prior-day-context');if(context){const b=document.createElement('button');b.className='yd-open';b.dataset.overviewDay='yesterday';b.textContent="Open yesterday's revenue ↗";context.prepend(b);}
