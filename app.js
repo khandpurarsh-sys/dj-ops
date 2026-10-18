@@ -1541,7 +1541,7 @@ function place(c,t,btn,animate){
  const x=br.left-cr.left+c.scrollLeft+(line?br.width*.14:0),w=line?br.width*.72:br.width;
  const y=line?(br.bottom-cr.top-2):(br.top-cr.top),h=line?2:br.height;
  t.style.setProperty('--tx',x+'px');t.style.setProperty('--tw',w+'px');t.style.setProperty('--ty',y+'px');t.style.setProperty('--th',h+'px');
- t.classList.add('aes-on');
+ if(!t.classList.contains('aes-on'))t.classList.add('aes-on');
 }
 function thumbs(){THUMBS.forEach(([sel,kind])=>$$(sel).forEach((c,i)=>{
  const act=c.querySelector('button[aria-pressed=true]');if(!act)return;
@@ -1550,7 +1550,7 @@ function thumbs(){THUMBS.forEach(([sel,kind])=>$$(sel).forEach((c,i)=>{
   const p=prev.get(key);
   if(p&&!RM()){['--tx','--tw','--ty','--th'].forEach(k=>t.style.setProperty(k,p[k]));t.classList.add('aes-on');void t.offsetWidth;t.classList.add('aes-go');place(c,t,act)}
   else{place(c,t,act);requestAnimationFrame(()=>t.classList.add('aes-go'))}
- }else{t.classList.add('aes-go');place(c,t,act)}
+ }else{if(!t.classList.contains('aes-go'))t.classList.add('aes-go');place(c,t,act)}
  const s={};['--tx','--tw','--ty','--th'].forEach(k=>s[k]=t.style.getPropertyValue(k));prev.set(key,s);
 }))}
 /* freshness dot (13) */
@@ -1560,7 +1560,7 @@ function insights(){
  $$('.hi-card').forEach(c=>{const k=c.querySelector('.hi-kicker>span');const m=k&&/^\s*(\d{2})\b/.exec(k.textContent);if(m&&c.dataset.aesN!==m[1])c.dataset.aesN=m[1]});
  $$('.hi-desk-tools [role=group] button[data-hi-view=saved]').forEach(b=>{if(b.querySelector('.aes-count'))return;const m=/^(.*?)\s*\((\d+)\)\s*$/.exec(b.textContent);if(m){b.innerHTML='';b.append(document.createTextNode(m[1]));const s=document.createElement('span');s.className='aes-count';s.textContent=m[2];b.append(s);b.setAttribute('aria-label',m[1]+' ('+m[2]+')')}});
  const note=document.querySelector('.hi-desk-tools .daily-learning-note'),g=document.querySelector('details.hi-clean-guide');
- if(note&&g){const sm=g.querySelector(':scope>summary');if(sm)sm.after(note)}
+ if(note&&g){const sm=g.querySelector(':scope>summary');if(sm&&note.previousElementSibling!==sm)sm.after(note)}
 }
 /* menu shrink (17) */
 let ly=scrollY,minState=false;
@@ -1570,7 +1570,7 @@ addEventListener('scroll',()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;cons
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.halo-menu-toggle')){minState=false;document.body.classList.remove('aes-menu-min')}},true);
 /* refresh states (26,25) */
 let wasBusy=false;
-function refresh(){const rf=document.querySelector('#rf');const b=!!(rf&&rf.classList.contains('bj-busy'));document.body.classList.toggle('aes-loading',b);if(wasBusy&&!b&&rf){rf.classList.add('aes-tick');setTimeout(()=>rf.classList.remove('aes-tick'),950)}wasBusy=b}
+function refresh(){const rf=document.querySelector('#rf');const b=!!(rf&&rf.classList.contains('bj-busy'));if(document.body.classList.contains('aes-loading')!==b)document.body.classList.toggle('aes-loading',b);if(wasBusy&&!b&&rf){rf.classList.add('aes-tick');setTimeout(()=>rf.classList.remove('aes-tick'),950)}wasBusy=b}
 /* pair-mode crossfade (14) */
 let pm=null;function pairFade(){const p=document.querySelector('.halo-pair');if(!p)return;const m=p.dataset.pairMode;if(pm!=null&&m!==pm&&!RM()){p.classList.add('aes-fade');setTimeout(()=>p.classList.remove('aes-fade'),360)}pm=m}
 /* charts (27) */
@@ -1586,7 +1586,7 @@ document.addEventListener('pointerdown',e=>{const g=e.target.closest&&e.target.c
 /* run */
 function run(){q=0;if(busy)return;try{thumbs();fresh();insights();refresh();pairFade();charts()}catch(e){}}
 let rq=0;const sched=()=>{if(busy||rq)return;rq=requestAnimationFrame(()=>{rq=0;run()})};
-new MutationObserver(ms=>{if(busy)return;sched()}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-pressed','class','data-pair-mode'],characterData:true});
+new MutationObserver(ms=>{if(busy)return;sched()}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-pressed','class','data-pair-mode']});
 addEventListener('resize',sched);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sched);
 sched();
 }catch(e){}})();
