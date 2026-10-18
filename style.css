@@ -1948,36 +1948,3 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-halo-palette=midnight] body.lay-halo :is(.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background:linear-gradient(160deg,#ead8b0,#d8c18f)!important;color:#15161b!important;box-shadow:none!important}
 :root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-panel button.on,.halo-dock button.on,.pills button.on,.seg button.on,.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background-color:#e0c897!important}
 :root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button.on svg{color:#15161b;stroke:currentColor}
-
-/* ===== Glow bar (minimal) ===== */
-body.lay-halo{--glow-gold:var(--atelier-gold)}
-:root[data-th=halo][data-halo-palette=""] body.lay-halo{--glow-gold:#85601f}
-:root[data-halo-palette=midnight] body.lay-halo{--glow-gold:#ecd6a2}
-.aes-has-thumb{position:relative}
-.aes-thumb{position:absolute;left:0;top:0;pointer-events:none;width:var(--tw,0);height:2px;border-radius:2px;transform:translate3d(var(--tx,0),var(--ty,0),0);will-change:transform,width;opacity:0;background:linear-gradient(90deg,transparent,var(--glow-gold) 18%,var(--glow-gold) 82%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--glow-gold) 55%,transparent),0 0 2px var(--glow-gold)}
-.aes-thumb.aes-on{opacity:1}
-@media (prefers-reduced-motion:no-preference){body.lay-halo:not(.noanim) .aes-thumb.aes-go{transition:transform .46s cubic-bezier(.22,1.15,.36,1),width .46s cubic-bezier(.22,1.15,.36,1),opacity .2s}}
-.halo-pair-controls>div.aes-has-thumb button,.hi-clean-tabs.aes-has-thumb button{border-bottom-color:transparent!important}
-
-/* motion: shared spring, transform/opacity only */
-:root{--mo-spring:cubic-bezier(.22,1.15,.36,1);--mo-ease:cubic-bezier(.3,.7,.2,1)}
-@media (prefers-reduced-motion:no-preference){
-body.lay-halo:not(.noanim) details>summary{transition:opacity .2s var(--mo-ease)}
-body.lay-halo:not(.noanim) details::details-content{opacity:0;transform:translate3d(0,-6px,0);transition:opacity .34s var(--mo-ease),transform .42s var(--mo-spring),content-visibility .42s allow-discrete}
-body.lay-halo:not(.noanim) details[open]::details-content{opacity:1;transform:none}
-@keyframes mo-open{from{opacity:0;transform:translate3d(0,-6px,0)}to{opacity:1;transform:none}}
-@supports not selector(::details-content){body.lay-halo:not(.noanim) details[open]>:not(summary){animation:mo-open .38s var(--mo-spring) both}}
-@keyframes mo-menu{from{opacity:0;transform:translate3d(-50%,14px,0) scale(.94)}to{opacity:1;transform:translate3d(-50%,0,0) scale(1)}}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel{animation:mo-menu .42s var(--mo-spring) both!important;transform-origin:50% 100%}
-@keyframes mo-item{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:none}}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel button{animation:mo-item .4s var(--mo-spring) both!important}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel button:nth-child(2){animation-delay:.04s!important}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel button:nth-child(3){animation-delay:.08s!important}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel button:nth-child(4){animation-delay:.12s!important}
-:root[data-th] body.lay-halo:not(.noanim).halo-menu-open .halo-menu-panel button:nth-child(n+5){animation-delay:.16s!important}
-@keyframes mo-theme{from{opacity:.0}to{opacity:1}}
-body.lay-halo:not(.noanim) #root.mo-theme{animation:mo-theme .45s var(--mo-ease) both}
-@keyframes mo-tick{0%{opacity:.4;transform:scale(.85)}60%{transform:scale(1.12)}100%{opacity:1;transform:none}}
-body.lay-halo:not(.noanim) #rf:not(.bj-busy).mo-done svg{animation:mo-tick .5s var(--mo-spring)}
-body.lay-halo:not(.noanim) #rf.bj-busy svg{animation:bj-spin .9s linear infinite}
-}
