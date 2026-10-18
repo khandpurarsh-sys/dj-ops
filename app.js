@@ -1367,7 +1367,7 @@ function askAnswer(raw){
   const rows=[['Sales (incl. GST)',M(rev)],['Bills',V(bl)],['Units',V(un)],['Avg bill',M(Math.round(rev/Math.max(1,bl)))]];
   if(!sHit&&S.length>1)S.forEach(z=>rows.push([esc(z.name||'Store'),M(n(z.sales))+' <small>'+V(n(z.bills)+' bills')+'</small>']));
   let h=card((sHit?esc(sHit.name)+' · ':'Retail · ')+'today',rows);
-  if(list.length){h+=card('Latest bills',(list.some(b=>bkey(b)!=null)?srtB(list).slice(0,8):list.slice(-8).reverse()).map(b=>[V(esc(b.no||'Bill'))+'<br><small>'+(b.time?esc(b.time)+' · ':'')+(payOf(b)?esc(payOf(b))+' · ':'')+V(esc(skuLine(b)||'no item detail'))+'</small>',M(b.amt),'rb:'+esc(b.store||'Store')+'||'+esc(b.no||'')]))}
+  if(list.length){h+=card('Latest bills',(list.every(b=>/\d\s*$/.test(String(b.no||'')))?srtN(list).slice(0,8):list.some(b=>bkey(b)!=null)?srtB(list).slice(0,8):list.slice(-8).reverse()).map(b=>[V(esc(b.no||'Bill'))+'<br><small>'+(b.time?esc(b.time)+' · ':'')+(payOf(b)?esc(payOf(b))+' · ':'')+V(esc(skuLine(b)||'no item detail'))+'</small>',M(b.amt),'rb:'+esc(b.store||'Store')+'||'+esc(b.no||'')]))}
   return h+`<p class="note" style="padding:0 0 6px;text-align:left">${foot}</p>`;}
  // ---- stock overview
  if(is('stock','stok','inventory','maal','khatam','oos','bacha','left','out of stock')&&!is('sold','sell','sale','sales')){
