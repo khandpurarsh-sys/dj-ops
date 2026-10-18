@@ -1934,3 +1934,16 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 #daily-share-dialog p{font-size:14px;line-height:1.65}
 #daily-share-dialog pre{font-family:inherit;font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;border-top:1px solid var(--atelier-line,var(--edge));padding:14px 0;margin:16px 0}
 #daily-share-dialog :is(button,a){display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 13px;margin:5px 7px 5px 0;border:1px solid var(--atelier-line,var(--edge));border-radius:10px;color:var(--ink);background:none;text-decoration:none;font-family:inherit;font-size:14px;box-sizing:border-box}
+/* Midnight: colours sampled from the user's supplied Retail reference. */
+:root[data-halo-palette=midnight]{background:#0e1118}
+:root[data-halo-palette=midnight] body.lay-halo{--atelier-ground:#0e1118;--atelier-paper:#191b20;--atelier-solid:#191b20;--atelier-wash:#2b2c31;--atelier-gold:#e0c897;--atelier-gold-wash:#27212a20;--atelier-line:#34353b;--atelier-glint:#f8f1e410;--atelier-nav:#2b2c31;--ink:#f8f1e4;--ink2:#9b9da6;--edge:#34353b;--bg1:#0e1118;--bg2:#121620;--mid:#191b20;--glass:#191b20;--sf:#191b20;--sfh:#2b2c31;--accent:#e0c897;--g1:#ead8b0;--g2:#d8c18f;--btn:#f8f1e4;--gold:#e0c897;--ok:#b9e3cc;--warn:#e0c897;--bad:#ffbec6;--low:var(--bad);color:#f8f1e4;background:#0e1118;color-scheme:dark}
+:root[data-halo-palette=midnight] body.lay-halo .app{background:radial-gradient(ellipse 90% 550px at 0 0,#1b223466,transparent 75%),radial-gradient(ellipse 60% 460px at 110% 500px,#38232355,transparent 80%),linear-gradient(170deg,#0c0d12,#0e1118 78%);background-attachment:fixed}
+.halo-theme-swatch[data-swatch=midnight]{background:linear-gradient(120deg,#121622 0 48%,#f8f1e4 49% 76%,#e0c897 77%)}
+:root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-toggle,.halo-menu-panel,.halo-dock){background:#2b2c31!important;border-color:#484950!important;color:var(--ink);box-shadow:0 8px 28px #0003!important}
+:root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-panel button.on,.halo-dock button.on,.pills button.on,.seg button.on){background:linear-gradient(160deg,#ead8b0,#d8c18f)!important;color:#15161b!important;border-color:#ead8b0!important;box-shadow:none!important}
+:root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-panel button,.halo-dock button){color:var(--ink)}
+:root[data-halo-palette=midnight] body.lay-halo :is(.bar,.ts-bar)>i{background:linear-gradient(90deg,#d8c18f,#ead8b0)!important}
+:root[data-halo-palette=midnight] body.lay-halo :is(.halo-pair .halo-kpi,.halo-pair .halo-kpi::before,.halo-pair .halo-kpi::after){background:none!important;box-shadow:none!important}
+:root[data-halo-palette=midnight] body.lay-halo :is(.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background:linear-gradient(160deg,#ead8b0,#d8c18f)!important;color:#15161b!important;box-shadow:none!important}
+:root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-panel button.on,.halo-dock button.on,.pills button.on,.seg button.on,.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background-color:#e0c897!important}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button.on svg{color:#15161b;stroke:currentColor}
