@@ -1536,8 +1536,8 @@ const THUMBS=[['.halo-pair-controls>div','line'],['.hi-clean-tabs','tab']];
 function place(c,t,btn,animate){
  const cr=c.getBoundingClientRect(),br=btn.getBoundingClientRect();if(!br.width)return;
  const kind=t.dataset.k,line=kind==='line'||kind==='tab';
- const x=br.left-cr.left+c.scrollLeft+(line?br.width*.14:0),w=line?br.width*.72:br.width;
- const y=line?(br.bottom-cr.top-2):(br.top-cr.top),h=line?2:br.height;
+ const x=br.left-cr.left+c.scrollLeft+(line?br.width*.04:0),w=line?br.width*.92:br.width;
+ const y=line?(br.bottom-cr.top-1.5):(br.top-cr.top),h=line?2:br.height;
  t.style.setProperty('--tx',x+'px');t.style.setProperty('--tw',w+'px');t.style.setProperty('--ty',y+'px');t.style.setProperty('--th',h+'px');
  if(!t.classList.contains('aes-on'))t.classList.add('aes-on');
 }
