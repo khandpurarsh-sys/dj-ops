@@ -1566,3 +1566,22 @@ new MutationObserver(sched).observe(document.documentElement,{subtree:true,child
 addEventListener('resize',sched);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sched);sched();
 }catch(e){}})();
 lockScreen();
+
+;(function(){if(window.__mo)return;window.__mo=1;
+const SEL='button,a[href],summary,[data-d],[data-t],[role=button],.line,[onclick],label,[data-th],[data-hm],[data-an],[data-ly]';
+const ok=()=>!document.body.classList.contains('noanim')&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&'animate' in Element.prototype&&CSS.supports('scale','1');
+let cur=null;
+function down(e){if(e.button>0||!ok())return;const t=e.target.closest&&e.target.closest(SEL);if(!t||t.disabled||t.closest('.halo-menu-toggle')&&0)return;
+ const r=t.getBoundingClientRect();if(r.width<1)return;const s=r.width>320||r.height>110?.985:r.width>160?.97:.93;
+ up();const a=t.animate([{scale:'1'},{scale:String(s)}],{duration:120,easing:'cubic-bezier(.3,.7,.2,1)',fill:'forwards'});cur={t,a,s}}
+function up(){if(!cur)return;const{t,a,s}=cur;cur=null;try{a.cancel();if(t.isConnected)t.animate([{scale:String(s)},{scale:'1.015',offset:.55},{scale:'1'}],{duration:380,easing:'cubic-bezier(.22,1.15,.36,1)'})}catch(x){}}
+addEventListener('pointerdown',down,{passive:true,capture:true});
+['pointerup','pointercancel','dragstart'].forEach(k=>addEventListener(k,up,{passive:true,capture:true}));
+addEventListener('scroll',()=>{if(cur){const{a}=cur;cur=null;try{a.cancel()}catch(x){}}},{passive:true,capture:true});
+// theme/mode cross-fade
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-th],[data-hm],[data-ly]');if(!b||!ok())return;setTimeout(()=>{const r=document.getElementById('root');if(!r)return;r.classList.remove('mo-theme');void r.offsetWidth;r.classList.add('mo-theme');setTimeout(()=>r.classList.contains('mo-theme')&&r.classList.remove('mo-theme'),520)},0)},true);
+// refresh tick
+document.addEventListener('animationend',e=>{if(e.animationName==='bj-spin'){}},true);
+const mo=new MutationObserver(ms=>{for(const m of ms){const t=m.target;if(t.id==='rf'&&m.attributeName==='class'&&m.oldValue&&m.oldValue.includes('bj-busy')&&!t.classList.contains('bj-busy')){if(!t.classList.contains('mo-done')){t.classList.add('mo-done');setTimeout(()=>t.classList.remove('mo-done'),600)}}}});
+mo.observe(document.body,{attributes:true,attributeFilter:['class'],attributeOldValue:true,subtree:true});
+})();
