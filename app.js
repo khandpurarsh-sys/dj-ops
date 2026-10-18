@@ -1565,7 +1565,6 @@ let rq=0;const sched=()=>{if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{th
 new MutationObserver(sched).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-pressed','data-pair-mode']});
 addEventListener('resize',sched);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sched);sched();
 }catch(e){}})();
-lockScreen();
 
 ;(function(){if(window.__mo)return;window.__mo=1;
 const SEL='button,a[href],summary,[data-d],[data-t],[role=button],.line,[onclick],label,[data-th],[data-hm],[data-an],[data-ly]';
@@ -1585,3 +1584,4 @@ document.addEventListener('animationend',e=>{if(e.animationName==='bj-spin'){}},
 const mo=new MutationObserver(ms=>{for(const m of ms){const t=m.target;if(t.id==='rf'&&m.attributeName==='class'&&m.oldValue&&m.oldValue.includes('bj-busy')&&!t.classList.contains('bj-busy')){if(!t.classList.contains('mo-done')){t.classList.add('mo-done');setTimeout(()=>t.classList.remove('mo-done'),600)}}}});
 mo.observe(document.body,{attributes:true,attributeFilter:['class'],attributeOldValue:true,subtree:true});
 })();
+lockScreen();
