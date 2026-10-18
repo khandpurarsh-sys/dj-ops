@@ -2111,3 +2111,10 @@ body.lay-halo .halo-scene-nav button,:root[data-halo-palette=midnight] body.lay-
 :root[data-halo-palette=midnight] body.lay-halo :is(.yd-view-tabs.aes-has-thumb,.halo-pair-controls>div.aes-has-thumb,.hi-clean-tabs.aes-has-thumb,.hi-desk-tools [role=group].aes-has-thumb) button[aria-pressed=true]{background:none!important;background-color:transparent!important;box-shadow:none!important;color:var(--aes-gold)!important}
 :root[data-halo-palette=midnight] body.lay-halo .halo-insights-link{color:var(--aes-gold)}
 :root[data-halo-palette=midnight] body.lay-halo :is(.halo-settings,.halo-refresh) svg{color:var(--aes-gold)}
+body.lay-halo .halo-insights-link{white-space:nowrap;padding-left:12px;padding-right:12px}
+:root[data-halo-palette=midnight] .aes-k-glass{background:linear-gradient(180deg,rgba(236,214,162,.4),rgba(236,214,162,.18))}
+:root[data-halo-palette=midnight] .aes-k-glass{background:linear-gradient(180deg,rgba(242,205,128,.52),rgba(196,150,74,.3));box-shadow:0 0 0 1px rgba(242,214,150,.6),0 8px 20px rgba(4,10,28,.35),inset 0 1px 0 rgba(255,244,220,.55)}
+:root[data-halo-palette=midnight] .aes-k-seg{background:linear-gradient(180deg,rgba(242,205,128,.38),rgba(196,150,74,.2))}
+
+body.lay-halo .halo-kpi>b::first-letter{font-size:.62em;font-weight:500;color:var(--aes-gold);letter-spacing:0}
+body.lay-halo .halo-kpi>b .aes-rs{all:unset}
