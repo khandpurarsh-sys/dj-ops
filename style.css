@@ -2005,3 +2005,16 @@ body.lay-halo .prod-meta,body.lay-halo .prod-flag,body.lay-halo .prod-gaps{text-
 body.lay-halo .prod-cat small{margin-left:8px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.85}
 :root[data-th] body.lay-halo .prod-tabs{margin:6px 0 4px}
 :root[data-th] body.lay-halo .prod-chart{padding:16px 0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+
+.prod-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.prod-pick{background:none;border:0;color:var(--atelier-gold,var(--g1));font:inherit;font-size:14px;min-height:44px;padding:0;cursor:pointer}
+.prod-cal{padding:6px 0 14px;border-bottom:1px solid var(--edge)}
+.prod-calh{display:flex;justify-content:space-between;align-items:center}.prod-calh b{font-weight:600}
+.prod-calh button{background:none;border:0;color:inherit;font-size:22px;width:44px;height:44px;cursor:pointer}.prod-calh button:disabled{opacity:.25}
+.prod-calw,.prod-calg{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.prod-calw span{font-size:11px;color:var(--ink2);padding:4px 0}
+.prod-calg>*{min-height:42px;display:grid;place-items:center;position:relative;font:inherit;font-size:15px}
+.prod-calg .off{color:var(--ink2);opacity:.4}
+.prod-calg button.has{background:none;border:0;color:inherit;font-weight:600;cursor:pointer}
+.prod-calg button.has i{position:absolute;bottom:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--atelier-gold,var(--g1))}
+.prod-cgs{margin-top:6px}
