@@ -825,7 +825,7 @@ window.__animReduce=()=>((window.harness&&!window.__animForce)||LS.getItem('dj_a
  function parseNum(t){const m=t.replace(/[,\s]/g,'').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
  function fmtLike(orig,v){const dec=(orig.split('.')[1]||'').length;return v.toLocaleString('en-IN',{minimumFractionDigits:dec,maximumFractionDigits:dec})}
  function countUp(el){ /* A-JS-01 number count-up on big figures */
-  if(el.__counting||el.__done===el.textContent)return;const target=parseNum(el.textContent);if(target===null||Math.abs(target)<4)return;
+  if(el.__counting||el.__done===el.textContent)return;const target=parseNum(el.textContent);if(target===null||Math.abs(target)<4||/₹/.test(el.textContent))return;
   const orig=el.textContent;const pre=orig.trim().match(/^[^\d-]*/)[0];
   el.__counting=1;const t0=performance.now(),dur=520;
   function step(t){const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=pre+fmtLike(orig,target*e);if(p<1)requestAnimationFrame(step);else{el.textContent=orig;el.__counting=0;el.__done=orig}}
@@ -1263,7 +1263,7 @@ function bestBlock(){const hasR=!!A(data.retailHistory);if(!hasR&&bchn==='retail
  else if(sl.summary)h+='<p class="note">Supplied range report; exact start/end dates and full SKU coverage are not confirmed.</p>';else if(sl.cov<sl.span)h+=`<p class="note">Item detail for ${sl.cov} of ${sl.span} days.</p>`;
  return h;}
 let lastAnim=null,dir='f',lastX=null;const RMf=()=>LS.getItem('dj_anim')==='reduced';
-function countUp(el){const m=(el.textContent||'').trim().match(/^(₹)?([\d,]+)$/);if(!m)return;const to=+m[2].replace(/,/g,'');if(!to||to>1e9)return;const pre=m[1]||'',t0=performance.now(),D=650;
+function countUp(el){const m=(el.textContent||'').trim().match(/^(₹)?([\d,]+)$/);if(!m||m[1])return;const to=+m[2].replace(/,/g,'');if(!to||to>1e9)return;const pre=m[1]||'',t0=performance.now(),D=650;
  const f=t=>{const p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);el.textContent=pre+Math.round(to*e).toLocaleString('en-IN');if(p<1)requestAnimationFrame(f);};el.textContent=pre+'0';requestAnimationFrame(f);}
 function motion(){const k=navKey(),an=k!==lastAnim;lastAnim=k;const mn=document.querySelector('main'),tb=document.querySelector('.tabbar'),ind=tb&&tb.querySelector('.ind'),on=tb&&tb.querySelector('button.on');
  if(tb&&on){let sp=ind;if(!sp){sp=document.createElement('span');sp.className='ind';tb.insertBefore(sp,tb.firstChild);}const x=on.offsetLeft;sp.style.width=on.offsetWidth+'px';sp.style.transform='translate3d('+x+'px,0,0)';
