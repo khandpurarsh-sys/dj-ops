@@ -1948,3 +1948,21 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-halo-palette=midnight] body.lay-halo :is(.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background:linear-gradient(160deg,#ead8b0,#d8c18f)!important;color:#15161b!important;box-shadow:none!important}
 :root[data-halo-palette=midnight] body.lay-halo :is(.halo-menu-panel button.on,.halo-dock button.on,.pills button.on,.seg button.on,.yd-view-tabs button[aria-pressed=true],.ts-channels button.on){background-color:#e0c897!important}
 :root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button.on svg{color:#15161b;stroke:currentColor}
+
+/* open layout: no translucent boxes on Yesterday, tighter header spacing */
+:root[data-th] body.lay-halo .yd-glance{gap:0;margin:0 0 6px;border-top:1px solid var(--atelier-line);border-bottom:1px solid var(--atelier-line)}
+:root[data-th] body.lay-halo .yd-glance button,:root[data-th] body.lay-halo .yd-glance a{background:none!important;border:0!important;border-radius:0;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;padding:16px 0 16px 0}
+:root[data-th] body.lay-halo .yd-glance button+button,:root[data-th] body.lay-halo .yd-glance a+a{border-left:1px solid var(--atelier-line)!important;padding-left:16px}
+:root[data-th] body.lay-halo .yd-combined{background:none!important;border:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;padding:14px 0!important;margin-bottom:0!important}
+:root[data-th] body.lay-halo .yd-combined .line{justify-content:space-between}
+:root[data-th] body.lay-halo .yd-combined .note{text-align:left}
+:root[data-th] body.lay-halo .halo-pair-header{padding-bottom:4px}
+:root[data-th] body.lay-halo .halo-pair-header+.halo-scene-nav{padding-bottom:0;margin-bottom:6px;min-height:36px}
+:root[data-th] body.lay-halo .halo-pair-header+.halo-scene-nav button{min-height:36px;padding:6px 0}
+:root[data-th] body.lay-halo .yd-view-tabs{margin-bottom:18px}
+:root[data-th] body.lay-halo .yd-intro p{margin-bottom:18px}
+:root[data-th] body.lay-halo .yd-view-tabs{background:none!important;border:0!important;border-bottom:1px solid var(--atelier-line)!important;border-radius:0;padding:0;gap:0;box-shadow:none}
+:root[data-th] body.lay-halo .yd-view-tabs button{border-radius:0;min-height:44px;background:none!important;box-shadow:none!important;border-bottom:2px solid transparent!important;margin-bottom:-1px}
+:root[data-th] body.lay-halo .yd-view-tabs button[aria-pressed=true]{background:none!important;box-shadow:none!important;color:var(--atelier-gold)!important;border-bottom-color:var(--atelier-gold)!important}
+:root[data-halo-palette=midnight] body.lay-halo .yd-view-tabs button[aria-pressed=true]{background:none!important;background-color:transparent!important;color:#e0c897!important;border-bottom-color:#e0c897!important}
+:root[data-th] body.lay-halo :is(.halo-finder,.halo-coverage){background:none!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-left:0!important;border-right:0!important;padding-left:0!important;padding-right:0!important}
