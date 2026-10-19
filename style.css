@@ -2002,3 +2002,6 @@ body.lay-halo .prod-meta,body.lay-halo .prod-flag,body.lay-halo .prod-gaps{text-
 :root[data-th] body.lay-halo .prod-batch{padding:0!important}
 :root[data-th] body.lay-halo .halo-menu-panel{grid-template-columns:repeat(4,minmax(0,1fr))!important;row-gap:4px;height:auto!important}
 :root[data-th] body.lay-halo .prod-batch>section{padding-left:0;padding-right:0}
+body.lay-halo .prod-cat small{margin-left:8px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.85}
+:root[data-th] body.lay-halo .prod-tabs{margin:6px 0 4px}
+:root[data-th] body.lay-halo .prod-chart{padding:16px 0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important}
