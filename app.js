@@ -1265,8 +1265,8 @@ function minModel(){const s=data.snapshot||{},R=data.retail,day=IST();
  const oStale=rollStale(s),oAmt=oStale?null:pgNum(s.revenue);
  const RR=retailReady(R),RT=R&&A(R.stores),rAmt=RR&&RT&&RT.every(z=>pgNum(z.sales)!=null)?RT.reduce((q,z)=>q+pgNum(z.sales),0):null;
  const yo=yesterdayRecord(false),yr=yesterdayRecord(true);
- const minT=x=>{if(!x)return null;const ms=/^\d{4}-\d\d-\d\dT/.test(String(x))?minMs(x):null;return ms?prodTime(ms):String(x)};
- const oTime=oAmt!==null?minT(s.at||s.readAt):null,rTime=rAmt!==null?retailTime(R):null;
+ const minT=x=>{if(!x)return null;const ms=/^\d{4}-\d\d-\d\dT/.test(String(x))?minMs(x):null;return (ms?prodTime(ms):String(x)).replace(/^read\s+/i,'')};
+ const oTime=oAmt!==null?minT(s.at||s.readAt):null,rTime=rAmt!==null?String(retailTime(R)).replace(/^read\s+/i,''):null;
  const oMs=oAmt!==null?minMs(s.readAt||s.at):null,rMs=rAmt!==null?minMs(R&&R.readAt):null;
  return {s,R,RT,RR,day,oStale,oAmt,rAmt,yo,yr,oTime,rTime,oMs,rMs,
   tot:oAmt!==null&&rAmt!==null?oAmt+rAmt:null,ytot:minOk(yo)&&minOk(yr)?yo.amount+yr.amount:null}}
