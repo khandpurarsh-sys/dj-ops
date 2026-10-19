@@ -2018,3 +2018,41 @@ body.lay-halo .prod-cat small{margin-left:8px;font-weight:400;letter-spacing:0;t
 .prod-calg button.has{background:none;border:0;color:inherit;font-weight:600;cursor:pointer}
 .prod-calg button.has i{position:absolute;bottom:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--atelier-gold,var(--g1))}
 .prod-cgs{margin-top:6px}
+
+/* Minimal layout: only active while body.min-home is set. */
+:root:has(body.min-home){background:#f6f3ec}
+body.min-home{--mbg:#f6f3ec;--mink:#14233f;--mink2:#6d7686;--mline:rgba(20,35,63,.12);--mgold:#a8843f;--mup:#2f8f5b;--mdn:#c0453a;background:var(--mbg)!important;color:var(--mink)}
+body.min-home[data-mm=dark]{--mbg:#0f1a2e;--mink:#f3ecdc;--mink2:#9aa5b8;--mline:rgba(243,236,220,.14);--mgold:#d9bf84;--mup:#5fc08a;--mdn:#ef7b70}
+@media (prefers-color-scheme:dark){body.min-home[data-mm=auto]{--mbg:#0f1a2e;--mink:#f3ecdc;--mink2:#9aa5b8;--mline:rgba(243,236,220,.14);--mgold:#d9bf84;--mup:#5fc08a;--mdn:#ef7b70}}
+:root:has(body.min-home[data-mm=dark]){background:#0f1a2e}
+@media (prefers-color-scheme:dark){:root:has(body.min-home[data-mm=auto]){background:#0f1a2e}}
+body.min-home #topstrip,body.min-home .blob{display:none}
+.m-wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 22px) 26px calc(env(safe-area-inset-bottom,0px) + 56px);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:var(--mink);animation:mIn .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+body.noanim .m-wrap{animation:none}
+@media (prefers-reduced-motion:reduce){.m-wrap{animation:none}}
+.m-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.m-head small{display:block;margin-top:4px;font-size:12px;color:var(--mink2)}
+.m-eye{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mink2)}
+.m-rf{background:none;border:0;color:var(--mink2);width:44px;height:44px;margin:-10px -10px 0 0;display:grid;place-items:center;cursor:pointer;border-radius:50%}
+.m-status{margin:14px 0 0;font-size:13px;color:var(--mink2)}
+.m-hero{padding:clamp(28px,9vh,64px) 0 28px}
+.m-big{font-size:clamp(48px,14.5vw,80px);line-height:1;font-weight:600;letter-spacing:-.035em;margin-top:14px;font-variant-numeric:tabular-nums}
+.m-dash{color:var(--mink2)}
+.m-yd{margin-top:16px;font-size:17px;color:var(--mink2);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.mp{font-size:13px;font-weight:600;color:var(--mink2);white-space:nowrap}.mp.up{color:var(--mup)}.mp.dn{color:var(--mdn)}
+.m-fn{margin:10px 0 0;font-size:12px;line-height:1.45;color:var(--mink2)}
+.m-rows{border-top:1px solid var(--mline)}
+.m-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:20px 0;border-bottom:1px solid var(--mline)}
+.m-l b{font-size:17px;font-weight:600}.m-l small,.m-r small{display:block;margin-top:5px;font-size:12px;line-height:1.4;color:var(--mink2)}
+.m-r{text-align:right}.m-r b{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.m-more{margin-top:8px}
+.m-more summary{list-style:none;display:flex;justify-content:space-between;align-items:center;min-height:52px;font-size:15px;color:var(--mgold);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.m-more summary::-webkit-details-marker{display:none}
+.m-more summary i{width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .25s}
+.m-more[open] summary i{transform:rotate(225deg)}
+.m-sec{padding:14px 0;border-top:1px solid var(--mline)}.m-sec h3{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--mink2)}.m-sec p{margin:0;font-size:15px}
+.m-st{display:flex;justify-content:space-between;padding:8px 0 0;font-size:14px;color:var(--mink2)}.m-st b{font-weight:500;color:var(--mink)}
+.m-go{display:flex;flex-wrap:wrap;gap:4px 22px;padding:10px 0;border-top:1px solid var(--mline)}
+.m-go button,.m-pills button{background:none;border:0;color:var(--mink);font:inherit;font-size:15px;padding:10px 0;min-height:44px;cursor:pointer}
+.m-pills{display:flex;gap:22px}.m-pills button{color:var(--mink2)}.m-pills button.on{color:var(--mgold);font-weight:600}
