@@ -1966,3 +1966,29 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-th] body.lay-halo .yd-view-tabs button[aria-pressed=true]{background:none!important;box-shadow:none!important;color:var(--atelier-gold)!important;border-bottom-color:var(--atelier-gold)!important}
 :root[data-halo-palette=midnight] body.lay-halo .yd-view-tabs button[aria-pressed=true]{background:none!important;background-color:transparent!important;color:#e0c897!important;border-bottom-color:#e0c897!important}
 :root[data-th] body.lay-halo :is(.halo-finder,.halo-coverage){background:none!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none;border-left:0!important;border-right:0!important;padding-left:0!important;padding-right:0!important}
+
+/* declutter: quieter section heads, softer rows, tighter spacing. No content removed. */
+:root[data-th] body.lay-halo .halo-section-id{display:flex;align-items:baseline;gap:10px;margin:0 0 6px;min-height:0;height:auto}
+:root[data-th] body.lay-halo .halo-section-id>span{border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important;width:auto;height:auto;min-width:0;padding:0;font-size:11px;letter-spacing:.12em;color:var(--atelier-gold);opacity:.9}
+:root[data-th] body.lay-halo .halo-section-id>b{font-size:21px;line-height:1.25;font-weight:600;letter-spacing:-.01em}
+:root[data-th] body.lay-halo .halo-panel>h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--ink2);opacity:.85;margin:18px 0 2px}
+:root[data-th] body.lay-halo .halo-panel .glass.list{border-bottom:0!important;box-shadow:none}
+:root[data-th] body.lay-halo .halo-panel .line,:root[data-th] body.lay-halo .halo-panel .chrow{border-bottom-color:color-mix(in srgb,var(--atelier-line) 55%,transparent)!important}
+:root[data-th] body.lay-halo .halo-panel .line{padding-top:13px;padding-bottom:13px;min-height:0}
+:root[data-th] body.lay-halo .halo-panel .chrow{padding-top:12px;padding-bottom:12px}
+:root[data-th] body.lay-halo .halo-panel{margin-bottom:22px}
+:root[data-th] body.lay-halo :is(.asof,.halo-pair-source,.halo-source-pair){font-size:11px;line-height:1.5;opacity:.62}
+:root[data-th] body.lay-halo .halo-kpis .halo-kpi{gap:4px}
+:root[data-th] body.lay-halo .halo-combined{border-bottom:0!important;padding-top:6px!important}
+:root[data-th] body.lay-halo .halo-panel .note{font-size:12px;opacity:.75}
+:root[data-th] body.lay-halo .halo-kpis .halo-pair-open{margin-top:6px}
+:root[data-th] body.lay-halo .halo-kpis .asof,:root[data-th] body.lay-halo .halo-kpis .halo-pair-source{margin-top:10px;padding-top:10px}
+:root[data-th] body.lay-halo .halo-finder{margin-bottom:6px}
+:root[data-th] body.lay-halo .halo-finder>summary{min-height:48px}
+/* open filters, status text, search underline */
+:root[data-th] body.lay-halo .pills{gap:2px 6px;border:0!important;background:none!important;padding:0}
+:root[data-th] body.lay-halo .pills button,:root[data-th] body.lay-halo .pills button.on,:root[data-halo-palette=midnight] body.lay-halo .pills button,:root[data-halo-palette=midnight] body.lay-halo .pills button.on{background:none!important;background-color:transparent!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;box-shadow:none!important;color:var(--ink2)!important;padding:8px 8px 6px!important;min-height:40px}
+:root[data-th] body.lay-halo .pills button.on{color:var(--atelier-gold)!important;border-bottom-color:var(--atelier-gold)!important;font-weight:650}
+:root[data-halo-palette=midnight] body.lay-halo .pills button.on{color:#e0c897!important;border-bottom-color:#e0c897!important}
+:root[data-th] body.lay-halo .order .st{background:none!important;border:0!important;padding:0!important;box-shadow:none!important;font-size:12px;font-weight:650;letter-spacing:.02em}
+:root[data-th] body.lay-halo .glass.search{background:none!important;border:0!important;border-bottom:1px solid var(--atelier-line)!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none}
