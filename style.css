@@ -2059,3 +2059,5 @@ body.noanim .m-wrap{animation:none}
 .m-wrap small,.m-wrap .mp{opacity:1}
 .m-r small .mp{display:block;margin-top:3px}
 .m-r{white-space:nowrap;flex:none}.m-l{min-width:0}
+.m-hero{padding-bottom:20px}.m-sub{display:flex;justify-content:space-between;gap:12px;margin-top:26px;padding-top:20px;border-top:1px solid var(--mline);font-size:18px;color:var(--mink2)}.m-sub b{color:var(--mink);font-weight:600;font-variant-numeric:tabular-nums}.m-unc{font-size:16px;font-weight:600;color:var(--mgold)}
+.m-more .m-fn{margin-bottom:16px}
