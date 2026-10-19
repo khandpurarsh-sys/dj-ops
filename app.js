@@ -1269,7 +1269,7 @@ function minModel(){const s=data.snapshot||{},R=data.retail,day=IST();
  const oTime=oAmt!==null?minT(s.at||s.readAt):null,rTime=rAmt!==null?String(retailTime(R)).replace(/^read\s+/i,''):null;
  const oMs=oAmt!==null?minMs(s.readAt||s.at):null,rMs=rAmt!==null?minMs(R&&R.readAt):null;
  return {s,R,RT,RR,day,oStale,oAmt,rAmt,yo,yr,oTime,rTime,oMs,rMs,
-  tot:oAmt!==null&&rAmt!==null?oAmt+rAmt:null,ytot:minOk(yo)&&minOk(yr)?yo.amount+yr.amount:null}}
+  tot:oAmt!==null&&rAmt!==null?oAmt+rAmt:null,ytot:minOk(yo)&&minOk(yr)?yo.amount+yr.amount:null,ytAny:yo.amount!==null&&yr.amount!==null?yo.amount+yr.amount:null}}
 function minimalNow(){const m=minModel(),yday=addD(m.day,-1),dl=iso=>new Date(iso+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'});
  const ydTxt=(y,lab)=>y.amount===null?'Yesterday unavailable':'Yesterday '+inr(y.amount)+(y.partial||y.conflict?' \u00B7 unconfirmed':'');
  const row=(label,amt,when,y,why)=>'<div class="m-row"><div class="m-l"><b>'+label+'</b><small>'+esc(amt===null?why:when)+'</small></div><div class="m-r"><b>'+(amt===null?'\u2014':SV(inr(amt)))+'</b><small>'+esc(ydTxt(y))+' '+(amt!==null&&minOk(y)?minPctHtml(minPct(amt,y.amount)):'')+'</small></div></div>';
@@ -1279,18 +1279,19 @@ function minimalNow(){const m=minModel(),yday=addD(m.day,-1),dl=iso=>new Date(is
  const OI=ordInfo(m.s),RTb=m.RT&&m.rAmt!==null?m.RT.reduce((q,z)=>q+(pgNum(z.bills)||0),0):null,RTu=m.RT&&m.rAmt!==null?m.RT.reduce((q,z)=>q+(pgNum(z.units)||0),0):null;
  const mode=minMode(),goto=(t,l)=>'<button data-mgo="'+t+'">'+l+'</button>';
  const more='<details class="m-more" '+(minOpen?'open':'')+'><summary><span>More</span><i aria-hidden="true"></i></summary>'
+  +'<section class="m-rows">'+row('Online',m.oAmt,'Today \u00B7 '+dl(m.day)+' \u00B7 read '+(m.oTime||'time unavailable'),m.yo,whyT.find(x=>/^Online/.test(x))||'')+row('Retail',m.rAmt,'Today \u00B7 '+dl(m.day)+' \u00B7 read '+(m.rTime||'time unavailable'),m.yr,whyT.find(x=>/^Retail/.test(x))||'')+'</section>'
+  +'<p class="m-fn">Yesterday is '+esc(dl(yday))+'. Amounts include GST. Online and Retail are separate sources'+(diff?', read at different times (Online '+esc(m.oTime)+', Retail '+esc(m.rTime)+').':'.')+(m.tot!==null&&m.ytot!==null?' Today so far is compared with all of yesterday.':'')+(upd?' '+esc(upd)+'.':'')+'</p>'
   +'<div class="m-sec"><h3>Online</h3><p>'+(m.oAmt===null?'Not read yet today':SV(esc(ordN(OI)+(OI.n===1&&!OI.plus?' order':' orders')+(m.s.items!=null?' \u00B7 '+m.s.items+(Number(m.s.items)===1?' item':' items'):''))))+'</p></div>'
   +'<div class="m-sec"><h3>Retail</h3><p>'+(m.rAmt===null?'Not read yet today':SV(esc((RTb||0)+' bills \u00B7 '+(RTu||0)+' units')))+'</p>'+(m.rAmt!==null?m.RT.map(z=>'<div class="m-st"><span>'+esc(z.name)+'</span><b>'+SV(pgNum(z.sales)===null?'\u2014':inr(z.sales))+'</b></div>').join(''):'')+'</div>'
   +'<div class="m-go">'+goto('orders','Orders')+goto('best','Sellers')+goto('stock','Stock')+goto('retail','Retail')+'<button data-mset-d="set:privacy">Settings</button></div>'
   +'<div class="m-sec"><h3>Appearance</h3><div class="m-pills"><button data-mset="auto" class="'+(mode==='auto'?'on':'')+'">Auto</button><button data-mset="light" class="'+(mode==='light'?'on':'')+'">Light</button><button data-mset="dark" class="'+(mode==='dark'?'on':'')+'">Dark</button></div></div></details>';
  document.body.dataset.mm=mode;
- root.innerHTML='<div class="m-wrap"><header class="m-head"><div><span class="m-eye">'+esc(new Date(m.day+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'numeric',month:'long'}))+'</span>'+(upd?'<small>'+esc(upd)+'</small>':'')+'</div><button id="rf" class="m-rf" aria-label="Refresh data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M19 12a7 7 0 0 0-12-5L4 10m16 4-3 3a7 7 0 0 1-12-5"/></svg></button></header>'
+ root.innerHTML='<div class="m-wrap"><header class="m-head"><div><span class="m-eye">'+esc(new Date(m.day+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'numeric',month:'long'}))+'</span>'+'</div><button id="rf" class="m-rf" aria-label="Refresh data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M19 12a7 7 0 0 0-12-5L4 10m16 4-3 3a7 7 0 0 1-12-5"/></svg></button></header>'
   +(status&&!/^Updating/.test(status)?'<p class="m-status">'+esc(status)+'</p>':'')
-  +'<section class="m-hero"><span class="m-eye">Today \u00B7 Online + Retail</span><div class="m-big">'+(m.tot===null?'<span class="m-dash">\u2014</span>':SV(inr(m.tot)))+'</div>'
-  +'<div class="m-yd">'+(m.tot===null?esc('Not a total: '+whyT.join(', ')+'.'):(m.ytot===null?'Yesterday unavailable':'Yesterday '+SV(inr(m.ytot))+' '+minPctHtml(minPct(m.tot,m.ytot))))+'</div>'
-  +(m.tot!==null&&m.ytot!==null?'<p class="m-fn">Today so far, compared with all of yesterday.</p>':'')+'</section>'
-  +'<section class="m-rows">'+row('Online',m.oAmt,'Today \u00B7 '+dl(m.day)+' \u00B7 read '+(m.oTime||'time unavailable'),m.yo,whyT.find(x=>/^Online/.test(x))||'')+row('Retail',m.rAmt,'Today \u00B7 '+dl(m.day)+' \u00B7 read '+(m.rTime||'time unavailable'),m.yr,whyT.find(x=>/^Retail/.test(x))||'')+'</section>'
-  +'<p class="m-fn">Yesterday is '+esc(dl(yday))+'. Amounts include GST. Online and Retail are separate sources'+(diff?', read at different times (Online '+esc(m.oTime)+', Retail '+esc(m.rTime)+').':'.')+'</p>'+more+'</div>';
+  +'<section class="m-hero"><span class="m-eye">Today</span><div class="m-big">'+(m.tot===null?'<span class="m-dash">\u2014</span>':SV(inr(m.tot)))+'</div>'
+  +'<div class="m-yd">'+(m.tot===null?esc('Not a total: '+whyT.join(', ')+'.'):(m.ytot!==null?'Yesterday '+SV(inr(m.ytot))+' '+minPctHtml(minPct(m.tot,m.ytot)):(m.ytAny!==null?'Yesterday '+SV(inr(m.ytAny))+' <span class="m-unc">unconfirmed</span>':'Yesterday unavailable')))+'</div>'
+  +'<div class="m-sub"><span>Online <b>'+(m.oAmt===null?'\u2014':SV(inr(m.oAmt)))+'</b></span><span>Retail <b>'+(m.rAmt===null?'\u2014':SV(inr(m.rAmt)))+'</b></span></div></section>'
+  +more+'</div>';
  const rf=$('#rf');if(rf)rf.onclick=async()=>{if(loadBusy)return;await load();toast(/failed|Could not|No data/i.test(status)?'Could not refresh':'Feed checked')};
  document.querySelectorAll('[data-mgo]').forEach(b=>b.onclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-mset-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.msetD;window.scrollTo(0,0);render()});
