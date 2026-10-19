@@ -1992,3 +1992,13 @@ body.lay-halo .hi-clean .air-pre{opacity:1!important;transform:none!important}
 :root[data-halo-palette=midnight] body.lay-halo .pills button.on{color:#e0c897!important;border-bottom-color:#e0c897!important}
 :root[data-th] body.lay-halo .order .st{background:none!important;border:0!important;padding:0!important;box-shadow:none!important;font-size:12px;font-weight:650;letter-spacing:.02em}
 :root[data-th] body.lay-halo .glass.search{background:none!important;border:0!important;border-bottom:1px solid var(--atelier-line)!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+
+/* production screen: open rows, no boxes */
+:root[data-th] body.lay-halo .prod-batch{border:0!important;background:none!important;border-radius:0!important;box-shadow:none!important;margin:0!important;border-bottom:1px solid var(--atelier-line)!important}
+:root[data-th] body.lay-halo .prod-batch>summary{padding-left:0!important;padding-right:0!important;min-height:56px}
+:root[data-th] body.lay-halo .prod-batch>:not(summary){margin-left:0;margin-right:0}
+body.lay-halo .prod-meta,body.lay-halo .prod-flag,body.lay-halo .prod-gaps{text-align:left;padding-left:0;padding-right:0}
+:root[data-th] body.lay-halo .prod-flag{color:var(--atelier-gold)}
+:root[data-th] body.lay-halo .prod-batch{padding:0!important}
+:root[data-th] body.lay-halo .halo-menu-panel{grid-template-columns:repeat(4,minmax(0,1fr))!important;row-gap:4px;height:auto!important}
+:root[data-th] body.lay-halo .prod-batch>section{padding-left:0;padding-right:0}
