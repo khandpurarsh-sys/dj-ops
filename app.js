@@ -793,7 +793,7 @@ document.addEventListener('click',e=>{if(detail==='halo:Production'){const t=e.t
  const b=e.target.closest&&e.target.closest('[data-pv]');if(!b||detail!=='halo:Production')return;PROD.view=b.dataset.pv==='month'?'month':'day';render()});
 
 const haloFolds={};let haloFocusSource='online',haloPairMode='revenue',haloClickUntil=0,haloClickGuard=false;
-const haloOn=()=>LS.getItem('dj_lay')==='halo';
+const haloOn=()=>LS.getItem('dj_lay')==='halo'||(typeof styKind==='function'&&!!styKind()&&/^halo:(Production|Insights)$/.test(detail||''));
 const haloIcon=(key)=>{const p={today:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',orders:'<path d="M7 4h10l3 4v12H4V8zM4 8h16M9 12h6"/>',best:'<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9z"/>',stock:'<path d="m12 3 9 5-9 5-9-5zM3 8v9l9 5 9-5V8M12 13v9"/>',retail:'<path d="M4 10v11h16V10M3 4h18v6H3zM9 21v-6h6v6"/>',insights:'<path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/>',production:'<path d="M3 20h18M5 20V9l5 3V9l5 3V5h4v15"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>',refresh:'<path d="M20 7v5h-5M4 17v-5h5M19 12a7 7 0 0 0-12-5L4 10m16 4-3 3a7 7 0 0 1-12-5"/>'};return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[key]||p.today)+'</svg>'};
 function haloCompose(html){
  if(!haloOn()||!data)return html;
@@ -1311,27 +1311,42 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
  const big=m.tot===null?'<span class="m-dash">\u2014</span>':SV(inr(m.tot));
  const ydl=m.tot===null?esc('Not a total: '+whyT.join(', ')+'.'):(m.ytot!==null?'Yesterday '+SV(inr(m.ytot))+' '+minPctHtml(minPct(m.tot,m.ytot)):(m.ytAny!==null?'Yesterday '+SV(inr(m.ytAny))+' <span class="m-unc">unconfirmed</span>':'Yesterday unavailable'));
  const ch=(label,amt,when,y,why,sub,cls)=>'<div class="y-ch '+cls+'"><span class="y-k">'+label+'</span><b class="y-n">'+(amt===null?'\u2014':SV(inr(amt)))+'</b><small>'+esc(amt===null?why:'Read '+(when||'time unavailable'))+'</small><small>'+esc(ydTxt(y))+' '+(amt!==null&&minOk(y)?minPctHtml(minPct(amt,y.amount)):'')+'</small>'+(sub?'<small>'+sub+'</small>':'')+'</div>';
+ const row=(label,amt,when,y,why,sub,cls)=>'<div class="y-row '+cls+'"><i class="y-bub" aria-hidden="true">'+label[0]+'</i><div class="y-rl"><span class="y-k">'+label+'</span><small>'+esc(amt===null?why:'Read '+(when||'time unavailable'))+'</small>'+(sub?'<small>'+sub+'</small>':'')+'</div><div class="y-rr"><b class="y-n">'+(amt===null?'\u2014':SV(inr(amt)))+'</b><small>'+esc(ydTxt(y))+' '+(amt!==null&&minOk(y)?minPctHtml(minPct(amt,y.amount)):'')+'</small></div></div>';
  const oSub=m.oAmt===null?'':SV(esc(ordN(OI)+(OI.n===1&&!OI.plus?' order':' orders')+(m.s.items!=null?' \u00B7 '+m.s.items+(Number(m.s.items)===1?' item':' items'):'')));
  const rSub=m.rAmt===null?'':SV(esc((RTb||0)+' bills \u00B7 '+(RTu||0)+' units'));
- const cO=ch('Online',m.oAmt,m.oTime,m.yo,whyT.find(x=>/^Online/.test(x))||'',oSub,'y-o'),cR=ch('Retail',m.rAmt,m.rTime,m.yr,whyT.find(x=>/^Retail/.test(x))||'',rSub,'y-r');
- const stores=m.rAmt!==null&&m.RT?'<div class="y-st">'+m.RT.map(z=>'<div><span>'+esc(z.name)+'</span><b>'+SV(pgNum(z.sales)===null?'\u2014':inr(z.sales))+'</b></div>').join('')+'</div>':'';
+ const oA=['Online',m.oAmt,m.oTime,m.yo,whyT.find(x=>/^Online/.test(x))||'',oSub],rA=['Retail',m.rAmt,m.rTime,m.yr,whyT.find(x=>/^Retail/.test(x))||'',rSub];
+ const cO=ch(...oA,'y-o'),cR=ch(...rA,'y-r'),rO=row(...oA,'y-o'),rR=row(...rA,'y-r');
+ const share=m.oAmt!==null&&m.rAmt!==null&&m.oAmt+m.rAmt>0?Math.round(m.oAmt/(m.oAmt+m.rAmt)*100):null;
+ const stl=m.rAmt!==null&&m.RT?m.RT:[];
+ const stRows=stl.length?'<div class="y-st">'+stl.map(z=>'<div><span>'+esc(z.name)+'</span><b>'+SV(pgNum(z.sales)===null?'\u2014':inr(z.sales))+'</b></div>').join('')+'</div>':'';
+ const stTiles=stl.map(z=>'<div class="y-stt"><span>'+esc(z.name)+'</span><b>'+SV(pgNum(z.sales)===null?'\u2014':inr(z.sales))+'</b><small>'+SV(esc((pgNum(z.bills)||0)+' bills \u00B7 '+(pgNum(z.units)||0)+' units'))+'</small></div>').join('');
  const fn='<p class="y-fn">Yesterday is '+esc(dl(yday))+'. Amounts include GST. Online and Retail are separate sources'+(diff?', read at different times (Online '+esc(m.oTime)+', Retail '+esc(m.rTime)+').':'.')+(m.tot!==null&&m.ytot!==null?' Today so far is compared with all of yesterday.':'')+(upd?' '+esc(upd)+'.':'')+'</p>';
- const go=(t,l)=>'<button data-mgo="'+t+'">'+l+'</button>';
- const links='<div class="y-go">'+go('orders','Orders')+go('best','Sellers')+go('stock','Stock')+go('retail','Retail')+'<button data-mset-d="set:privacy">Settings</button></div>';
+ const LK=[['orders','Orders','data-mgo="orders"'],['best','Sellers','data-mgo="best"'],['stock','Stock','data-mgo="stock"'],['retail','Retail','data-mgo="retail"'],['production','Production','data-mset-d="halo:Production"'],['insights','Insights','data-mset-d="halo:Insights"'],['settings','Settings','data-mset-d="set:privacy"']];
+ const lk=(cls,arrow)=>LK.map(l=>'<button class="'+(cls||'')+'" '+l[2]+'>'+haloIcon(l[0])+'<span>'+l[1]+'</span>'+(arrow?'<em aria-hidden="true">\u203A</em>':'')+'</button>').join('');
  const mode=styMode(k),app='<div class="y-app"><span class="y-k">Appearance</span><div class="y-pills"><button data-sset="auto" class="'+(mode==='auto'?'on':'')+'">Auto</button><button data-sset="light" class="'+(mode==='light'?'on':'')+'">Light</button><button data-sset="dark" class="'+(mode==='dark'?'on':'')+'">Dark</button></div></div>';
  const head='<header class="y-head"><span class="y-eye">'+eye+'</span><button id="rf" class="m-rf" aria-label="Refresh data"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M19 12a7 7 0 0 0-12-5L4 10m16 4-3 3a7 7 0 0 1-12-5"/></svg></button></header>'+(status&&!/^Updating/.test(status)?'<p class="m-status">'+esc(status)+'</p>':'');
  const hero='<section class="y-hero"><span class="y-k">Today</span><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></section>';
+ const bar=share===null?'':'<div class="y-split" role="img" aria-label="Online '+share+' percent, Retail '+(100-share)+' percent of today"><i style="width:'+share+'%"></i></div><div class="y-splitl"><span>Online '+share+'%</span><span>Retail '+(100-share)+'%</span></div>';
  let body;
- if(k==='bento')body='<div class="y-grid">'+hero+cO+cR+(stores?'<section class="y-tile y-t-st"><span class="y-k">Retail stores</span>'+stores+'</section>':'')+'<section class="y-tile y-t-go"><span class="y-k">Open</span>'+links+'</section><section class="y-tile y-t-app">'+app+'</section><section class="y-tile y-t-fn">'+fn+'</section></div>';
- else if(k==='glass')body=hero+'<section class="y-panel y-two">'+cO+cR+'</section>'+(stores?'<section class="y-panel"><span class="y-k">Retail stores</span>'+stores+'</section>':'')+'<section class="y-panel">'+links+app+fn+'</section>';
- else if(k==='brut')body=hero+'<div class="y-two">'+cO+cR+'</div>'+(stores?'<section class="y-block"><span class="y-k">Retail stores</span>'+stores+'</section>':'')+'<section class="y-block">'+links+'</section><section class="y-block">'+app+fn+'</section>';
- else body=hero+'<div class="y-two">'+cO+cR+'</div>'+(stores?'<section class="y-card"><span class="y-k">Retail stores</span>'+stores+'</section>':'')+'<section class="y-card">'+links+'</section><section class="y-card">'+app+fn+'</section>';
+ if(k==='bento'){const cyc=mode==='auto'?'Auto':mode==='light'?'Light':'Dark';
+  body='<div class="y-mos"><section class="y-hero y-b-hero"><span class="y-k">Today</span><div class="y-big">'+big+'</div></section>'
+  +cO.replace('y-ch y-o','y-ch y-o y-b-on')+cR.replace('y-ch y-r','y-ch y-r y-b-rt')
+  +'<section class="y-tile y-b-yd"><span class="y-k">Yesterday</span><div class="y-yd">'+ydl.replace(/^Yesterday\s*/,'')+'</div></section>'
+  +stTiles.replace(/y-stt/g,'y-stt y-b-st')
+  +LK.map(l=>'<button class="y-tile y-b-ln" '+l[2]+'>'+haloIcon(l[0])+'<span>'+l[1]+'</span></button>').join('')
+  +'<button class="y-tile y-b-ln y-b-look" data-scycle="1"><b aria-hidden="true">\u25D0</b><span>'+cyc+'</span></button>'
+  +'<section class="y-tile y-b-fn">'+fn+'</section></div>';}
+ else if(k==='glass')body=hero.replace('</section>',bar+'</section>')+'<div class="y-stack">'+cO+cR+'</div>'+(stRows?'<section class="y-panel"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-panel y-list">'+lk('',true)+'</section><section class="y-panel">'+app+fn+'</section>';
+ else if(k==='elev')body=hero+'<div class="y-car">'+cO+cR+'</div>'+(stRows?'<section class="y-card y-l2"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-lvl">'+lk('',true)+'</section><section class="y-card y-l1">'+app+fn+'</section>';
+ else if(k==='soft')body='<section class="y-hero"><span class="y-k">Today</span><div class="y-ringw"><div class="y-ring" style="--p:'+(share===null?0:share)+'%"><div class="y-ringin"><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></div></div></div>'+(share===null?'':'<div class="y-splitl"><span>Online '+share+'%</span><span>Retail '+(100-share)+'%</span></div>')+'</section><section class="y-well">'+rO+rR+'</section>'+(stRows?'<section class="y-card"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-orbs">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
+ else if(k==='brut')body='<section class="y-hero"><span class="y-tag">Today</span><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></section><section class="y-bands">'+rO+rR+'</section>'+(stTiles?'<div class="y-stamps">'+stTiles+'</div>':'')+'<section class="y-bars">'+lk('',true)+'</section><section class="y-block">'+app+fn+'</section>';
+ else body=hero+'<section class="y-pile">'+rO+rR+'</section>'+(stTiles?'<div class="y-pebs">'+stTiles+'</div>':'')+'<section class="y-icons">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
  styApply();
  root.innerHTML='<div class="y-wrap y-'+k+'">'+head+body+'</div>';
  const rf=$('#rf');if(rf)rf.onclick=async()=>{if(loadBusy)return;await load();toast(/failed|Could not|No data/i.test(status)?'Could not refresh':'Feed checked')};
  document.querySelectorAll('[data-mgo]').forEach(b=>b.onclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-mset-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.msetD;window.scrollTo(0,0);render()});
- document.querySelectorAll('[data-sset]').forEach(b=>b.onclick=()=>{LS.setItem('dj_sty_mode',b.dataset.sset);render()})}
+ document.querySelectorAll('[data-sset]').forEach(b=>b.onclick=()=>{LS.setItem('dj_sty_mode',b.dataset.sset);render()});document.querySelectorAll('[data-scycle]').forEach(b=>b.onclick=()=>{const o=['auto','light','dark'],c=styMode(k);LS.setItem('dj_sty_mode',o[(o.indexOf(c)+1)%3]);render()})}
 function render(){return haloRender()}
 function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
