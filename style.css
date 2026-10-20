@@ -2632,3 +2632,15 @@ body.sty-on .app{background:transparent!important}
 :root body.sty-on[data-sty] .app :is(.logo.brand-transparent,.halo-brand img.brand-transparent){background:#2a1f1c!important;border-radius:14px!important;padding:6px 10px!important;box-sizing:content-box!important;object-fit:contain!important;width:60px!important;height:26px!important}
 :root body.sty-on[data-sty=brut] .app :is(.logo.brand-transparent,.halo-brand img.brand-transparent){border:3px solid #0b0b0b!important;border-radius:10px!important;box-shadow:3px 3px 0 #0b0b0b!important}
 :root body.sty-on[data-sty] .app .halo-brand img.brand-transparent{width:52px!important;height:22px!important}
+/* single brand chip */
+:root body.sty-on[data-sty] .app .halo-brand{display:inline-flex!important;align-items:center;gap:7px;background:#2a1f1c!important;border-radius:14px!important;padding:7px 12px!important;box-shadow:inset 0 0 0 1px #d8b46a55}
+:root body.sty-on[data-sty=brut] .app .halo-brand{border:3px solid #111!important;box-shadow:3px 3px 0 #111!important}
+:root body.sty-on[data-sty] .app .halo-brand img,:root body.sty-on[data-sty] .app .halo-brand img.brand-transparent,:root body.sty-on[data-sty] .app .halo-brand img.brand-wordmark{background:none!important;padding:0!important;border:0!important;box-shadow:none!important;border-radius:0!important;height:17px!important;width:auto!important;max-height:17px!important;filter:brightness(1.9) saturate(1.25)!important}
+:root body.sty-on[data-sty] .app img.logo.brand-transparent{filter:brightness(1.9) saturate(1.25)!important;box-shadow:inset 0 0 0 1px #d8b46a66!important}
+:root body.sty-on[data-sty] .app .halo-brand{background:#241a17!important;opacity:1!important}
+:root body.sty-on[data-sty] .app .halo-brand img,:root body.sty-on[data-sty] .app .halo-brand img.brand-wordmark{opacity:1!important;filter:brightness(2.8) saturate(1.5) contrast(1.1)!important;mix-blend-mode:normal!important}
+:root body.sty-on[data-sty] .app .halo-brand,:root body.sty-on[data-sty] .app .halo-brand *{opacity:1!important}
+:root body.sty-on[data-sty] .app .halo-brand img,:root body.sty-on[data-sty] .app .halo-brand img.brand-wordmark,:root body.sty-on[data-sty] .app img.logo.brand-transparent{filter:brightness(0) invert(78%) sepia(48%) saturate(520%) hue-rotate(2deg) brightness(1.02)!important}
+:root body.sty-on[data-sty] .app .halo-brand img,:root body.sty-on[data-sty] .app .halo-brand img.brand-wordmark{filter:brightness(0) invert(82%) sepia(55%) saturate(600%) hue-rotate(2deg) brightness(1.25)!important}
+:root body.sty-on[data-sty] .app img.logo.brand-transparent{filter:brightness(1.9) saturate(1.25)!important}
+:root body.sty-on[data-sty] .app .halo-brand img,:root body.sty-on[data-sty] .app .halo-brand img.brand-wordmark{filter:brightness(0) invert(85%) sepia(60%) saturate(700%) hue-rotate(-14deg) brightness(1.35)!important}
