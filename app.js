@@ -1329,13 +1329,13 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
  const bar=share===null?'':'<div class="y-split" role="img" aria-label="Online '+share+' percent, Retail '+(100-share)+' percent of today"><i style="width:'+share+'%"></i></div><div class="y-splitl"><span>Online '+share+'%</span><span>Retail '+(100-share)+'%</span></div>';
  let body;
  if(k==='bento'){const cyc=mode==='auto'?'Auto':mode==='light'?'Light':'Dark';
-  body='<div class="y-mos"><section class="y-hero y-b-hero"><span class="y-k">Today</span><div class="y-big">'+big+'</div></section>'
-  +cO.replace('y-ch y-o','y-ch y-o y-b-on')+cR.replace('y-ch y-r','y-ch y-r y-b-rt')
-  +'<section class="y-tile y-b-yd"><span class="y-k">Yesterday</span><div class="y-yd">'+ydl.replace(/^Yesterday\s*/,'')+'</div></section>'
-  +stTiles.replace(/y-stt/g,'y-stt y-b-st')
-  +LK.map(l=>'<button class="y-tile y-b-ln" '+l[2]+'>'+haloIcon(l[0])+'<span>'+l[1]+'</span></button>').join('')
-  +'<button class="y-tile y-b-ln y-b-look" data-scycle="1"><b aria-hidden="true">\u25D0</b><span>'+cyc+'</span></button>'
-  +'<section class="y-tile y-b-fn">'+fn+'</section></div>';}
+  const pn=(t,sub,inner)=>'<article class="y-bp"><h3>'+t+'</h3><p class="y-bs">'+sub+'</p><div class="y-bpc">'+inner+'</div></article>';
+  body='<div class="y-mos" id="ymos" tabindex="0" aria-label="Sideways grid, swipe sideways for more panels">'
+  +pn('Today','Sales so far, incl. GST','<section class="y-hero y-b-hero"><span class="y-k">Today</span><div class="y-big">'+big+'</div></section><section class="y-tile y-b-yd"><span class="y-k">Yesterday</span><div class="y-yd">'+ydl.replace(/^Yesterday\s*/,'')+'</div></section>')
+  +pn('Channels','Online and retail, read separately',cO.replace('y-ch y-o','y-ch y-o y-b-on')+cR.replace('y-ch y-r','y-ch y-r y-b-rt'))
+  +pn('Stores &amp; shortcuts','Open any screen',(stTiles?'<div class="y-b-stg">'+stTiles.replace(/y-stt/g,'y-stt y-b-st')+'</div>':'')+'<div class="y-b-lng">'+LK.map(l=>'<button class="y-tile y-b-ln" '+l[2]+'>'+haloIcon(l[0])+'<span>'+l[1]+'</span></button>').join('')+'</div>')
+  +pn('Look &amp; settings','Appearance and data notes','<button class="y-tile y-b-ln y-b-look" data-scycle="1"><b aria-hidden="true">\u25D0</b><span>'+cyc+'</span></button><section class="y-tile y-b-fn">'+fn+'</section>')
+  +'</div>';body='<div class="y-bdots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><span>Swipe sideways \u203A</span></div>'+body;}
  else if(k==='glass')body=hero.replace('</section>',bar+'</section>')+'<div class="y-stack">'+cO+cR+'</div>'+(stRows?'<section class="y-panel"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-panel y-list">'+lk('',true)+'</section><section class="y-panel">'+app+fn+'</section>';
  else if(k==='elev')body=hero+'<div class="y-car">'+cO+cR+'</div>'+(stRows?'<section class="y-card y-l2"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-lvl">'+lk('',true)+'</section><section class="y-card y-l1">'+app+fn+'</section>';
  else if(k==='soft')body='<section class="y-hero"><span class="y-k">Today</span><div class="y-ringw"><div class="y-ring" style="--p:'+(share===null?0:share)+'%"><div class="y-ringin"><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></div></div></div>'+(share===null?'':'<div class="y-splitl"><span>Online '+share+'%</span><span>Retail '+(100-share)+'%</span></div>')+'</section><section class="y-well">'+rO+rR+'</section>'+(stRows?'<section class="y-card"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-orbs">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
@@ -1343,6 +1343,7 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
  else body=hero+'<section class="y-pile">'+rO+rR+'</section>'+(stTiles?'<div class="y-pebs">'+stTiles+'</div>':'')+'<section class="y-icons">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
  styApply();
  root.innerHTML='<div class="y-wrap y-'+k+'"><div class="y-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'+head+body+'</div>';
+ {const m=$('#ymos');if(m){m.onscroll=()=>{const p=m.querySelector('.y-bp');const i=Math.round(m.scrollLeft/(p.offsetWidth+14));document.querySelectorAll('.y-bdots i').forEach((d,j)=>d.classList.toggle('on',j===i))}}}
  const rf=$('#rf');if(rf)rf.onclick=async()=>{if(loadBusy)return;await load();toast(/failed|Could not|No data/i.test(status)?'Could not refresh':'Feed checked')};
  document.querySelectorAll('[data-mgo]').forEach(b=>b.onclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-mset-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.msetD;window.scrollTo(0,0);render()});
