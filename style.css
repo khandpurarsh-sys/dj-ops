@@ -2251,3 +2251,18 @@ body.sty-on main button:not([data-t]):not(.y-ch):not(.y-b-ln){min-height:40px;pa
 body.sty-on[data-sty=brut] main button:not([data-t]):not(.y-ch):not(.y-b-ln){border-radius:6px;border-width:2px}
 body.sty-on main summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .y-clay .y-icons,.y-orbs{grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
+/* pixel fixes */
+.y-glass .y-stack .y-o{width:88%;padding-bottom:56px}
+.y-glass .y-stack .y-r{width:88%;margin:-40px 0 0 auto}
+.y-ringw{min-width:0;width:100%}
+.y-ring{width:min(100%,290px);max-width:100%;margin:0 auto}
+.y-soft .y-hero{overflow:hidden}
+.y-ringw{display:grid;grid-template-columns:minmax(0,1fr)}
+.y-ring{width:100%;max-width:290px;min-width:0;justify-self:center;padding:12px}
+.y-ringin{min-width:0;padding:8px;overflow:hidden}
+.y-ringin .y-big{font-size:clamp(26px,8.2vw,44px);white-space:nowrap}
+.y-ringin .y-yd{font-size:14px;gap:4px}
+.y-ringin{box-sizing:border-box;width:auto}
+body.sty-on .tabbar{max-width:100%;box-sizing:border-box}
+body.sty-on .tabbar button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px}
+body.sty-on .tabbar{width:min(420px,calc(100% - 16px));gap:2px;padding:5px}
