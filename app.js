@@ -1338,7 +1338,7 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
   +LK.map((l,i)=>'<button class="y-tile y-b-ln g-ln g-l'+i+'" '+l[2]+'>'+haloIcon(l[0])+'<span>'+l[1]+'</span></button>').join('')
   +'<button class="y-tile y-b-ln y-b-look g-look" data-scycle="1"><b aria-hidden="true">\u25D0</b><span>'+cyc+'</span></button>'
   +'<section class="y-tile y-b-fn g-fn">'+fn+'</section></div>';}
- else if(k==='glass')body=hero.replace('</section>',bar+'</section>')+'<div class="y-stack">'+cO+cR+'</div>'+(stRows?'<section class="y-panel"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-panel y-list">'+lk('',true)+'</section><section class="y-panel">'+app+fn+'</section>';
+="y-panel y-list">'+lk('',true)+'</section><section class="y-panel">'+app+fn+'</section>';
  else if(k==='elev')body=hero+'<div class="y-car">'+cO+cR+'</div>'+(stRows?'<section class="y-card y-l2"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-lvl">'+lk('',true)+'</section><section class="y-card y-l1">'+app+fn+'</section>';
  else if(k==='soft')body='<section class="y-hero"><span class="y-k">Today</span><div class="y-ringw"><div class="y-ring" style="--p:'+(share===null?0:share)+'%"><div class="y-ringin"><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></div></div></div>'+(share===null?'':'<div class="y-splitl"><span>Online '+share+'%</span><span>Retail '+(100-share)+'%</span></div>')+'</section><section class="y-well">'+rO+rR+'</section>'+(stRows?'<section class="y-card"><span class="y-k">Retail stores</span>'+stRows+'</section>':'')+'<section class="y-orbs">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
  else if(k==='brut')body='<section class="y-hero"><span class="y-tag">Today</span><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></section><section class="y-bands">'+rO+rR+'</section>'+(stTiles?'<div class="y-stamps">'+stTiles+'</div>':'')+'<section class="y-bars">'+lk('',true)+'</section><section class="y-block">'+app+fn+'</section>';
@@ -1346,8 +1346,8 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
  styApply();
  root.innerHTML='<div class="y-wrap y-'+k+'"><div class="y-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'+head+body+'</div>';
  {const m=$('#ymos');if(m){m.onscroll=()=>{const i=Math.min(3,Math.floor(4*m.scrollLeft/Math.max(1,m.scrollWidth-m.clientWidth+1)));document.querySelectorAll('.y-bdots i').forEach((d,j)=>d.classList.toggle('on',j===i))}}}
- const rf=$('#rf');if(rf)rf.onclick=async()=>{if(loadBusy)return;await load();toast(/failed|Could not|No data/i.test(status)?'Could not refresh':'Feed checked')};
- document.querySelectorAll('[data-mgo]').forEach(b=>b.onclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
+ {const m=$('#ymos');if(m){m.onscroll=()=>{const i=Math.min(3,Math.floor(4*m.scrollLeft/Math.max(1,m.scrollWidth-m.clientWidth+1)));document.querySelectorAll('.y-bdots i').forEach((d,j)=>d.classList.toggle('on',j===i))}}}
+nclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-mset-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.msetD;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-sset]').forEach(b=>b.onclick=()=>{LS.setItem('dj_sty_mode',b.dataset.sset);render()});document.querySelectorAll('[data-scycle]').forEach(b=>b.onclick=()=>{const o=['auto','light','dark'],c=styMode(k);LS.setItem('dj_sty_mode',o[(o.indexOf(c)+1)%3]);render()})}
 function render(){return haloRender()}
