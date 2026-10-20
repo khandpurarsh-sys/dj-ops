@@ -2266,3 +2266,76 @@ body.sty-on main summary{min-height:44px;display:flex;align-items:center;cursor:
 body.sty-on .tabbar{max-width:100%;box-sizing:border-box}
 body.sty-on .tabbar button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px}
 body.sty-on .tabbar{width:min(420px,calc(100% - 16px));gap:2px;padding:5px}
+/* ===== detail pages and lists: contrast, wrapping, nav ===== */
+body.sty-on .bj-skip,body.sty-on .atelier-skip{position:absolute;left:-9999px;top:8px;z-index:9999;padding:10px 16px;border-radius:999px;background:var(--ybtn);color:var(--ybtni);font:600 15px/1.2 system-ui,sans-serif;text-decoration:none}
+body.sty-on .bj-skip:focus,body.sty-on .atelier-skip:focus{left:12px}
+body.sty-on .halo-rail{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 4px;min-height:48px}
+body.sty-on .halo-brand{display:flex;align-items:center;gap:8px;min-width:0}
+body.sty-on .halo-brand img{max-height:34px;width:auto}
+body.sty-on .halo-rail button{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;font:600 15px/1 inherit;color:var(--ybtni);background:var(--ybtn);border:1px solid var(--ybtnb);border-radius:999px;box-shadow:var(--ysh);cursor:pointer}
+body.sty-on .halo-rail .halo-settings{margin-left:auto}
+body.sty-on[data-sty=brut] .halo-rail button{border-radius:6px;border-width:3px}
+body.sty-on .halo-detail-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 16px}
+body.sty-on .halo-detail-header h1{color:var(--mink);margin:0}
+body.sty-on .halo-detail-header p,body.sty-on .halo-eyebrow{color:var(--mink2);margin:2px 0 0;font-size:14px}
+body.sty-on .halo-detail-header .refresh{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;font-size:15px;color:var(--ybtni);background:var(--ybtn);border:1px solid var(--ybtnb);border-radius:999px;box-shadow:var(--ysh)}
+body.sty-on[data-sty=brut] .halo-detail-header .refresh{border-radius:6px;border-width:3px}
+body.sty-on .halo-detail-header~main{margin:8px 12px 140px;padding:16px;background:var(--ycard);border:var(--yb);border-radius:var(--yr);box-shadow:var(--ysh);color:var(--mink);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.sty-on[data-sty=glass][data-sm=dark] .halo-detail-header~main{background:rgba(18,20,44,.72)}
+body.sty-on[data-sty=glass][data-sm=light] .halo-detail-header~main{background:rgba(255,255,255,.72)}
+body.sty-on .halo-detail-header~main :is(p,.note,small,summary,span,div,li,h2,h3,b,td,th,label){color:var(--mink)}
+body.sty-on .halo-detail-header~main :is(.note,small,h2){color:var(--mink2)}
+body.sty-on .halo-detail-header~main :is(.note,.prod-meta,.prod-flag){font-size:14px;line-height:1.5;text-align:left;margin:10px 0}
+body.sty-on .halo-detail-header~main .prod-flag{color:var(--mgold)}
+body.sty-on main summary,body.sty-on main details>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:6px 0;list-style:none}
+body.sty-on main summary::-webkit-details-marker{display:none}
+body.sty-on main summary>span{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;overflow-wrap:anywhere}
+body.sty-on main summary>span>small{display:block;font-size:14px;line-height:1.4;color:var(--mink2)}
+body.sty-on main summary>b{flex:none;font-size:22px;color:var(--ya)}
+body.sty-on main details{border-bottom:1px solid var(--yl)}
+body.sty-on main details:last-child{border-bottom:0}
+body.sty-on main .line{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:12px 2px}
+body.sty-on main .line>span{flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+body.sty-on main .line>b{flex:0 1 auto;max-width:52%;text-align:right;overflow-wrap:anywhere;line-height:1.35}
+body.sty-on main .line small{display:inline-block;font-size:14px;line-height:1.4;margin-top:2px;opacity:1;color:var(--mink2)}
+body.sty-on main .line .sv{font-style:normal;font-weight:600}
+body.sty-on main .low{color:var(--mdn)}
+body.sty-on .prod-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 6px}
+body.sty-on .prod-top h2{margin:0;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+/* seven-tab bar wraps to two rows so every label stays whole */
+body.sty-on .tabbar{flex-wrap:wrap;justify-content:center}
+body.sty-on .tabbar button{flex:1 1 22%;font-size:13px;min-height:44px;white-space:nowrap}
+body.sty-on .tabbar:not(:has(button:nth-child(6))) button{flex:1 1 0}
+/* round 3 */
+body.sty-on .tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:6px;border-radius:28px;width:min(420px,calc(100% - 16px))}
+body.sty-on .tabbar:has(button:nth-child(6)){grid-template-columns:repeat(4,minmax(0,1fr))}
+body.sty-on .tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;min-height:48px;border-radius:18px;font-size:13px;line-height:1.1;flex:none}
+body.sty-on .tabbar button svg{width:20px;height:20px}
+body.sty-on[data-sty=brut] .tabbar button{border-radius:8px}
+body.sty-on .halo-detail-header{grid-template-columns:minmax(0,1fr) auto}
+body.sty-on .halo-detail-header #bk{order:1;justify-self:start}
+body.sty-on .halo-detail-header .halo-refresh{order:2}
+body.sty-on .halo-detail-header>div{order:3;grid-column:1/-1}
+body.sty-on .halo-detail-header h1{font-size:clamp(28px,8vw,36px);line-height:1.1;overflow-wrap:normal;word-break:normal}
+body.sty-on .halo-rail button{white-space:nowrap}
+body.sty-on .halo-detail-header~main .note{min-height:0!important;padding:0!important}
+body.sty-on .prod-tabs{margin:12px 0!important}
+/* round 4 */
+body.sty-on .tabbar .ind{display:none!important}
+body.sty-on .tabbar:has(button:nth-of-type(6)){grid-template-columns:repeat(4,minmax(0,1fr))}
+body.sty-on .tabbar:not(:has(button:nth-of-type(6))){grid-template-columns:repeat(5,minmax(0,1fr))}
+body.sty-on .halo-detail-header #bk{grid-column:1;grid-row:1;justify-self:start;margin:0}
+body.sty-on .halo-detail-header .halo-refresh{grid-column:2;grid-row:1;margin:0}
+body.sty-on .halo-detail-header>div{grid-column:1/-1;grid-row:2}
+/* active tab */
+body.sty-on .tabbar button.on{background:var(--ya)!important;color:#fff!important;box-shadow:none}
+body.sty-on[data-sty=brut] .tabbar button.on,body.sty-on[data-sty=elev][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=glass][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=soft][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=clay][data-sm=dark] .tabbar button.on{color:#0b0b0b!important}
+body.sty-on .tabbar button.on svg{color:inherit}
+/* active tab */
+body.sty-on .tabbar button.on{background:var(--ya)!important;color:#fff!important;box-shadow:none}
+body.sty-on[data-sty=brut] .tabbar button.on,body.sty-on[data-sty=elev][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=glass][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=soft][data-sm=dark] .tabbar button.on,body.sty-on[data-sty=clay][data-sm=dark] .tabbar button.on{color:#0b0b0b!important}
+body.sty-on .tabbar button.on svg{color:inherit}
+body.sty-on .prod-pick,body.sty-on .prod-top button{white-space:nowrap;padding:0 16px}
+body.sty-on main .line>b{max-width:42%}body.sty-on main .line .sv{white-space:nowrap}
+body.sty-on[data-sty=glass][data-sm=dark] main section.glass.list{background:rgba(14,16,40,.72)!important;border-radius:22px;padding-left:12px;padding-right:12px}
+body.sty-on[data-sty=glass][data-sm=light] main section.glass.list{background:rgba(255,255,255,.7)!important;border-radius:22px;padding-left:12px;padding-right:12px}
