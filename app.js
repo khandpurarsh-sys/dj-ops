@@ -1342,7 +1342,7 @@ function styHome(){const k=styKind(),m=minModel(),yday=addD(m.day,-1),dl=iso=>ne
  else if(k==='brut')body='<section class="y-hero"><span class="y-tag">Today</span><div class="y-big">'+big+'</div><div class="y-yd">'+ydl+'</div></section><section class="y-bands">'+rO+rR+'</section>'+(stTiles?'<div class="y-stamps">'+stTiles+'</div>':'')+'<section class="y-bars">'+lk('',true)+'</section><section class="y-block">'+app+fn+'</section>';
  else body=hero+'<section class="y-pile">'+rO+rR+'</section>'+(stTiles?'<div class="y-pebs">'+stTiles+'</div>':'')+'<section class="y-icons">'+lk('',false)+'</section><section class="y-card">'+app+fn+'</section>';
  styApply();
- root.innerHTML='<div class="y-wrap y-'+k+'">'+head+body+'</div>';
+ root.innerHTML='<div class="y-wrap y-'+k+'"><div class="y-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'+head+body+'</div>';
  const rf=$('#rf');if(rf)rf.onclick=async()=>{if(loadBusy)return;await load();toast(/failed|Could not|No data/i.test(status)?'Could not refresh':'Feed checked')};
  document.querySelectorAll('[data-mgo]').forEach(b=>b.onclick=()=>{tab=b.dataset.mgo;detail=null;window.scrollTo(0,0);render()});
  document.querySelectorAll('[data-mset-d]').forEach(b=>b.onclick=()=>{detail=b.dataset.msetD;window.scrollTo(0,0);render()});
