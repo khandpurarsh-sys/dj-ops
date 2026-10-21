@@ -2834,3 +2834,52 @@ body.frost.sty-on{padding-bottom:96px}
 .f-ln svg{width:20px;height:20px;padding:7px}
 .f-ln span{overflow-wrap:normal;white-space:nowrap}
 .f-fab{width:50px;height:50px}
+/* ===== Frost v3: softer blending, accent var, rouge theme ===== */
+body.frost[data-sm=light]{--ybg:radial-gradient(78% 48% at 14% 4%,#dde488 0,transparent 76%),radial-gradient(72% 46% at 93% 34%,#f4ca8e 0,transparent 76%),radial-gradient(60% 42% at 58% 52%,#f2d9a6 0,transparent 76%),radial-gradient(82% 52% at 24% 96%,#f4c1be 0,transparent 78%),linear-gradient(180deg,#e9e6c2,#f3dec2 50%,#f5cecb)}
+body.frost[data-sm=dark]{--ybg:radial-gradient(82% 52% at 12% 4%,#8f8f24 0,transparent 78%),radial-gradient(76% 48% at 93% 36%,#c87d30 0,transparent 78%),radial-gradient(62% 44% at 55% 55%,#7a4a28 0,transparent 78%),radial-gradient(86% 52% at 22% 96%,#ad4c64 0,transparent 80%),linear-gradient(180deg,#27250f,#372313 55%,#3b1f29)}
+body.frost .f-panel,body.frost .f-pill,body.frost .f-ln,body.frost .f-day{-webkit-backdrop-filter:blur(30px) saturate(1.55);backdrop-filter:blur(30px) saturate(1.55)}
+body.frost .f-sheet{-webkit-backdrop-filter:blur(34px) saturate(1.6);backdrop-filter:blur(34px) saturate(1.6)}
+/* accent variable */
+body.frost[data-sm=light]{--facc:var(--fa-user-d,#7f9e00)}
+body.frost[data-sm=dark]{--facc:var(--fa-user,#d6f53a)}
+body.frost[data-sm=rouge]{--facc:var(--fa-user,#ff5a66)}
+body.frost.sty-on .tabbar button.on{background:var(--facc)!important;color:#1d2108!important}
+body.frost.sty-on .app :is(.chip,button.on,[aria-pressed=true]).pill{background:var(--facc);color:#1d2108}
+body.frost .f-seg button.on{background:var(--facc);color:#1d2108}
+body.frost .y-glass .y-split i{background:var(--facc)}
+body.frost .y-glass .y-ch .mp{background:color-mix(in srgb,var(--facc) 90%,#fff 10%);color:#1d2108!important}
+body.frost .y-glass .y-list button svg{color:var(--facc);background:color-mix(in srgb,var(--facc) 22%,transparent)}
+body.frost .f-dot::after{background:var(--facc)}
+body.frost .f-mark i{background:var(--facc);box-shadow:0 0 10px color-mix(in srgb,var(--facc) 80%,transparent)}
+body.frost .f-mark::before{border-top-color:var(--facc);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--facc) 80%,transparent))}
+body.frost .f-day.now{border-color:var(--facc);box-shadow:0 0 18px color-mix(in srgb,var(--facc) 28%,transparent),inset 0 0 0 1px rgba(255,255,255,.1)}
+body.frost .f-ck{background:var(--facc);box-shadow:0 0 12px color-mix(in srgb,var(--facc) 45%,transparent)}
+body.frost .f-day.now .f-ck{border-color:var(--facc);background:transparent;box-shadow:none}
+body.frost .f-day.now .f-ck i.lv{background:var(--facc);box-shadow:0 0 10px var(--facc)}
+body.frost .f-ln svg,body.frost .f-sheet button svg{background:var(--facc);color:#1d2108}
+#ffab.open .f-fab{background:var(--facc);color:#1d2108}
+body.frost .f-spark{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--facc) 40%,transparent))}
+/* accent swatches */
+.f-sw{display:flex;gap:9px;flex-wrap:wrap}
+.f-sw button{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:var(--sw);padding:0;flex:none}
+.f-sw button.on{border-color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--sw) 55%,transparent),0 2px 8px rgba(0,0,0,.2)}
+/* rouge theme: soft black glass with diffused red */
+body.frost[data-sty=glass][data-sm=rouge]{--ybg:radial-gradient(85% 55% at 14% 0%,rgba(196,32,54,.6) 0,transparent 76%),radial-gradient(75% 50% at 92% 32%,rgba(150,20,40,.55) 0,transparent 78%),radial-gradient(60% 45% at 55% 55%,rgba(90,10,26,.5) 0,transparent 80%),radial-gradient(88% 55% at 26% 100%,rgba(130,16,46,.5) 0,transparent 80%),linear-gradient(180deg,#0b0406,#150409 55%,#090304);--mink:#fff5f3;--mink2:rgba(255,236,233,.84);--mup:#8ef07a;--mdn:#ff9a94;--mgold:#f0c98e;--yhb:rgba(255,255,255,.1);--tbg:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.05));--tbd:1px solid rgba(255,255,255,.24);--tsh:0 14px 32px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.22);--tr:24px;--ibg:rgba(255,255,255,.08);--cbg:rgba(255,255,255,.12);--cb:1px solid rgba(255,255,255,.3);--csh:inset 0 1px 0 rgba(255,255,255,.3);--cfg:#fff5f3;--cact:var(--facc);--cacti:#2a0508}
+body.frost.sty-on[data-sty=glass][data-sm=rouge]{--bg1:#0b0406;--bg2:#150409;--ink:#fff5f3;--ink2:rgba(255,236,233,.87);--glass:rgba(255,255,255,.09);--edge:rgba(255,255,255,.24);--shadow:0 10px 28px rgba(0,0,0,.42);--accent:var(--facc)}
+body.frost[data-sm=rouge] .y-glass .y-hero,body.frost[data-sm=rouge] .y-glass .y-panel,body.frost[data-sm=rouge] .y-glass .y-ch{background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05))!important;border-color:rgba(255,255,255,.28)!important}
+body.frost[data-sm=rouge] .y-glass .y-list button,body.frost[data-sm=rouge] .y-glass .y-list button:nth-child(even){background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.26)}
+body.frost[data-sm=rouge] .f-panel{background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05));border-color:rgba(255,255,255,.3)}
+body.frost[data-sm=rouge] .f-pill{background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.04));border-color:rgba(255,255,255,.3)}
+body.frost[data-sm=rouge] .f-tabs button.on{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.1));border-color:rgba(255,255,255,.3)}
+body.frost[data-sm=rouge] .f-day{background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border-color:rgba(255,255,255,.2)}
+body.frost[data-sm=rouge] .f-ln{background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border-color:rgba(255,255,255,.28)}
+body.frost[data-sm=rouge] .f-sheet{background:linear-gradient(160deg,rgba(46,10,16,.85),rgba(22,5,9,.88))}
+body.frost.sty-on[data-sm=rouge] :is(input,select,textarea){background:rgba(0,0,0,.3);color:#fff5f3;border-color:rgba(255,255,255,.3)}
+body.frost.sty-on[data-sm=rouge] input::placeholder,body.frost.sty-on[data-sm=rouge] textarea::placeholder{color:rgba(255,236,233,.85)!important;opacity:1!important;-webkit-text-fill-color:rgba(255,236,233,.85)}
+body.frost.sty-on[data-sm=rouge] :is(small,.note,.sub,.meta,.muted,.k,.lbl,.hint,.glass p){color:rgba(255,236,233,.88)}
+body.frost.sty-on[data-sm=rouge] .glass.search input{color:#fff5f3}
+body.frost[data-sm=rouge] .y-glass .y-ch .mp{background:rgba(110,230,150,.92);color:#08150c!important}
+body.frost[data-sm=rouge] .y-glass .y-ch .mp.dn{background:rgba(255,150,142,.9);color:#3d0805!important}
+.f-app{flex-wrap:wrap;row-gap:10px}
+.f-seg{flex-wrap:wrap}
+.f-seg button{padding:7px 10px;font-size:13.5px}
