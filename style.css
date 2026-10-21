@@ -2883,3 +2883,9 @@ body.frost[data-sm=rouge] .y-glass .y-ch .mp.dn{background:rgba(255,150,142,.9);
 .f-app{flex-wrap:wrap;row-gap:10px}
 .f-seg{flex-wrap:wrap}
 .f-seg button{padding:7px 10px;font-size:13.5px}
+/* soft rounded theme-matched filters */
+body.frost.sty-on .app :is(.chip,button.on,[aria-pressed=true]).pill{background:color-mix(in srgb,var(--facc) 24%,transparent);color:var(--mink);border:1px solid color-mix(in srgb,var(--facc) 60%,transparent);border-radius:999px;box-shadow:0 0 12px color-mix(in srgb,var(--facc) 18%,transparent)}
+body.frost.sty-on .app .pill{border-radius:999px}
+body.frost.sty-on .pills button{border-radius:999px!important}
+body.frost.sty-on .pills button.on{background:color-mix(in srgb,var(--facc) 26%,transparent)!important;color:var(--mink)!important;border:1px solid color-mix(in srgb,var(--facc) 60%,transparent)!important;box-shadow:0 0 12px color-mix(in srgb,var(--facc) 18%,transparent)}
+body.frost.sty-on .pills button.on small{color:var(--mink2);opacity:1}
