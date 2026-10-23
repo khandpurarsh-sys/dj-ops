@@ -22,15 +22,18 @@ jobs:
           [ "$slim_sz" -le 60000 ] && [ "$full_sz" -le 65000 ]
           jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and .slim==1' PUB-payload.json >/dev/null
           jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and (has("slim")|not)' PUB-payload_full.json >/dev/null
-          feed=$(gh api "repos/$GITHUB_REPOSITORY/issues/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "feed check failed"; exit 1; }
-          if printf '%s' "$feed" | grep -qF "$sid"; then
-            echo "sid $sid already in feed; skipping posts"
-          else
-            gh api "repos/$GITHUB_REPOSITORY/issues/1/comments" -F body=@PUB-payload.json >/dev/null
-            echo "posted slim to issue 1"
-            gh api "repos/$GITHUB_REPOSITORY/issues/3/comments" -F body=@PUB-payload_full.json >/dev/null
-            echo "posted full to issue 3"
-          fi
+          c1=$(gh api "repos/$GITHUB_REPOSITORY/issues/1/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "issue1 feed check failed"; exit 1; }
+          c3=$(gh api "repos/$GITHUB_REPOSITORY/issues/3/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "issue3 feed check failed"; exit 1; }
+          nslim=$(printf '%s' "$c1" | grep -F "$sid" | grep -c '"slim":1' || true)
+          nfull=$(printf '%s' "$c3" | grep -F "$sid" | grep -cv '"slim":1' || true)
+          if [ "$nslim" = 0 ]; then gh api "repos/$GITHUB_REPOSITORY/issues/1/comments" -F body=@PUB-payload.json >/dev/null || { echo "slim post failed"; exit 1; }; echo "posted slim to issue 1"; fi
+          if [ "$nfull" = 0 ]; then gh api "repos/$GITHUB_REPOSITORY/issues/3/comments" -F body=@PUB-payload_full.json >/dev/null || { echo "full post failed"; exit 1; }; echo "posted full to issue 3"; fi
+          c1=$(gh api "repos/$GITHUB_REPOSITORY/issues/1/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "issue1 recheck failed"; exit 1; }
+          c3=$(gh api "repos/$GITHUB_REPOSITORY/issues/3/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "issue3 recheck failed"; exit 1; }
+          nslim=$(printf '%s' "$c1" | grep -F "$sid" | grep -c '"slim":1' || true)
+          nfull=$(printf '%s' "$c3" | grep -F "$sid" | grep -cv '"slim":1' || true)
+          [ "$nslim" -ge 1 ] && [ "$nfull" -ge 1 ] || { echo "pair incomplete after post (slim=$nslim full=$nfull); leaving staged files for retry"; exit 1; }
+          echo "pair verified in feed (slim=$nslim full=$nfull)"
           git rm -qf PUB-sid.txt PUB-payload.json PUB-payload_full.json
           git add -A
           git config user.name bot
