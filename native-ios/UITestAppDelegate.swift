@@ -6,8 +6,8 @@ import Capacitor
 // Activates only when launched with DJOPS_UITEST=1 in the process environment
 // (SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch ...) and never ships in
 // Release builds. Optional env flags: DJOPS_WRONGPASS=1 (one failed passphrase
-// attempt before the correct one), DJOPS_FALLBACK=1 (click the "Use passphrase"
-// link after a delay, to exercise the phone-unlock fallback),
+// attempt before the correct one), DJOPS_SKIPDEV=1 (dismiss the phone-unlock
+// offer with 'Not now' instead of attempting enrollment),
 // DJOPS_ROUNDTRIP=1 + DJOPS_SEED_B64 (seed the committed dummy vault and
 // decrypt the peer publisher's synthetic slim + full envelopes in-app).
 // The green DJT overlay keeps a rolling 7-line action/error history so a single
@@ -69,7 +69,7 @@ final class UITestDriver {
     }
 
     private static let wrongPass = ProcessInfo.processInfo.environment["DJOPS_WRONGPASS"] == "1" ? "true" : "false"
-    private static let fallback = ProcessInfo.processInfo.environment["DJOPS_FALLBACK"] == "1" ? "true" : "false"
+    private static let skipDev = ProcessInfo.processInfo.environment["DJOPS_SKIPDEV"] == "1" ? "true" : "false"
     private static let roundtrip = ProcessInfo.processInfo.environment["DJOPS_ROUNDTRIP"] == "1" ? "true" : "false"
     private static let seedB64 = ProcessInfo.processInfo.environment["DJOPS_SEED_B64"] ?? ""
 
@@ -80,7 +80,7 @@ final class UITestDriver {
         var pw = 'dummy-pass-1234';
         var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0, hist: [], lastErr: '', t0: Date.now()};
         var WRONGPASS = __WRONGPASS__;
-        var FALLBACK = __FALLBACK__;
+        var SKIPDEV = __SKIPDEV__;
         var ROUNDTRIP = __ROUNDTRIP__;
         var SEEDB = '__SEED_B64__';
         function push(line){
@@ -92,7 +92,18 @@ final class UITestDriver {
         function render(msg){
           var err = document.querySelector('.err');
           var errT = err && err.textContent ? String(err.textContent).trim() : '';
-          if (errT && errT !== st.lastErr) { st.lastErr = errT; push('APPERR:' + errT.slice(0, 80)); }
+          if (errT && errT !== st.lastErr) {
+            st.lastErr = errT;
+            push('APPERR:' + errT.slice(0, 80));
+            st.banners = st.banners || 0;
+            if (st.banners < 6 && document.body) {
+              var b = document.createElement('div');
+              b.style.cssText = 'position:fixed;top:' + (210 + st.banners * 54) + 'px;left:8px;right:8px;z-index:99999;background:#ff0;color:#000;font:13px monospace;padding:6px;word-break:break-all';
+              b.textContent = 'SEEN-ERR: ' + errT;
+              document.body.appendChild(b);
+              st.banners += 1;
+            }
+          }
           push(msg);
           var d = document.getElementById('__djt');
           if (!d) {
@@ -176,17 +187,13 @@ final class UITestDriver {
           var c1 = clickText(['create', 'unlock']);
           return render(c1 ? 'clicked:' + c1 : 'filled');
         }
-        if (FALLBACK && Date.now() - st.t0 > 12000) {
-          var c2 = clickText(['use passphrase']);
-          if (c2) { return render('clicked:' + c2); }
-        }
-        var c3 = clickText(['continue', 'turn on phone unlock']);
+        var c3 = clickText(SKIPDEV ? ['continue', 'not now'] : ['continue', 'turn on phone unlock']);
         if (c3 === 'turn on phone unlock') { st.pauseUntil = Date.now() + 30000; }
         return render(c3 ? 'clicked:' + c3 : 'idle');
       } catch (e) { return 'err'; }
     })();
     """.replacingOccurrences(of: "__WRONGPASS__", with: wrongPass)
-       .replacingOccurrences(of: "__FALLBACK__", with: fallback)
+       .replacingOccurrences(of: "__SKIPDEV__", with: skipDev)
        .replacingOccurrences(of: "__ROUNDTRIP__", with: roundtrip)
        .replacingOccurrences(of: "__SEED_B64__", with: seedB64)
 }

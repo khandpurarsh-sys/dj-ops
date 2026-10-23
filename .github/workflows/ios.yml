@@ -66,62 +66,55 @@ jobs:
           xcrun simctl create djops-preview "iPhone 16" || true
           UDID=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(v['udid'] for r,vs in d.items() if 'iOS' in r for v in vs if v['name']=='djops-preview'))")
           xcrun simctl boot $UDID || true
-          echo '--- simctl subcommand list ---'
-          xcrun simctl help 2>&1 | sed -n '1,60p'
-          echo '--- biometric enroll ---'
-          xcrun simctl biometric enroll $UDID && echo BIOMETRIC-ENROLL-OK || echo BIOMETRIC-ENROLL-FAILED
-          ( for i in $(seq 1 200); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
-          MATCHER=$!
+          echo '--- simctl ui subcommand ---'
+          xcrun simctl help ui 2>&1 | head -20
+          echo '--- simctl privacy subcommand ---'
+          xcrun simctl help privacy 2>&1 | head -12
+          echo '--- simctl keychain subcommand ---'
+          xcrun simctl help keychain 2>&1 | head -12
           APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
           xcrun simctl install $UDID "$APP_PATH"
           mkdir -p preview
-          # Launch 1: create vault with dummy passphrase, then enable phone unlock
+          # Launch 1: create vault, attempt phone-unlock enable; sticky SEEN-ERR
+          # banner captures the 1.8s error (simulator has no screen lock at all:
+          # simctl on this runner has no biometric or passcode subcommand)
           SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
           sleep 40
           xcrun simctl io $UDID screenshot preview/01-create-gate.png
           sleep 40
-          xcrun simctl io $UDID screenshot preview/02-enable-phone-unlock.png
-          # Launch 2: relaunch - phone unlock (Face ID) auto-approved by matcher
+          xcrun simctl io $UDID screenshot preview/02-enable-attempt.png
+          # Launch 2: relaunch - wrong passphrase (sticky error), correct unlock,
+          # dismiss phone-unlock offer with Not now, home
           xcrun simctl terminate $UDID com.arsh.djops || true
           sleep 2
-          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 SIMCTL_CHILD_DJOPS_SKIPDEV=1 xcrun simctl launch $UDID com.arsh.djops || true
           sleep 45
-          xcrun simctl io $UDID screenshot preview/03-relaunch-faceid.png
+          xcrun simctl io $UDID screenshot preview/03-wrong-passphrase.png
           sleep 40
-          xcrun simctl io $UDID screenshot preview/04-home-after-faceid.png
-          # Launch 3: phone unlock denied (matcher stopped, unmatch x2), then
-          # passphrase fallback including one wrong-passphrase failure
-          kill $MATCHER 2>/dev/null || true
-          xcrun simctl terminate $UDID com.arsh.djops || true
-          sleep 2
-          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 SIMCTL_CHILD_DJOPS_FALLBACK=1 xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 15
-          xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
-          sleep 3
-          xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
-          sleep 27
-          xcrun simctl io $UDID screenshot preview/05-unlock-denied.png
-          sleep 40
-          xcrun simctl io $UDID screenshot preview/06-wrong-passphrase.png
-          sleep 40
-          xcrun simctl io $UDID screenshot preview/07-home-after-fallback.png
-          # Launch 4: seeded dummy vault, decrypt the peer publisher's synthetic
-          # slim + full 10-recipient envelopes in the app's own WKWebView
+          xcrun simctl io $UDID screenshot preview/04-home-after-relaunch.png
+          # Launch 3: seeded dummy vault, decrypt peer publisher slim + full envelopes
           xcrun simctl terminate $UDID com.arsh.djops || true
           xcrun simctl uninstall $UDID com.arsh.djops || true
           xcrun simctl install $UDID "$APP_PATH"
           SEED_B64=$(base64 < /tmp/dj-seed.json | tr -d '\n')
           SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops || true
           sleep 45
-          xcrun simctl io $UDID screenshot preview/08-roundtrip-peer.png
+          xcrun simctl io $UDID screenshot preview/05-roundtrip-peer.png
           sleep 40
-          xcrun simctl io $UDID screenshot preview/09-roundtrip-peer-late.png
+          xcrun simctl io $UDID screenshot preview/06-roundtrip-peer-late.png
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}
         with:
           name: ios-preview
           path: preview/*.png
+      - name: Verify signed build carries no test hooks
+        if: ${{ inputs.sign_and_upload }}
+        run: |
+          ! grep -rn '__djt\|DJOPS_UITEST\|UITestDriver' ios/App/App/public/ && echo CLEAN-WWW
+          ! grep -n 'UITestDriver' ios/App/App/AppDelegate.swift && echo CLEAN-APPDELEGATE
+          diff node_modules/djops-unlock/ios/Sources/DjOpsUnlockPlugin/DjOpsUnlockPlugin.swift native-ios/DjOpsUnlock/ios/Sources/DjOpsUnlockPlugin/DjOpsUnlockPlugin.swift && echo CLEAN-PLUGIN
+          ! find ios/App/App/public -name '*payload*' -o -name '*fixture*' | grep . && echo CLEAN-FIXTURES
       - name: Sign and upload to TestFlight
         if: ${{ inputs.sign_and_upload }}
         env:
