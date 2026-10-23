@@ -72,7 +72,7 @@ async function feedBatch(repo){
   const j=await feedJson('https://api.github.com/repos/'+repo+'/issues/comments?sort=created&direction=desc&per_page=6'+since);
   if(!Array.isArray(j))throw new Error('Unexpected feed response');
   const seen={};let latest=old?.latest||'';
-  for(const c of j){if(typeof c.created_at==='string'&&(!latest||c.created_at>latest))latest=c.created_at;const m=String(c.issue_url||'').match(/^https:\/\/api\.github\.com\/repos\/([^/]+\/[^/]+)\/issues\/(1|2|3|87)$/);if(!m||m[1].toLowerCase()!==repo.toLowerCase())continue;const n=m[2];if(seen[n])continue;seen[n]=true;rows[n]={body:typeof c.body==='string'?c.body:'',owner:String(c.user?.login||''),id:c.id};}
+  for(const c of j){if(typeof c.created_at==='string'&&(!latest||c.created_at>latest))latest=c.created_at;const m=String(c.issue_url||'').match(/^https:\/\/api\.github\.com\/repos\/([^/]+\/[^/]+)\/issues\/(1|2|3|87|88)$/);if(!m||m[1].toLowerCase()!==repo.toLowerCase())continue;const n=m[2];if(seen[n])continue;seen[n]=true;rows[n]={body:typeof c.body==='string'?c.body:'',owner:String(c.user?.login||''),id:c.id};}
   const out={repo,rows,at:Date.now(),latest,seen,complete:j.length<6};LS.setItem('dj_feed_batch_v2',JSON.stringify(out));return out;
  })();try{return await feedBatchFlight}finally{feedBatchFlight=null}
 }
@@ -1354,22 +1354,46 @@ function expView(){const E=data&&data.expenses;if(!E||!Array.isArray(E.months)||
  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
  const ml=m=>{const p=String(m).split('-');return (MN[+p[1]-1]||p[1])+' '+p[0]};
  const inrP=p=>'₹'+(Number(p)/100).toLocaleString('en-IN',{minimumFractionDigits:Number(p)%100?2:0,maximumFractionDigits:2});
- const BL={unclassified:'Uncategorized',shared_shipping_channel_unresolved:'Shipping / porter · channel pending',shared_production_or_unclassified:'Production / unclassified',porter_shipping:'Porter / shipping',production:'Production',advertising:'Advertising',mixed_advertising_channel_unresolved:'Advertising · channel pending',shared_platform_channel_unresolved:'Platform · channel pending',online_refund:'Refund payout',retail_tagore:'Retail · Tagore',retail_jaipur:'Retail · Jaipur',shared_pragma_channel_unresolved:'Pragma · channel pending',business_allocation_unknown:'Allocation unknown'};
+ const BL={unclassified:'Uncategorized',shared_shipping_channel_unresolved:'Shipping / porter · channel pending',shared_production_or_unclassified:'Production / unclassified',porter_shipping:'Porter / shipping',production:'Production',advertising:'Advertising',mixed_advertising_channel_unresolved:'Advertising · channel pending',shared_platform_channel_unresolved:'Platform · channel pending',online_refund:'Refund payout',retail_tagore:'Retail · Tagore',retail_jaipur:'Retail · Jaipur',shared_pragma_channel_unresolved:'Pragma · channel pending',business_allocation_unknown:'Allocation unknown',payment_status_unproven:'Payment · status unproven',issued_instrument:'Issued instrument',invoice_document:'Invoice / document',overlap_review:'Overlap review'};
  const HL={document_not_payment_separate:'Documents, not payment proof',not_an_expense_excluded:'Not an expense (excluded)',paid_amount_missing_held:'Paid, amount missing',reported_paid_unconfirmed:'Reported paid, unconfirmed',source_duplicate_excluded:'Duplicate (excluded)',related_party_name_match_held:'Name-match hold',refund_record_separate:'Refund record (separate)',unverified_pending:'Verification pending',bucket_conflict_held:'Category conflict hold',issued_clearing_unknown:'Issued, clearing unknown',retail_overlap_candidate_held:'Retail overlap hold',undated_held:'Undated hold'};
  const bn=i=>E.buckets&&E.buckets[i]!=null?E.buckets[i]:'unclassified';
  const bnm=i=>{const k=bn(i);return BL[k]||String(k).replace(/_/g,' ')};
- const TL={'approx-date':'date approximate','screenshot-only':'screenshot only','own-transfer':'possible own/family transfer','refund-payout':'refund payout','retail-once':'retail overlap · counted once'};
+ const pnm=x=>typeof x[0]==='number'?(E.payees&&E.payees[x[0]]!=null?E.payees[x[0]]:'(payee)'):x[0];
+ const TL={'approx-date':'date approximate','screenshot-only':'screenshot only','no-txn-id':'screenshot, no transaction id','own-transfer':'possible own/family transfer','refund-payout':'refund payout','retail-once':'retail overlap · counted once','overlap-unresolved':'may match another entry · link being verified','payee-missing':'payee not recorded'};
  const tg=it=>it.length>3&&Array.isArray(it[3])&&it[3].length?' · '+it[3].map(t=>esc(TL[t]||String(t))).join(' · '):'';
- let h=`<p class="note">Known recorded payments in each month, whatever their category. Not a final month total; reconciliation continues. Source ${esc(E.source||'reconciliation')}.</p>`;
+ const row=it=>`<div class="line"><span>${esc(pnm(it))}<br><small>${esc(bnm(it[2]))}${tg(it)}</small></span><b>${inrP(it[1])}</b></div>`;
+ const comp=m=>{let s='';
+  if(m.unproven&&m.unproven.items&&m.unproven.items.length)s+=`<p class="note">Payments, status unproven · ${inrP(m.unproven.paise)} · ${m.unproven.items.length} - screenshots on record, completion not proven. Not added to the payment total.</p><section class="glass list">${m.unproven.items.map(row).join('')}</section>`;
+  if(m.issued&&m.issued.items&&m.issued.items.length)s+=`<p class="note">Issued, clearing not confirmed · ${inrP(m.issued.paise)} · ${m.issued.items.length} - dated this month, not proven paid. May overlap payments above; links being verified, so not added to the payment total.</p><section class="glass list">${m.issued.items.map(row).join('')}</section>`;
+  if(m.unpaid&&m.unpaid.items&&m.unpaid.items.length)s+=`<p class="note">Unpaid invoices / documents · ${inrP(m.unpaid.paise)} · ${m.unpaid.items.length} - dated this month, no payment recorded. May overlap payments above; links being verified, so not added to the payment total.</p><section class="glass list">${m.unpaid.items.map(row).join('')}</section>`;
+  if(m.overlap&&m.overlap.items&&m.overlap.items.length)s+=`<p class="note">Overlap review · ${m.overlap.items.length} - may duplicate entries above; excluded from every sum until resolved.</p><section class="glass list">${m.overlap.items.map(row).join('')}</section>`;
+  return s;};
+ let h=`<p class="note">Recorded payments in each month, whatever their category. Issued, unproven and unpaid items show separately inside each month until links are proven. Not a final month total; reconciliation continues. Source ${esc(E.source||'reconciliation')}.</p>`;
  for(const m of E.months){
-  h+=`<details class="fold"><summary>${esc(ml(m.m))} · ${inrP(m.verifiedPaise)} · ${m.rows} payment${m.rows===1?'':'s'}</summary><section class="glass list">${m.items.map(it=>`<div class="line"><span>${esc(it[0])}<br><small>${esc(bnm(it[2]))}${tg(it)}</small></span><b>${inrP(it[1])}</b></div>`).join('')}</section>`;
+  h+=`<details class="fold"><summary>${esc(ml(m.m))} · ${inrP(m.verifiedPaise)} · ${m.rows} payment${m.rows===1?'':'s'}</summary><section class="glass list">${m.items.map(row).join('')}</section>${comp(m)}`;
   if(Array.isArray(m.held)&&m.held.length)h+=`<p class="note">${m.held.map(x=>esc(HL[x[0]]||String(x[0]).replace(/_/g,' '))+': '+x[1]).join(' · ')} - not added to the recorded sum</p>`;
   h+='</details>';
  }
+ if(E.undated&&E.undated.items&&E.undated.items.length)h+=`<details class="fold"><summary>Undated invoices / documents · ${inrP(E.undated.paise)} · ${E.undated.items.length}</summary><p class="note">No reliable date - not placed in any month, not added to any total.</p><section class="glass list">${E.undated.items.map(row).join('')}</section></details>`;
  return h;}
-async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;let b=null;
+async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;let b=null,c=null;
  try{b=await lastComment(repo,87);LS.setItem('dj_exp',b);}catch(e){b=LS.getItem('dj_exp');if(!b){data.expenses=null;return}}
- try{const ed=await decryptPayload(JSON.parse(b),priv,myKid);data.expenses=ed&&ed.kind==='expenses'&&Array.isArray(ed.months)?ed:null;}catch(e){}
+ try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=LS.getItem('dj_expc');}
+ try{const ed=await decryptPayload(JSON.parse(b),priv,myKid);
+  if(!(ed&&ed.kind==='expenses'&&Array.isArray(ed.months))){data.expenses=null;return}
+  if(c){try{const cd=await decryptPayload(JSON.parse(c),priv,myKid);
+   if(cd&&cd.kind==='expenses_components'&&Array.isArray(cd.months)&&cd.sid&&cd.sid===ed.sid){
+    const pk=ed.payees||(ed.payees=[]);const pidx={};pk.forEach((p,i)=>pidx[p]=i);
+    const remap=(cd.payees||[]).map(n=>{if(!(n in pidx)){pidx[n]=pk.length;pk.push(n)}return pidx[n]});
+    const cb=cd.buckets||[];const eb=ed.buckets||(ed.buckets=[]);const bidx2={};eb.forEach((p,i)=>bidx2[p]=i);
+    const bremap=cb.map(n=>{if(!(n in bidx2)){bidx2[n]=eb.length;eb.push(n)}return bidx2[n]});
+    const fix=it=>{it[0]=remap[it[0]];it[2]=bremap[it[2]];return it};
+    for(const cm of cd.months){let m=ed.months.find(x=>x.m===cm.m);if(!m){m={m:cm.m,verifiedPaise:0,rows:0,items:[]};ed.months.push(m)}
+     for(const k of ['unproven','issued','unpaid','overlap'])if(cm[k])m[k]={paise:cm[k].paise,items:cm[k].items.map(fix)}}
+    ed.months.sort((a,b)=>a.m<b.m?1:-1);
+    if(cd.undated&&cd.undated.items)ed.undated={paise:cd.undated.paise,items:cd.undated.items.map(fix)};
+   }}catch(e){}}
+  data.expenses=ed;}catch(e){}
  if(data.expenses)render();}
 function render(){return haloRender()}
 function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
