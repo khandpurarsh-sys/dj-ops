@@ -1,8 +1,16 @@
-// DJ Ops native shell: maps the app's WebAuthn phone-unlock calls onto the
-// native Face ID / device-unlock plugin. Loaded only in the Capacitor build;
-// the web app is untouched. The app's own code keeps its "phone lock gate"
-// mode: Face ID is required before the locally stored wrapping key is used.
-// The passphrase remains the backup, exactly as on the web.
+// DJ Ops native shell: maps the app's WebAuthn phone-unlock calls onto a
+// native Face ID / device-unlock plugin backed by an iOS Keychain key.
+// Loaded only in the Capacitor build; the web app is untouched.
+//
+// Security model (matches the app's own "prf" mode): on enrollment the
+// plugin generates a random 256-bit key in the iOS Keychain, readable only
+// after device user verification (Face ID, falling back to device passcode,
+// exactly like WebAuthn userVerification). On unlock the app receives that
+// key as the PRF output and derives its wrapping key with HKDF - the ECDH
+// private key that decrypts app data stays AES-GCM-wrapped in local storage
+// and can only be unwrapped after a successful Face ID prompt. No passphrase
+// is stored anywhere, and no wrapping key is stored in web storage (the
+// app's weaker "gate" fallback never activates here).
 (function () {
   try {
     var C = window.Capacitor;
@@ -11,6 +19,7 @@
     if (!P) return;
 
     function b64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+    function ub64(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
     function randBytes(n) { var u = new Uint8Array(n); crypto.getRandomValues(u); return u; }
     function authData() {
       // 32-byte rpId hash placeholder + flags byte (UP|UV set) + 4-byte counter
@@ -34,18 +43,21 @@
           return {
             id: b64(id), rawId: id.buffer, type: 'public-key',
             response: { clientDataJSON: new ArrayBuffer(0), attestationObject: new ArrayBuffer(0) },
-            getClientExtensionResults: function () { return { prf: { enabled: false } }; }
+            getClientExtensionResults: function () { return { prf: { enabled: true } }; }
           };
         });
       },
       get: function (opts) {
         if (!opts || !opts.publicKey) return Promise.reject(new Error('Unsupported credential request'));
-        return P.unlock().then(function () {
+        var wantsPrf = !!(opts.publicKey.extensions && opts.publicKey.extensions.prf);
+        return P.unlock().then(function (r) {
           var id = randBytes(32);
           return {
             id: b64(id), rawId: id.buffer, type: 'public-key',
             response: { authenticatorData: authData(), clientDataJSON: new ArrayBuffer(0), signature: new ArrayBuffer(0) },
-            getClientExtensionResults: function () { return {}; }
+            getClientExtensionResults: function () {
+              return wantsPrf ? { prf: { results: { first: ub64(r.key).buffer } } } : {};
+            }
           };
         });
       }
