@@ -30,7 +30,7 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY/issues/3/comments" -F body=@PUB-payload_full.json >/dev/null
             echo "posted full to issue 3"
           fi
-          git rm -q PUB-sid.txt PUB-payload.json PUB-payload_full.json
+          git rm -qf PUB-sid.txt PUB-payload.json PUB-payload_full.json
           git add -A
           git config user.name bot
           git config user.email bot@users.noreply.github.com
