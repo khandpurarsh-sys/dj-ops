@@ -54,9 +54,11 @@ jobs:
           APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
           xcrun simctl install $UDID "$APP_PATH"
           xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 6
           mkdir -p preview
+          sleep 12
           xcrun simctl io $UDID screenshot preview/01-launch.png
+          sleep 15
+          xcrun simctl io $UDID screenshot preview/02-settled.png
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}
