@@ -66,6 +66,8 @@ final class UITestDriver {
 
     private static let wrongPass = ProcessInfo.processInfo.environment["DJOPS_WRONGPASS"] == "1" ? "true" : "false"
     private static let fallback = ProcessInfo.processInfo.environment["DJOPS_FALLBACK"] == "1" ? "true" : "false"
+    private static let roundtrip = ProcessInfo.processInfo.environment["DJOPS_ROUNDTRIP"] == "1" ? "true" : "false"
+    private static let seedB64 = ProcessInfo.processInfo.environment["DJOPS_SEED_B64"] ?? ""
 
     // Fills visible passphrase/password inputs with a dummy value and clicks the
     // primary action buttons. Idempotent and rate-limited; no-ops on screens
@@ -77,6 +79,8 @@ final class UITestDriver {
         var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0};
         var WRONGPASS = __WRONGPASS__;
         var FALLBACK = __FALLBACK__;
+        var ROUNDTRIP = __ROUNDTRIP__;
+        var SEEDB = '__SEED_B64__';
         if (st.pauseUntil && Date.now() < st.pauseUntil) { return 'paused'; }
         function visible(el){ var r = el.getBoundingClientRect(); return r.width > 40 && r.height > 10 && r.bottom > 0 && r.top < window.innerHeight; }
         function nativeSet(el, v){
@@ -100,6 +104,31 @@ final class UITestDriver {
           var ph = (i.placeholder || '').toLowerCase();
           return visible(i) && (i.type === 'password' || ph.indexOf('passphrase') !== -1 || ph.indexOf('password') !== -1);
         });
+        if (ROUNDTRIP) {
+          if (!localStorage.getItem('dj_vault')) {
+            var seed0 = JSON.parse(atob(SEEDB));
+            localStorage.setItem('dj_vault', JSON.stringify(seed0.vault));
+            localStorage.setItem('dj_devno', '1');
+            location.reload();
+            return 'seeded';
+          }
+          if (!inputs.length && !window.__rtDone && st.clicks > 0) {
+            window.__rtDone = 1;
+            (async function(){
+              function mark(t){ var d = document.createElement('div'); d.style.cssText = 'position:fixed;top:70px;left:8px;right:8px;z-index:99999;background:#ff0;color:#000;font:16px monospace;padding:10px;word-break:break-all'; d.textContent = t; document.body.appendChild(d); }
+              try {
+                var seed = JSON.parse(atob(SEEDB));
+                var m = await import('./crypto.js?v=3');
+                var v = JSON.parse(localStorage.getItem('dj_vault'));
+                var priv = await m.unlock(v, 'dummy-pass-1234');
+                var k = await m.kid(v.pub);
+                var data = await m.decryptPayload(seed.payload, priv, k);
+                mark('ROUNDTRIP-OK ' + (data && data.synthetic));
+              } catch (e) { mark('ROUNDTRIP-FAIL ' + (e && e.message)); }
+            })();
+            return 'rt-running';
+          }
+        }
         if (inputs.length) {
           if (WRONGPASS && !st.wrongDone && inputs.length === 1 && (inputs[0].placeholder || '') === 'Passphrase') {
             nativeSet(inputs[0], 'wrong-pass-999');
@@ -119,5 +148,7 @@ final class UITestDriver {
     })();
     """.replacingOccurrences(of: "__WRONGPASS__", with: wrongPass)
        .replacingOccurrences(of: "__FALLBACK__", with: fallback)
+       .replacingOccurrences(of: "__ROUNDTRIP__", with: roundtrip)
+       .replacingOccurrences(of: "__SEED_B64__", with: seedB64)
 }
 #endif

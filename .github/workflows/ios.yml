@@ -51,6 +51,11 @@ jobs:
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             IPHONEOS_DEPLOYMENT_TARGET=16.4 CODE_SIGNING_ALLOWED=NO build
+      - name: Build synthetic roundtrip fixture
+        if: ${{ !inputs.sign_and_upload }}
+        run: |
+          cp crypto.js /tmp/crypto.mjs
+          node native-ios/make-roundtrip-fixture.mjs
       - name: Preview + dummy unlock-flow validation (simulator)
         if: ${{ always() && !inputs.sign_and_upload }}
         run: |
@@ -94,6 +99,16 @@ jobs:
           xcrun simctl io $UDID screenshot preview/06-unlock-denied.png
           sleep 18
           xcrun simctl io $UDID screenshot preview/07-home-after-fallback.png
+          # Launch 4: seeded known identity + synthetic encrypted-feed decrypt roundtrip
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          xcrun simctl uninstall $UDID com.arsh.djops || true
+          xcrun simctl install $UDID "$APP_PATH"
+          SEED_B64=$(base64 -w0 /tmp/dj-seed.json 2>/dev/null || base64 /tmp/dj-seed.json)
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 22
+          xcrun simctl io $UDID screenshot preview/08-roundtrip.png
+          sleep 10
+          xcrun simctl io $UDID screenshot preview/09-roundtrip-late.png
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}
