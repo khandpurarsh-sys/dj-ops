@@ -26,6 +26,9 @@ jobs:
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.4'/" ios/App/Podfile
       - name: Sync web assets and plugins
         run: npx cap sync ios
+      - name: Inject preview UI test driver
+        if: ${{ !inputs.sign_and_upload }}
+        run: cp native-ios/UITestAppDelegate.swift ios/App/App/AppDelegate.swift
       - name: App icon
         run: rm -rf ios/App/App/Assets.xcassets/AppIcon.appiconset && cp -R native-ios/AppIcon.appiconset ios/App/App/Assets.xcassets/AppIcon.appiconset
       - name: Build number from run
@@ -44,21 +47,33 @@ jobs:
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             IPHONEOS_DEPLOYMENT_TARGET=16.4 CODE_SIGNING_ALLOWED=NO build
-      - name: Preview screenshot (simulator)
+      - name: Preview + dummy unlock-flow validation (simulator)
         if: ${{ always() && !inputs.sign_and_upload }}
         run: |
           set -e
           xcrun simctl create djops-preview "iPhone 16" || true
           UDID=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(v['udid'] for r,vs in d.items() if 'iOS' in r for v in vs if v['name']=='djops-preview'))")
           xcrun simctl boot $UDID || true
+          xcrun simctl help biometric 2>&1 | head -12 || true
+          xcrun simctl biometric enroll $UDID 2>&1 | tail -2 || true
+          ( for i in $(seq 1 90); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
+          MATCHER=$!
           APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
           xcrun simctl install $UDID "$APP_PATH"
-          xcrun simctl launch $UDID com.arsh.djops || true
           mkdir -p preview
+          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
           sleep 12
           xcrun simctl io $UDID screenshot preview/01-launch.png
-          sleep 15
-          xcrun simctl io $UDID screenshot preview/02-settled.png
+          sleep 12
+          xcrun simctl io $UDID screenshot preview/02-after-create.png
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          sleep 2
+          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 10
+          xcrun simctl io $UDID screenshot preview/03-relaunch-gate.png
+          sleep 12
+          xcrun simctl io $UDID screenshot preview/04-after-unlock.png
+          kill $MATCHER 2>/dev/null || true
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}
