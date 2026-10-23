@@ -19,15 +19,15 @@ jobs:
       - run: npm install
       - run: npm run prepare-www
       - name: Generate iOS project
-        run: |
-          npx cap add ios
-          npx cap sync ios
-      - name: App icon
-        run: rm -rf ios/App/App/Assets.xcassets/AppIcon.appiconset && cp -R native-ios/AppIcon.appiconset ios/App/App/Assets.xcassets/AppIcon.appiconset
+        run: npx cap add ios
       - name: Deployment target 16.4
         run: |
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.4/g' ios/App/App.xcodeproj/project.pbxproj
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.4'/" ios/App/Podfile
+      - name: Sync web assets and plugins
+        run: npx cap sync ios
+      - name: App icon
+        run: rm -rf ios/App/App/Assets.xcassets/AppIcon.appiconset && cp -R native-ios/AppIcon.appiconset ios/App/App/Assets.xcassets/AppIcon.appiconset
       - name: Build number from run
         run: |
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" ios/App/App/Info.plist
