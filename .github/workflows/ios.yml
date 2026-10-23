@@ -95,15 +95,15 @@ jobs:
           xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
           sleep 2
           xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
-          sleep 4
+          sleep 8
           xcrun simctl io $UDID screenshot preview/06-unlock-denied.png
-          sleep 18
+          sleep 22
           xcrun simctl io $UDID screenshot preview/07-home-after-fallback.png
           # Launch 4: seeded known identity + synthetic encrypted-feed decrypt roundtrip
           xcrun simctl terminate $UDID com.arsh.djops || true
           xcrun simctl uninstall $UDID com.arsh.djops || true
           xcrun simctl install $UDID "$APP_PATH"
-          SEED_B64=$(base64 -w0 /tmp/dj-seed.json 2>/dev/null || base64 /tmp/dj-seed.json)
+          SEED_B64=$(base64 < /tmp/dj-seed.json | tr -d '\n')
           SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops || true
           sleep 22
           xcrun simctl io $UDID screenshot preview/08-roundtrip.png

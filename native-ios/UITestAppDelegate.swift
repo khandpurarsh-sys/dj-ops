@@ -76,12 +76,21 @@ final class UITestDriver {
     (function(){
       try {
         var pw = 'dummy-pass-1234';
-        var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0};
+        var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0, last: 'init'};
         var WRONGPASS = __WRONGPASS__;
         var FALLBACK = __FALLBACK__;
         var ROUNDTRIP = __ROUNDTRIP__;
         var SEEDB = '__SEED_B64__';
-        if (st.pauseUntil && Date.now() < st.pauseUntil) { return 'paused'; }
+        function overlay(msg){
+          st.last = msg;
+          var d = document.getElementById('__djt');
+          if (!d) { d = document.createElement('div'); d.id = '__djt'; d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#000;color:#0f0;font:11px monospace;padding:4px 6px;word-break:break-all'; document.body && document.body.appendChild(d); }
+          var err = document.querySelector('.err');
+          var errT = err && err.textContent ? ' | APPERR:' + err.textContent : '';
+          var dev = ''; try { dev = localStorage.getItem('dj_dev') ? 'dev:1' : 'dev:0'; } catch (e) {}
+          var v = ''; try { v = localStorage.getItem('dj_vault') ? 'vault:1' : 'vault:0'; } catch (e) {}
+          d.textContent = 'DJT ' + new Date().toISOString().slice(11, 19) + ' ' + msg + ' | ' + v + ' ' + dev + errT;
+        }
         function visible(el){ var r = el.getBoundingClientRect(); return r.width > 40 && r.height > 10 && r.bottom > 0 && r.top < window.innerHeight; }
         function nativeSet(el, v){
           var proto = Object.getPrototypeOf(el);
@@ -110,7 +119,7 @@ final class UITestDriver {
             localStorage.setItem('dj_vault', JSON.stringify(seed0.vault));
             localStorage.setItem('dj_devno', '1');
             location.reload();
-            return 'seeded';
+            return overlay('seeded');
           }
           if (!inputs.length && !window.__rtDone && st.clicks > 0) {
             window.__rtDone = 1;
@@ -126,24 +135,25 @@ final class UITestDriver {
                 mark('ROUNDTRIP-OK ' + (data && data.synthetic));
               } catch (e) { mark('ROUNDTRIP-FAIL ' + (e && e.message)); }
             })();
-            return 'rt-running';
+            return overlay('rt-running');
           }
         }
         if (inputs.length) {
           if (WRONGPASS && !st.wrongDone && inputs.length === 1 && (inputs[0].placeholder || '') === 'Passphrase') {
             nativeSet(inputs[0], 'wrong-pass-999');
             st.wrongDone = true;
+            st.lastClick = 0;
             var c0 = clickText(['unlock']);
-            st.pauseUntil = Date.now() + 25000;
-            return 'wrong-attempted:' + c0;
+            st.pauseUntil = Date.now() + 20000;
+            return overlay('wrong-attempted:' + c0);
           }
           inputs.forEach(function(i){ if (i.value !== pw) { nativeSet(i, pw); } });
           var c1 = clickText(['create', 'unlock']);
-          return c1 ? 'clicked:' + c1 : 'filled';
+          return overlay(c1 ? 'clicked:' + c1 : 'filled');
         }
-        if (FALLBACK) { var c2 = clickText(['use passphrase']); if (c2) { return 'clicked:' + c2; } }
+        if (FALLBACK) { var c2 = clickText(['use passphrase']); if (c2) { return overlay('clicked:' + c2); } }
         var c3 = clickText(['continue', 'turn on phone unlock']);
-        return c3 ? 'clicked:' + c3 : 'idle';
+        return overlay(c3 ? 'clicked:' + c3 : 'idle');
       } catch (e) { return 'err'; }
     })();
     """.replacingOccurrences(of: "__WRONGPASS__", with: wrongPass)
