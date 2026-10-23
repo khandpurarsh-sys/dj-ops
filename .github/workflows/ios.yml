@@ -37,6 +37,10 @@ jobs:
       - name: Face ID permission text
         run: |
           /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string 'Used to unlock DJ Ops with your phone instead of typing the passphrase.'" ios/App/App/Info.plist
+      - name: Light status bar icons (native chrome only)
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :UIViewControllerBasedStatusBarAppearance bool false" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :UIViewControllerBasedStatusBarAppearance false" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :UIStatusBarStyle string UIStatusBarStyleLightContent" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :UIStatusBarStyle UIStatusBarStyleLightContent" ios/App/App/Info.plist
       - name: Export compliance declaration (exempt - OS-provided crypto only)
         run: |
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
@@ -56,24 +60,40 @@ jobs:
           xcrun simctl boot $UDID || true
           xcrun simctl help biometric 2>&1 | head -12 || true
           xcrun simctl biometric enroll $UDID 2>&1 | tail -2 || true
-          ( for i in $(seq 1 90); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
+          ( for i in $(seq 1 60); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
           MATCHER=$!
           APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
           xcrun simctl install $UDID "$APP_PATH"
           mkdir -p preview
-          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 12
-          xcrun simctl io $UDID screenshot preview/01-launch.png
-          sleep 12
-          xcrun simctl io $UDID screenshot preview/02-after-create.png
+          # Launch 1: create vault with dummy passphrase, wrong-passphrase failure, correct unlock, enable phone unlock
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 5
+          xcrun simctl io $UDID screenshot preview/01-create-gate.png
+          sleep 11
+          xcrun simctl io $UDID screenshot preview/02-wrong-passphrase.png
+          sleep 29
+          xcrun simctl io $UDID screenshot preview/03-home-after-setup.png
+          # Launch 2: phone unlock (Face ID auto-approved) after relaunch
           xcrun simctl terminate $UDID com.arsh.djops || true
           sleep 2
           SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 8
+          xcrun simctl io $UDID screenshot preview/04-relaunch.png
           sleep 10
-          xcrun simctl io $UDID screenshot preview/03-relaunch-gate.png
-          sleep 12
-          xcrun simctl io $UDID screenshot preview/04-after-unlock.png
+          xcrun simctl io $UDID screenshot preview/05-home-after-faceid.png
+          # Launch 3: phone unlock denied, then passphrase fallback
           kill $MATCHER 2>/dev/null || true
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          sleep 2
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_FALLBACK=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 6
+          xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
+          sleep 2
+          xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
+          sleep 4
+          xcrun simctl io $UDID screenshot preview/06-unlock-denied.png
+          sleep 18
+          xcrun simctl io $UDID screenshot preview/07-home-after-fallback.png
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}

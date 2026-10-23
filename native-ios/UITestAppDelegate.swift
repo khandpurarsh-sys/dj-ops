@@ -3,9 +3,11 @@ import Capacitor
 
 // Standard Capacitor 7 AppDelegate plus a DEBUG-only, env-gated UI test driver
 // used by the CI preview job to validate the unlock flow with a dummy passphrase.
-// It activates only when the process is launched with DJOPS_UITEST=1 in its
-// environment (SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch ...) and never
-// ships in Release builds.
+// Activates only when launched with DJOPS_UITEST=1 in the process environment
+// (SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch ...) and never ships in
+// Release builds. Optional env flags: DJOPS_WRONGPASS=1 (one failed passphrase
+// attempt before the correct one) and DJOPS_FALLBACK=1 (click the
+// "Use passphrase" link when present, to exercise the phone-unlock fallback).
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -52,7 +54,7 @@ final class UITestDriver {
 
     private func tick() {
         ticks += 1
-        if ticks > 100 {
+        if ticks > 120 {
             timer?.invalidate()
             timer = nil
             return
@@ -62,14 +64,20 @@ final class UITestDriver {
         webView.evaluateJavaScript(UITestDriver.script, completionHandler: nil)
     }
 
-    // Fills any visible passphrase/password inputs with a dummy value and clicks
-    // the primary action button (Create / Unlock / Continue / ...). Idempotent:
-    // no-ops when no matching fields are on screen.
-    static let script = """
+    private static let wrongPass = ProcessInfo.processInfo.environment["DJOPS_WRONGPASS"] == "1" ? "true" : "false"
+    private static let fallback = ProcessInfo.processInfo.environment["DJOPS_FALLBACK"] == "1" ? "true" : "false"
+
+    // Fills visible passphrase/password inputs with a dummy value and clicks the
+    // primary action buttons. Idempotent and rate-limited; no-ops on screens
+    // with nothing to do.
+    static let script: String = """
     (function(){
       try {
         var pw = 'dummy-pass-1234';
-        window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0};
+        var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0};
+        var WRONGPASS = __WRONGPASS__;
+        var FALLBACK = __FALLBACK__;
+        if (st.pauseUntil && Date.now() < st.pauseUntil) { return 'paused'; }
         function visible(el){ var r = el.getBoundingClientRect(); return r.width > 40 && r.height > 10 && r.bottom > 0 && r.top < window.innerHeight; }
         function nativeSet(el, v){
           var proto = Object.getPrototypeOf(el);
@@ -78,30 +86,38 @@ final class UITestDriver {
           el.dispatchEvent(new Event('input', {bubbles: true}));
           el.dispatchEvent(new Event('change', {bubbles: true}));
         }
+        function clickText(list){
+          var now = Date.now();
+          if (now - st.lastClick < 4000 || st.clicks >= 24) { return null; }
+          var els = Array.prototype.slice.call(document.querySelectorAll('button, a, [role="button"], input[type="submit"]')).filter(visible);
+          for (var i = 0; i < els.length; i++) {
+            var t = ((els[i].innerText || els[i].value || '') + '').trim().toLowerCase();
+            if (list.indexOf(t) !== -1) { st.lastClick = now; st.clicks += 1; els[i].click(); return t; }
+          }
+          return null;
+        }
         var inputs = Array.prototype.slice.call(document.querySelectorAll('input')).filter(function(i){
           var ph = (i.placeholder || '').toLowerCase();
           return visible(i) && (i.type === 'password' || ph.indexOf('passphrase') !== -1 || ph.indexOf('password') !== -1);
         });
-        if (!inputs.length) { return 'no-fields'; }
-        inputs.forEach(function(i){ if (i.value !== pw) { nativeSet(i, pw); } });
-        var now = Date.now();
-        if (now - window.__djopsTest.lastClick > 4000 && window.__djopsTest.clicks < 12) {
-          var wanted = ['create','unlock','continue','submit','save','set passphrase','confirm'];
-          var btns = Array.prototype.slice.call(document.querySelectorAll('button, a, [role="button"], input[type="submit"]')).filter(function(b){
-            if (!visible(b)) { return false; }
-            var t = ((b.innerText || b.value || '') + '').trim().toLowerCase();
-            return wanted.indexOf(t) !== -1;
-          });
-          if (btns.length) {
-            window.__djopsTest.lastClick = now;
-            window.__djopsTest.clicks += 1;
-            btns[0].click();
-            return 'clicked';
+        if (inputs.length) {
+          if (WRONGPASS && !st.wrongDone && inputs.length === 1 && (inputs[0].placeholder || '') === 'Passphrase') {
+            nativeSet(inputs[0], 'wrong-pass-999');
+            st.wrongDone = true;
+            var c0 = clickText(['unlock']);
+            st.pauseUntil = Date.now() + 25000;
+            return 'wrong-attempted:' + c0;
           }
+          inputs.forEach(function(i){ if (i.value !== pw) { nativeSet(i, pw); } });
+          var c1 = clickText(['create', 'unlock']);
+          return c1 ? 'clicked:' + c1 : 'filled';
         }
-        return 'filled';
+        if (FALLBACK) { var c2 = clickText(['use passphrase']); if (c2) { return 'clicked:' + c2; } }
+        var c3 = clickText(['continue', 'turn on phone unlock']);
+        return c3 ? 'clicked:' + c3 : 'idle';
       } catch (e) { return 'err'; }
     })();
-    """
+    """.replacingOccurrences(of: "__WRONGPASS__", with: wrongPass)
+       .replacingOccurrences(of: "__FALLBACK__", with: fallback)
 }
 #endif
