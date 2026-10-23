@@ -22,7 +22,8 @@ jobs:
           [ "$slim_sz" -le 60000 ] && [ "$full_sz" -le 65000 ]
           jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and .slim==1' PUB-payload.json >/dev/null
           jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and (has("slim")|not)' PUB-payload_full.json >/dev/null
-          if gh api "repos/$GITHUB_REPOSITORY/issues/comments?sort=created&direction=desc&per_page=10" --jq '.[].body' | grep -qF "$sid"; then
+          feed=$(gh api "repos/$GITHUB_REPOSITORY/issues/comments?sort=created&direction=desc&per_page=20" --jq '.[].body') || { echo "feed check failed"; exit 1; }
+          if printf '%s' "$feed" | grep -qF "$sid"; then
             echo "sid $sid already in feed; skipping posts"
           else
             gh api "repos/$GITHUB_REPOSITORY/issues/1/comments" -F body=@PUB-payload.json >/dev/null
