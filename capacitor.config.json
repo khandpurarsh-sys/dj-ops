@@ -1,0 +1,14 @@
+{
+  "appId": "com.arsh.djops",
+  "appName": "DJ Ops",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never"
+  },
+  "backgroundColor": "#16294a",
+  "plugins": {
+    "StatusBar": {
+      "style": "LIGHT"
+    }
+  }
+}
