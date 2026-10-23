@@ -2,40 +2,12 @@ name: fix
 on: workflow_dispatch
 permissions:
   contents: write
-  issues: write
 jobs:
   fix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: publish staged payloads
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -f PUB-sid.txt ]; then
-            sid=$(tr -d '[:space:]' < PUB-sid.txt)
-            test -s PUB-payload.json
-            test -s PUB-payload_full.json
-            if gh api "repos/$GITHUB_REPOSITORY/issues/comments?sort=created&direction=desc&per_page=10" --jq '.[].body' | grep -qF "$sid"; then
-              echo "sid $sid already present in feed, skipping posts"
-            else
-              gh api "repos/$GITHUB_REPOSITORY/issues/1/comments" -F body=@PUB-payload.json
-              echo "posted slim to issue 1"
-              gh api "repos/$GITHUB_REPOSITORY/issues/3/comments" -F body=@PUB-payload_full.json
-              echo "posted full to issue 3"
-            fi
-            git rm -q PUB-sid.txt PUB-payload.json PUB-payload_full.json
-            git add -A
-            git config user.name bot
-            git config user.email bot@users.noreply.github.com
-            git commit -m "publish $sid" || echo "nothing to commit"
-            git push
-          else
-            echo "no staged payloads"
-          fi
-      - name: apply uploaded files
-        run: |
+      - run: |
           shopt -s nullglob
           for f in [0-9]*-*; do cp -f "$f" "$(echo "$f" | sed -E 's/^[0-9]+-//')"; git rm -q "$f"; done
           git add -A
