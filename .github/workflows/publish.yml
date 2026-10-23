@@ -1,0 +1,38 @@
+name: publish
+on: workflow_dispatch
+permissions:
+  contents: write
+  issues: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: validate and publish staged envelopes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in [0-9]*-PUB-*; do git mv -f "$f" "${f#*-}" 2>/dev/null || mv "$f" "${f#*-}"; done
+          test -f PUB-sid.txt -a -f PUB-payload.json -a -f PUB-payload_full.json || { echo "no staged payload set; nothing to do"; exit 0; }
+          sid=$(tr -d '[:space:]' < PUB-sid.txt)
+          echo "$sid" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+\+05:30-[0-9a-f]{6}$'
+          slim_sz=$(stat -c%s PUB-payload.json); full_sz=$(stat -c%s PUB-payload_full.json)
+          [ "$slim_sz" -le 60000 ] && [ "$full_sz" -le 65000 ]
+          jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and .slim==1' PUB-payload.json >/dev/null
+          jq -e '.ct and .iv and .z==1 and (.msgs|length==9) and .sid=="'"$sid"'" and (has("slim")|not)' PUB-payload_full.json >/dev/null
+          if gh api "repos/$GITHUB_REPOSITORY/issues/comments?sort=created&direction=desc&per_page=10" --jq '.[].body' | grep -qF "$sid"; then
+            echo "sid $sid already in feed; skipping posts"
+          else
+            gh api "repos/$GITHUB_REPOSITORY/issues/1/comments" -F body=@PUB-payload.json >/dev/null
+            echo "posted slim to issue 1"
+            gh api "repos/$GITHUB_REPOSITORY/issues/3/comments" -F body=@PUB-payload_full.json >/dev/null
+            echo "posted full to issue 3"
+          fi
+          git rm -q PUB-sid.txt PUB-payload.json PUB-payload_full.json
+          git add -A
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git commit -m "publish $sid" || echo "nothing to commit"
+          git push
