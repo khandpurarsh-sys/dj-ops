@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "prepare-www": "rm -rf www && mkdir www && cp index.html app.js crypto.js style.css config.js manifest.webmanifest icon-192.png icon-512.png maskable-512.png apple-touch-icon.png www/"
+    "prepare-www": "rm -rf www && mkdir www && cp index.html app.js crypto.js style.css config.js manifest.webmanifest icon-192.png icon-512.png maskable-512.png apple-touch-icon.png www/ && cp native-ios/native-shim.js www/ && sed -i.bak 's|<script src=\"config.js\">|<script src=\"native-shim.js\"></script><script src=\"config.js\">|' www/index.html && rm -f www/index.html.bak"
   },
   "dependencies": {
     "@capacitor/core": "^7.0.0",
     "@capacitor/ios": "^7.0.0",
-    "@capacitor/status-bar": "^7.0.0"
+    "@capacitor/status-bar": "^7.0.0",
+    "djops-unlock": "file:native-ios/DjOpsUnlock"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0"

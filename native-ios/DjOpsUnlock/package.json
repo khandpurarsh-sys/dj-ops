@@ -1,0 +1,11 @@
+{
+  "name": "djops-unlock",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  }
+}
