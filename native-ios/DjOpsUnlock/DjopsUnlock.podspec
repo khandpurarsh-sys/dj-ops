@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.author = 'DJ Ops'
   s.source = { :git => 'https://localhost', :tag => package['version'] }
   s.source_files = 'ios/Sources/DjOpsUnlockPlugin/**/*.{swift,h,m}'
-  s.ios.deployment_target = '16.4'
+  s.ios.deployment_target = '14.0'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
 end
