@@ -32,6 +32,8 @@ jobs:
         run: /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" ios/App/App/Info.plist
       - name: Face ID permission text
         run: /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string 'Used to unlock DJ Ops with your phone instead of typing the passphrase.'" ios/App/App/Info.plist
+      - name: Export compliance declaration (exempt: OS-provided crypto only)
+        run: /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
       - name: Install pods
         run: cd ios/App && pod install
       - name: Unsigned test build (simulator)
