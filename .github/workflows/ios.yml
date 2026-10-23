@@ -26,6 +26,9 @@ jobs:
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.4'/" ios/App/Podfile
       - name: Sync web assets and plugins
         run: npx cap sync ios
+      - name: Preview-only plugin ACL relaxation (CI simulator has no passcode)
+        if: ${{ !inputs.sign_and_upload }}
+        run: python3 native-ios/preview-plugin-patch.py
       - name: Inject preview UI test driver
         if: ${{ !inputs.sign_and_upload }}
         run: cp native-ios/UITestAppDelegate.swift ios/App/App/AppDelegate.swift
@@ -63,52 +66,56 @@ jobs:
           xcrun simctl create djops-preview "iPhone 16" || true
           UDID=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(v['udid'] for r,vs in d.items() if 'iOS' in r for v in vs if v['name']=='djops-preview'))")
           xcrun simctl boot $UDID || true
-          xcrun simctl help biometric 2>&1 | head -12 || true
-          xcrun simctl biometric enroll $UDID 2>&1 | tail -2 || true
-          ( for i in $(seq 1 60); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
+          echo '--- simctl subcommand list ---'
+          xcrun simctl help 2>&1 | sed -n '1,60p'
+          echo '--- biometric enroll ---'
+          xcrun simctl biometric enroll $UDID && echo BIOMETRIC-ENROLL-OK || echo BIOMETRIC-ENROLL-FAILED
+          ( for i in $(seq 1 200); do xcrun simctl biometric match $UDID >/dev/null 2>&1 || true; sleep 2; done ) &
           MATCHER=$!
           APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
           xcrun simctl install $UDID "$APP_PATH"
           mkdir -p preview
-          # Launch 1: create vault with dummy passphrase, wrong-passphrase failure, correct unlock, enable phone unlock
-          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 5
+          # Launch 1: create vault with dummy passphrase, then enable phone unlock
+          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 40
           xcrun simctl io $UDID screenshot preview/01-create-gate.png
-          sleep 11
-          xcrun simctl io $UDID screenshot preview/02-wrong-passphrase.png
-          sleep 29
-          xcrun simctl io $UDID screenshot preview/03-home-after-setup.png
-          # Launch 2: phone unlock (Face ID auto-approved) after relaunch
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/02-enable-phone-unlock.png
+          # Launch 2: relaunch - phone unlock (Face ID) auto-approved by matcher
           xcrun simctl terminate $UDID com.arsh.djops || true
           sleep 2
           SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 8
-          xcrun simctl io $UDID screenshot preview/04-relaunch.png
-          sleep 10
-          xcrun simctl io $UDID screenshot preview/05-home-after-faceid.png
-          # Launch 3: phone unlock denied, then passphrase fallback
+          sleep 45
+          xcrun simctl io $UDID screenshot preview/03-relaunch-faceid.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/04-home-after-faceid.png
+          # Launch 3: phone unlock denied (matcher stopped, unmatch x2), then
+          # passphrase fallback including one wrong-passphrase failure
           kill $MATCHER 2>/dev/null || true
           xcrun simctl terminate $UDID com.arsh.djops || true
           sleep 2
-          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_FALLBACK=1 xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 6
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 SIMCTL_CHILD_DJOPS_FALLBACK=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 15
           xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
-          sleep 2
+          sleep 3
           xcrun simctl biometric unmatch $UDID >/dev/null 2>&1 || true
-          sleep 8
-          xcrun simctl io $UDID screenshot preview/06-unlock-denied.png
-          sleep 22
+          sleep 27
+          xcrun simctl io $UDID screenshot preview/05-unlock-denied.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/06-wrong-passphrase.png
+          sleep 40
           xcrun simctl io $UDID screenshot preview/07-home-after-fallback.png
-          # Launch 4: seeded known identity + synthetic encrypted-feed decrypt roundtrip
+          # Launch 4: seeded dummy vault, decrypt the peer publisher's synthetic
+          # slim + full 10-recipient envelopes in the app's own WKWebView
           xcrun simctl terminate $UDID com.arsh.djops || true
           xcrun simctl uninstall $UDID com.arsh.djops || true
           xcrun simctl install $UDID "$APP_PATH"
           SEED_B64=$(base64 < /tmp/dj-seed.json | tr -d '\n')
           SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops || true
-          sleep 22
-          xcrun simctl io $UDID screenshot preview/08-roundtrip.png
-          sleep 10
-          xcrun simctl io $UDID screenshot preview/09-roundtrip-late.png
+          sleep 45
+          xcrun simctl io $UDID screenshot preview/08-roundtrip-peer.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/09-roundtrip-peer-late.png
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}

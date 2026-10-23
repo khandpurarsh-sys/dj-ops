@@ -1,13 +1,13 @@
-// CI-only fixture builder for the iOS preview job. Creates a dummy identity,
-// wraps it in a vault with the dummy passphrase, and encrypts a SYNTHETIC
-// payload (no business data) to that identity using the repo's real encrypt.mjs.
-import {writeFileSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
-const m = await import('/tmp/crypto.mjs');
-const r = await m.setup('dummy-pass-1234');
-writeFileSync('/tmp/dj-pubs.json', JSON.stringify([r.vault.pub]));
-writeFileSync('/tmp/dj-synth-data.json', JSON.stringify({synthetic: 'roundtrip-ok-dummy', history: [], note: 'synthetic fixture, not business data'}));
-const payload = execFileSync('node', ['encrypt.mjs', '/tmp/dj-synth-data.json', '/tmp/dj-pubs.json'], {encoding: 'utf8'});
-const seed = {vault: r.vault, payload: JSON.parse(payload)};
+// CI-only fixture builder for the iOS preview job. Loads the committed DUMMY
+// identity vault (wrapped with the dummy passphrase 'dummy-pass-1234'; its
+// pubkey is the 10th recipient the peer publisher added to these synthetic
+// envelopes) and embeds the peer-publisher's slim + full payloads for the
+// in-app WKWebView decrypt test. All data is synthetic; no real keys or
+// business data.
+import {readFileSync, writeFileSync} from 'node:fs';
+const vault = JSON.parse(readFileSync('native-ios/test-fixtures/vault.json', 'utf8'));
+const payloadSlim = JSON.parse(readFileSync('native-ios/test-fixtures/payload_slim.json', 'utf8'));
+const payloadFull = JSON.parse(readFileSync('native-ios/test-fixtures/payload_full.json', 'utf8'));
+const seed = {vault, payloadSlim, payloadFull};
 writeFileSync('/tmp/dj-seed.json', JSON.stringify(seed));
 console.log('fixture ok, seed bytes:', JSON.stringify(seed).length);

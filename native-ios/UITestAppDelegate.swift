@@ -6,8 +6,12 @@ import Capacitor
 // Activates only when launched with DJOPS_UITEST=1 in the process environment
 // (SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch ...) and never ships in
 // Release builds. Optional env flags: DJOPS_WRONGPASS=1 (one failed passphrase
-// attempt before the correct one) and DJOPS_FALLBACK=1 (click the
-// "Use passphrase" link when present, to exercise the phone-unlock fallback).
+// attempt before the correct one), DJOPS_FALLBACK=1 (click the "Use passphrase"
+// link after a delay, to exercise the phone-unlock fallback),
+// DJOPS_ROUNDTRIP=1 + DJOPS_SEED_B64 (seed the committed dummy vault and
+// decrypt the peer publisher's synthetic slim + full envelopes in-app).
+// The green DJT overlay keeps a rolling 7-line action/error history so a single
+// screenshot proves what happened regardless of screenshot latency.
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -54,7 +58,7 @@ final class UITestDriver {
 
     private func tick() {
         ticks += 1
-        if ticks > 120 {
+        if ticks > 160 {
             timer?.invalidate()
             timer = nil
             return
@@ -69,27 +73,37 @@ final class UITestDriver {
     private static let roundtrip = ProcessInfo.processInfo.environment["DJOPS_ROUNDTRIP"] == "1" ? "true" : "false"
     private static let seedB64 = ProcessInfo.processInfo.environment["DJOPS_SEED_B64"] ?? ""
 
-    // Fills visible passphrase/password inputs with a dummy value and clicks the
-    // primary action buttons. Idempotent and rate-limited; no-ops on screens
-    // with nothing to do.
     static let script: String = """
     (function(){
       try {
+        var NL = String.fromCharCode(10);
         var pw = 'dummy-pass-1234';
-        var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0, last: 'init'};
+        var st = window.__djopsTest = window.__djopsTest || {clicks: 0, lastClick: 0, wrongDone: false, pauseUntil: 0, hist: [], lastErr: '', t0: Date.now()};
         var WRONGPASS = __WRONGPASS__;
         var FALLBACK = __FALLBACK__;
         var ROUNDTRIP = __ROUNDTRIP__;
         var SEEDB = '__SEED_B64__';
-        function overlay(msg){
-          st.last = msg;
-          var d = document.getElementById('__djt');
-          if (!d) { d = document.createElement('div'); d.id = '__djt'; d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#000;color:#0f0;font:11px monospace;padding:4px 6px;word-break:break-all'; document.body && document.body.appendChild(d); }
+        function push(line){
+          if (!line) { return; }
+          if (st.hist.length && st.hist[st.hist.length - 1].slice(9) === line) { return; }
+          st.hist.push(new Date().toISOString().slice(11, 19) + ' ' + line);
+          if (st.hist.length > 7) { st.hist.shift(); }
+        }
+        function render(msg){
           var err = document.querySelector('.err');
-          var errT = err && err.textContent ? ' | APPERR:' + err.textContent : '';
+          var errT = err && err.textContent ? String(err.textContent).trim() : '';
+          if (errT && errT !== st.lastErr) { st.lastErr = errT; push('APPERR:' + errT.slice(0, 80)); }
+          push(msg);
+          var d = document.getElementById('__djt');
+          if (!d) {
+            d = document.createElement('pre');
+            d.id = '__djt';
+            d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;margin:0;z-index:99999;background:#000;color:#0f0;font:9px monospace;padding:3px 5px;white-space:pre-wrap;word-break:break-all';
+            if (document.body) { document.body.appendChild(d); }
+          }
           var dev = ''; try { dev = localStorage.getItem('dj_dev') ? 'dev:1' : 'dev:0'; } catch (e) {}
           var v = ''; try { v = localStorage.getItem('dj_vault') ? 'vault:1' : 'vault:0'; } catch (e) {}
-          d.textContent = 'DJT ' + new Date().toISOString().slice(11, 19) + ' ' + msg + ' | ' + v + ' ' + dev + errT;
+          d.textContent = 'DJT ' + v + ' ' + dev + NL + st.hist.join(NL);
         }
         function visible(el){ var r = el.getBoundingClientRect(); return r.width > 40 && r.height > 10 && r.bottom > 0 && r.top < window.innerHeight; }
         function nativeSet(el, v){
@@ -101,7 +115,7 @@ final class UITestDriver {
         }
         function clickText(list){
           var now = Date.now();
-          if (now - st.lastClick < 4000 || st.clicks >= 24) { return null; }
+          if (now < st.pauseUntil || now - st.lastClick < 4000 || st.clicks >= 30) { return null; }
           var els = Array.prototype.slice.call(document.querySelectorAll('button, a, [role="button"], input[type="submit"]')).filter(visible);
           for (var i = 0; i < els.length; i++) {
             var t = ((els[i].innerText || els[i].value || '') + '').trim().toLowerCase();
@@ -119,23 +133,34 @@ final class UITestDriver {
             localStorage.setItem('dj_vault', JSON.stringify(seed0.vault));
             localStorage.setItem('dj_devno', '1');
             location.reload();
-            return overlay('seeded');
+            return render('seeded');
           }
           if (!inputs.length && !window.__rtDone && st.clicks > 0) {
             window.__rtDone = 1;
             (async function(){
-              function mark(t){ var d = document.createElement('div'); d.style.cssText = 'position:fixed;top:70px;left:8px;right:8px;z-index:99999;background:#ff0;color:#000;font:16px monospace;padding:10px;word-break:break-all'; d.textContent = t; document.body.appendChild(d); }
+              function mark(t, top){
+                var d = document.createElement('div');
+                d.style.cssText = 'position:fixed;top:' + top + 'px;left:8px;right:8px;z-index:99999;background:#ff0;color:#000;font:15px monospace;padding:8px;word-break:break-all';
+                d.textContent = t;
+                document.body.appendChild(d);
+              }
               try {
                 var seed = JSON.parse(atob(SEEDB));
                 var m = await import('./crypto.js?v=3');
                 var v = JSON.parse(localStorage.getItem('dj_vault'));
                 var priv = await m.unlock(v, 'dummy-pass-1234');
                 var k = await m.kid(v.pub);
-                var data = await m.decryptPayload(seed.payload, priv, k);
-                mark('ROUNDTRIP-OK ' + (data && data.synthetic));
-              } catch (e) { mark('ROUNDTRIP-FAIL ' + (e && e.message)); }
+                try {
+                  var d1 = await m.decryptPayload(seed.payloadSlim, priv, k);
+                  mark('RT-SLIM-OK ' + JSON.stringify(d1).slice(0, 45), 70);
+                } catch (e1) { mark('RT-SLIM-FAIL ' + (e1 && e1.message), 70); }
+                try {
+                  var d2 = await m.decryptPayload(seed.payloadFull, priv, k);
+                  mark('RT-FULL-OK ' + JSON.stringify(d2).slice(0, 45), 132);
+                } catch (e2) { mark('RT-FULL-FAIL ' + (e2 && e2.message), 132); }
+              } catch (e) { mark('RT-SETUP-FAIL ' + (e && e.message), 70); }
             })();
-            return overlay('rt-running');
+            return render('rt-running');
           }
         }
         if (inputs.length) {
@@ -145,15 +170,19 @@ final class UITestDriver {
             st.lastClick = 0;
             var c0 = clickText(['unlock']);
             st.pauseUntil = Date.now() + 20000;
-            return overlay('wrong-attempted:' + c0);
+            return render('wrong-attempted:' + c0);
           }
           inputs.forEach(function(i){ if (i.value !== pw) { nativeSet(i, pw); } });
           var c1 = clickText(['create', 'unlock']);
-          return overlay(c1 ? 'clicked:' + c1 : 'filled');
+          return render(c1 ? 'clicked:' + c1 : 'filled');
         }
-        if (FALLBACK) { var c2 = clickText(['use passphrase']); if (c2) { return overlay('clicked:' + c2); } }
+        if (FALLBACK && Date.now() - st.t0 > 12000) {
+          var c2 = clickText(['use passphrase']);
+          if (c2) { return render('clicked:' + c2); }
+        }
         var c3 = clickText(['continue', 'turn on phone unlock']);
-        return overlay(c3 ? 'clicked:' + c3 : 'idle');
+        if (c3 === 'turn on phone unlock') { st.pauseUntil = Date.now() + 30000; }
+        return render(c3 ? 'clicked:' + c3 : 'idle');
       } catch (e) { return 'err'; }
     })();
     """.replacingOccurrences(of: "__WRONGPASS__", with: wrongPass)
