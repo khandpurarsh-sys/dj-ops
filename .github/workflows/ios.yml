@@ -26,6 +26,8 @@ jobs:
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.4'/" ios/App/Podfile
       - name: Sync web assets and plugins
         run: npx cap sync ios
+      - name: Production AppDelegate (privacy cover)
+        run: cp native-ios/AppDelegate.swift ios/App/App/AppDelegate.swift
       - name: Preview-only plugin ACL relaxation (CI simulator has no passcode)
         if: ${{ !inputs.sign_and_upload }}
         run: python3 native-ios/preview-plugin-patch.py
@@ -102,6 +104,37 @@ jobs:
           xcrun simctl io $UDID screenshot preview/05-roundtrip-peer.png
           sleep 40
           xcrun simctl io $UDID screenshot preview/06-roundtrip-peer-late.png
+          # Launches 4-6: fixture-backed v6 render assertions (Today + Expenses
+          # tab, merged vs sid-gated A-only), driven by UITestDriver EXPMODE.
+          # Fail-loud: launch errors abort; the driver's verdict string must be
+          # present on the pasteboard and free of FAIL/TIMEOUT/SKIP markers.
+          for MODE in match mismatch solo; do
+            xcrun simctl terminate $UDID com.arsh.djops || true
+            SEED_B64=$(base64 < /tmp/dj-seed-$MODE.json | tr -d '\n')
+            SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_EXPMODE=$MODE SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops
+            sleep 55
+            xcrun simctl io $UDID screenshot preview/07-expenses-$MODE.png
+            sleep 25
+            xcrun simctl io $UDID screenshot preview/08-expenses-$MODE-late.png
+            PB=$(xcrun simctl pbpaste $UDID)
+            echo "verdict $MODE: $PB"
+            echo "$PB" | grep -q "DJVERDICT $MODE"
+            echo "$PB" | grep -qE "FAIL|TIMEOUT|SKIP" && exit 1
+            true
+          done
+          # Launch 7: auto-lock on leaving the app (background gate + re-unlock)
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          SEED_B64=$(base64 < /tmp/dj-seed-match.json | tr -d '\n')
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_EXPMODE=match SIMCTL_CHILD_DJOPS_LOCKTEST=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops
+          sleep 75
+          xcrun simctl io $UDID screenshot preview/09-autolock-cycle.png
+          PB=$(xcrun simctl pbpaste $UDID)
+          echo "verdict locktest: $PB"
+          echo "$PB" | grep -q "DJVERDICT"
+          echo "$PB" | grep -qE "FAIL|TIMEOUT|SKIP" && exit 1
+          true
+          echo "$PB" | grep -q "LOCK-AUTO-OK"
+          echo "$PB" | grep -q "LOCK-REUNLOCK-OK"
           xcrun simctl shutdown $UDID || true
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !inputs.sign_and_upload }}
