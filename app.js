@@ -1011,7 +1011,7 @@ function net(){let b=$('.bj-off');const on=()=>{if(b)b.remove()},off=()=>{if(!$(
  addEventListener('online',()=>{on();say('Back online')});addEventListener('offline',off);if(!navigator.onLine)off();}
 
 /* B088 relative "checked x min ago" text stays fresh */
-function stampTicker(){if(window._bjTick)return;window._bjTick=1;setInterval(()=>{$$('header p').forEach(p=>{const m=p.textContent.match(/· (Online data|Retail data): ([^·]+)/);});},30000);}
+function stampTicker(){if(window._bjTick)return;window._bjTick=1;setInterval(()=>{nextReadMount();$$('header p').forEach(p=>{const m=p.textContent.match(/· (Online data|Retail data): ([^·]+)/);});},30000);}
 
 /* B089 dock hides on scroll down, returns on scroll up (phones, motion-safe) */
 let lastY=0;
@@ -1397,8 +1397,25 @@ async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;
    }}catch(e){}}
   data.expenses=ed;}catch(e){}
  if(data.expenses)render();}
+/* Scheduled read times are plans, independent of source freshness and feed checks. */
+function nextReadPlan(now=new Date()){
+ const ms=now.getTime();if(!Number.isFinite(ms))return null;
+ const offset=330*60000,local=new Date(ms+offset),day=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate());
+ let start=null;for(let d=0;d<2&&start===null;d++)for(let h=11;h<=23;h++){const t=day+d*86400000+h*3600000+15*60000-offset;if(t>ms){start=t;break;}}
+ const fmt=t=>new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');
+ const tomorrow=new Date(start+offset).getUTCDate()!==local.getUTCDate();
+ return {start,read:(tomorrow?'Tomorrow, ':'')+fmt(start)+' IST',update:(tomorrow?'Tomorrow, ':'')+fmt(start+25*60000)+'-'+fmt(start+30*60000)+' IST'};
+}
+function nextReadMount(){
+ if(!data)return;const head=root.querySelector('header');if(!head)return;
+ let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
+ const p=nextReadPlan();if(!p){el.remove();return;}
+ el.replaceChildren();for(const text of ['Next scheduled read: '+p.read,'Update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
+}
+function renderNow(){renderNowCore();nextReadMount();}
+
 function render(){return haloRender()}
-function renderNow(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
+function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=load;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
  if(tab==='exp'&&!(data&&data.expenses))tab='today';
  let h=`<header>${detail?'<button class="refresh" id="bk">‹ Back</button>':logo}<div><h1${detail&&detailTitle().length>14?' class="hl"':''}>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Top sellers',stock:'Low stock',retail:'Retail',exp:'Expenses',ask:'Kingsley'})[tab]}${!detail&&tab==='today'?'<span class="dt">'+new Date(IST()+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'</span>':''}</h1><p>Dressjet${tab==='best'&&!detail?' · '+(tsChannel==='retail'?'Retail':'Online')+' sellers':(s.at||s.asOf)?((tab==='retail'||/^(rt|rb):/.test(detail||''))&&data.retail?' · Retail data: '+esc(retailTime(data.retail)):' · Online data: '+esc(s.at||s.asOf)):''}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail||tab==='best'?'':tab==='retail'?retailFreshBanner():tab==='stock'?stockSourceBanner():freshBanner(s)}<main>${!detail&&tab==='today'?recoveryView():''}`;

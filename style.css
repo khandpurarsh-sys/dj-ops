@@ -2694,3 +2694,7 @@ body.sty-home[data-sty=bento] .app,body.sty-home[data-sty=bento] #root{backgroun
 .y-bento .y-bdots{margin:10px 4px 2px}
 body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-bdots span,body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-bdots{color:#5c5f7a}
 body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-head *{color:#4b4e6a}
+
+/* A quiet schedule note, separate from actual source timestamps. */
+.next-read-plan{display:grid;gap:4px;margin:0 0 18px;padding:0 4px;font-size:12px;line-height:1.5;color:var(--ink2);opacity:1;font-weight:400;letter-spacing:0}
+.m-wrap .next-read-plan,.y-wrap .next-read-plan{margin:8px 0 20px;padding:0;color:var(--mink2)}
