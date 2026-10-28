@@ -1398,10 +1398,10 @@ async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;
   data.expenses=ed;}catch(e){}
  if(data.expenses)render();}
 /* Scheduled read times are plans, independent of source freshness and feed checks. */
-function nextReadPlan(now=new Date()){
+function nextReadPlan(now=new Date(),kind='online'){
  const ms=now.getTime();if(!Number.isFinite(ms))return null;
  const offset=330*60000,local=new Date(ms+offset),day=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate());
- let start=null;for(let d=0;d<2&&start===null;d++)for(let h=11;h<=23;h++){const t=day+d*86400000+h*3600000+15*60000-offset;if(t>ms){start=t;break;}}
+ let start=null;for(let d=0;d<2&&start===null;d++)for(let h=11;h<=23&&start===null;h++)for(const minute of (kind==='retail'&&h<23?[15,45]:[15])){const t=day+d*86400000+h*3600000+minute*60000-offset;if(t>ms){start=t;break;}}
  const fmt=t=>new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');
  const tomorrow=new Date(start+offset).getUTCDate()!==local.getUTCDate();
  return {start,read:(tomorrow?'Tomorrow, ':'')+fmt(start)+' IST',update:(tomorrow?'Tomorrow, ':'')+fmt(start+25*60000)+'-'+fmt(start+30*60000)+' IST'};
@@ -1409,8 +1409,8 @@ function nextReadPlan(now=new Date()){
 function nextReadMount(){
  if(!data)return;const head=root.querySelector('header');if(!head)return;
  let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
- const p=nextReadPlan();if(!p){el.remove();return;}
- el.replaceChildren();for(const text of ['Next scheduled read: '+p.read,'Update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
+ const retail=nextReadPlan(new Date(),'retail'),online=nextReadPlan(new Date(),'online');if(!retail||!online){el.remove();return;}
+ el.replaceChildren();for(const [name,p] of [['Retail',retail],['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
 }
 function renderNow(){renderNowCore();nextReadMount();}
 
