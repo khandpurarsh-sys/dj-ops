@@ -1441,6 +1441,7 @@ function nextReadMount(){
  let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
  const retail=nextReadPlan(new Date(),'retail'),online=nextReadPlan(new Date(),'online');if(!retail||!online){el.remove();return;}
  el.replaceChildren();for(const [name,p] of [['Retail',retail],['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
+ if(root.querySelector('#feed-state'))overviewOrderMount();
 }
 function loadStateMount(){
  const old=root.querySelector('#feed-state');if(old)old.remove();if(!data)return;
@@ -1457,7 +1458,8 @@ function overviewOrderMount(){
  if(!data||detail||tab!=='today')return;
  const grid=root.querySelector('main > .grid2,main .yd-glance');if(!grid)return;
  const state=root.querySelector('#feed-state'),plan=root.querySelector('.next-read-plan');
- if(state){grid.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
+ const combined=overviewDay==='yesterday'?root.querySelector('.yd-combined'):null;const anchor=combined||grid;
+ if(state){anchor.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
 }
 function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();}
 
