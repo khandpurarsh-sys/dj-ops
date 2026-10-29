@@ -1,5 +1,5 @@
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
-const WEB_BUILD_ID='web-freshness-20261029-1449';
+const WEB_BUILD_ID='20261029-static-ciphertext-feed-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':p===0?'0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
@@ -61,10 +61,14 @@ if(pu){const inp=$('#pn'),e=$('#err');inp.focus();inp.oninput=async()=>{inp.valu
 function showKey(t){root.innerHTML=shell(`<div class="lock">${logo}<h1>Almost done</h1><p>Send this public key to your assistant. It is not secret. It lets updates be locked so only this phone can read them.</p><div class="glass"><div class="keybox" id="k">${esc(t)}</div><button class="btn" id="cp">Copy key</button><button class="btn alt" id="sh">Share key</button><button class="btn alt" id="nx">Continue</button></div></div>`);
  $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(t);$('#cp').textContent='Copied'}catch{}};
  $('#sh').onclick=()=>navigator.share?navigator.share({text:t}):0;$('#nx').onclick=lockScreen;}
-const feedCache={};let feedPauseUntil=Number(LS.getItem('dj_feed_pause_until')||0)||0,loadBusy=false,feedBatchFlight=null;
+const feedCache={};let acceptedStaticMemory=null,feedBatchMemory=null,apiFallbackAfter=0;
+function feedSave(k,v){try{LS.setItem(k,v);return true}catch{return false}}
+function acceptedStatic(repo){if(acceptedStaticMemory?.repo===repo)return acceptedStaticMemory;try{const j=JSON.parse(LS.getItem('dj_static_feed')||'null');return j?.repo===repo?j:null}catch{return null}}
+function acceptFeed(){if(staticFeed){acceptedStaticMemory=staticFeed;feedSave('dj_static_feed',JSON.stringify(staticFeed));}}
+let feedPauseUntil=Number(LS.getItem('dj_feed_pause_until')||0)||0,loadBusy=false,feedBatchFlight=null;
 function feedError(){return new Error('GitHub feed rate-limited. Next check after '+new Date(feedPauseUntil).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM')+' IST');}
-async function feedJson(url){feedPauseUntil=Math.max(feedPauseUntil,Number(LS.getItem('dj_feed_pause_until')||0)||0);if(Date.now()<feedPauseUntil)throw feedError();const r=await fetch(url,{cache:'no-cache',headers:{Accept:'application/vnd.github+json'}});if(!r.ok){const err=await r.json().catch(()=>({}));if(r.status===429||(r.status===403&&(r.headers.get('x-ratelimit-remaining')==='0'||/rate limit/i.test(err.message||'')))){const reset=Number(r.headers.get('x-ratelimit-reset')||0)*1000,ra=r.headers.get('retry-after')||'',seconds=Number(ra),retry=ra?(Number.isFinite(seconds)?Date.now()+seconds*1000:Date.parse(ra)):0;feedPauseUntil=Math.max(Date.now()+60000,reset,Number.isFinite(retry)?retry:0);LS.setItem('dj_feed_pause_until',String(feedPauseUntil));throw feedError();}throw new Error('GitHub feed HTTP '+r.status+(err.message?': '+err.message:''));}return r.json();}
-function readFeedBatch(repo){try{const x=JSON.parse(LS.getItem('dj_feed_batch_v2')||'null');return x&&x.repo===repo&&x.rows&&typeof x.rows==='object'?x:null}catch{return null}}
+async function feedJson(url){feedPauseUntil=Math.max(feedPauseUntil,Number(LS.getItem('dj_feed_pause_until')||0)||0);if(Date.now()<feedPauseUntil)throw feedError();const r=await fetch(url,{cache:'no-cache',headers:{Accept:'application/vnd.github+json'}});if(!r.ok){const err=await r.json().catch(()=>({}));if(r.status===429||(r.status===403&&(r.headers.get('x-ratelimit-remaining')==='0'||/rate limit/i.test(err.message||'')))){const reset=Number(r.headers.get('x-ratelimit-reset')||0)*1000,ra=r.headers.get('retry-after')||'',seconds=Number(ra),retry=ra?(Number.isFinite(seconds)?Date.now()+seconds*1000:Date.parse(ra)):0;feedPauseUntil=Math.max(Date.now()+60000,reset,Number.isFinite(retry)?retry:0);feedSave('dj_feed_pause_until',String(feedPauseUntil));throw feedError();}throw new Error('GitHub feed HTTP '+r.status+(err.message?': '+err.message:''));}return r.json();}
+function readFeedBatch(repo){if(feedBatchMemory?.repo===repo)return feedBatchMemory;try{const x=JSON.parse(LS.getItem('dj_feed_batch_v2')||'null');return x&&x.repo===repo&&x.rows&&typeof x.rows==='object'?x:null}catch{return null}}
 async function feedBatch(repo,force=false){
  const old=readFeedBatch(repo),now=Date.now();if(!force&&old&&Number.isFinite(old.at)&&now>=old.at&&now-old.at<180000)return old;
  if(feedBatchFlight)return feedBatchFlight;
@@ -74,19 +78,43 @@ async function feedBatch(repo,force=false){
   if(!Array.isArray(j))throw new Error('Unexpected feed response');
   const seen={};let latest=old?.latest||'';
   for(const c of j){if(typeof c.created_at==='string'&&(!latest||c.created_at>latest))latest=c.created_at;const m=String(c.issue_url||'').match(/^https:\/\/api\.github\.com\/repos\/([^/]+\/[^/]+)\/issues\/(1|2|3|87|88)$/);if(!m||m[1].toLowerCase()!==repo.toLowerCase())continue;const n=m[2];if(seen[n])continue;seen[n]=true;rows[n]={body:typeof c.body==='string'?c.body:'',owner:String(c.user?.login||''),id:c.id};}
-  const out={repo,rows,at:Date.now(),latest,seen,complete:j.length<6};LS.setItem('dj_feed_batch_v2',JSON.stringify(out));return out;
+  const out={repo,rows,at:Date.now(),latest,seen,complete:j.length<6};feedBatchMemory=out;feedSave('dj_feed_batch_v2',JSON.stringify(out));return out;
  })();try{return await feedBatchFlight}finally{feedBatchFlight=null}
 }
-async function lastComment(repo,num,back,force=false){
- if(!back){const b=await feedBatch(repo,force),row=b.rows[String(num)];if(row&&(b.seen[String(num)]||b.complete)){if(row.owner.toLowerCase()!==String(repo).split('/')[0].toLowerCase())throw new Error('Newest comment is not from the owner');return row.body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();}}
- // A bounded fallback covers a quiet stock feed or an older explicit comment request.
- back=back||0;const iss=await feedJson('https://api.github.com/repos/'+repo+'/issues/'+num),n=iss&&iss.comments;if(!Number.isInteger(n)||n-back<1)throw new Error('No feed comment available');
- const key=repo+'/'+num+'/'+back,c=feedCache[key];if(c&&c.n===n)return c.body;
- const j=await feedJson('https://api.github.com/repos/'+repo+'/issues/'+num+'/comments?per_page=1&page='+(n-back));if(!Array.isArray(j)||!j.length)throw new Error('No feed comment available');
- const own=String(repo).split('/')[0].toLowerCase();if(!j[0].user||String(j[0].user.login||'').toLowerCase()!==own)throw new Error('Newest comment is not from the owner');
- const body=j[0].body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();feedCache[key]={n,body};if(!back){const b=readFeedBatch(repo);if(b){b.rows[String(num)]={body:j[0].body,owner:j[0].user.login,id:j[0].id};b.seen[String(num)]=true;LS.setItem('dj_feed_batch_v2',JSON.stringify(b));}}return body;
+/* Same-origin ciphertext is primary. API fallback is one repository batch per 15 minutes. */
+let staticFeed=null,staticFeedFlight=null,feedLoadMode=false,feedTransport='';
+async function staticFeedRead(force=false){
+ if(staticFeedFlight)return staticFeedFlight;
+ staticFeedFlight=(async()=>{
+  const r=await fetch('feed.json',{cache:'no-store'});if(!r.ok)throw Error('Static feed HTTP '+r.status);
+  const j=await r.json(),repo=(window.DJ_CONFIG||{}).repo;
+  if(j.version!==1||j.repo!==repo||!j.rows||!j.rows['1']||!j.rows['3'])throw Error('Static feed format invalid');
+  const stored=readFeedBatch(repo),previous=acceptedStatic(repo);
+  for(const [n,row] of Object.entries(j.rows)){
+   if(!['1','2','3','87','88'].includes(n)||typeof row.body!=='string'||!Number.isSafeInteger(row.commentId)||!/^[a-f0-9]{64}$/.test(row.sha256))throw Error('Static feed row invalid');
+   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(row.body));const hex=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');if(hex!==row.sha256)throw Error('Static feed hash mismatch');
+   const e=JSON.parse(row.body);if(!e.ct||!Array.isArray(e.msgs))throw Error('Static feed is not encrypted');
+   if((previous?.repo===repo&&previous.rows?.[n]?.commentId>row.commentId)||(stored?.rows?.[n]?.id>row.commentId))throw Error('Static feed older than last saved update');
+  }
+  const full=JSON.parse(j.rows['3'].body),slim=JSON.parse(j.rows['1'].body);if(!full.sid||full.sid!==slim.sid||j.sid!==full.sid||full.slim||!slim.slim)throw Error('Static feed snapshots mismatch');
+  staticFeed=j;feedTransport='static';return j;
+ })();try{return await staticFeedFlight}finally{staticFeedFlight=null}
 }
-async function fetchLatest(force=false){const repo=(window.DJ_CONFIG||{}).repo;let body=await lastComment(repo,1,0,force);window.__slim=false;/* reuse a cached full copy only when it is exactly this slim snapshot */try{const o=JSON.parse(body);if(o&&o.slim){let full=false;try{const old=LS.getItem('dj_last'),po=old&&JSON.parse(old);if(po&&!po.slim&&po.z&&po.sid&&po.sid===o.sid){body=old;full=true;}else{const f=await lastComment(repo,3),p=JSON.parse(f);if(p&&!p.slim&&p.z&&p.sid&&p.sid===o.sid){body=f;full=true}}}catch(e){}window.__slim=!full}}catch(e){}LS.setItem('dj_last',body);LS.setItem('dj_slim',window.__slim?'1':'0');return body;}
+async function prepareFeed(){
+ staticFeed=null;try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
+ const now=Date.now(),next=Math.max(apiFallbackAfter,Number(LS.getItem('dj_api_fallback_after')||0));if(now<next)throw Error('Static feed unavailable; API fallback paused until '+new Date(next).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'})+' IST');
+ apiFallbackAfter=now+900000;feedSave('dj_api_fallback_after',String(apiFallbackAfter));await feedBatch((window.DJ_CONFIG||{}).repo,true);
+}
+async function lastComment(repo,num,back,force=false){
+ if(!back&&staticFeed&&staticFeed.repo===repo){const row=staticFeed.rows[String(num)];if(!row)throw Error('Static supplementary feed unavailable');return row.body;}
+ // One batch is shared across all channels. No per-issue count/page fallback.
+ const b=readFeedBatch(repo),row=b&&b.rows[String(num)];
+ if(!row||!(b.seen[String(num)]||b.complete))throw Error('Feed channel unavailable in bounded fallback');
+ if(row.owner.toLowerCase()!==String(repo).split('/')[0].toLowerCase())throw Error('Newest comment is not from the owner');
+ const accepted=acceptedStatic(repo);if(accepted?.rows?.[String(num)]?.commentId>row.id)throw Error('API feed older than last accepted static update');
+ return row.body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();
+}
+async function fetchLatest(force=false){const repo=(window.DJ_CONFIG||{}).repo;let body=await lastComment(repo,1,0,force);window.__slim=false;/* reuse a cached full copy only when it is exactly this slim snapshot */try{const o=JSON.parse(body);if(o&&o.slim){let full=false;try{const old=LS.getItem('dj_last'),po=old&&JSON.parse(old);if(po&&!po.slim&&po.z&&po.sid&&po.sid===o.sid){body=old;full=true;}else{const f=await lastComment(repo,3),p=JSON.parse(f);if(p&&!p.slim&&p.z&&p.sid&&p.sid===o.sid){body=f;full=true}}}catch(e){}window.__slim=!full}}catch(e){}return body;}
 function dl(a,b,k){const n=a.length,m=b.length;if(Math.abs(n-m)>k)return k+1;let p2=null,p1=Array.from({length:m+1},(_,j)=>j);for(let i=1;i<=n;i++){const c=[i];let mn=i;for(let j=1;j<=m;j++){let v=Math.min(p1[j]+1,c[j-1]+1,p1[j-1]+(a[i-1]===b[j-1]?0:1));if(p2&&i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])v=Math.min(v,p2[j-2]+1);c[j]=v;if(v<mn)mn=v;}if(mn>k)return k+1;p2=p1;p1=c;}return p1[m];}
 const fzn=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\s]+/g,' ').replace(/\s+/g,' ').trim();
 function fzMatch(q,text){const t=fzn(text),toks=fzn(q).split(' ').filter(Boolean);if(!toks.length)return 0;const flat=t.replace(/ /g,''),words=t.split(' ');let worst=0;
@@ -153,12 +181,12 @@ function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
   if(data._deadDerived||(!A(data.deadStock)&&rows.some(x=>x.sold30!=null))){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));data.deadStock=d;data._deadDerived=true;}}
  }catch(e){}}
 async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
- try{b=await lastComment(repo,2);LS.setItem('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');render();}
+ try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');render();}
  if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){}}
-async function load(opts={}){if(loadBusy)return;loadBusy=true;window.__lastLoad=Date.now();try{await loadData(opts.force===true);await loadStock();await loadExp();}finally{loadBusy=false;}}
+async function load(opts={}){if(loadBusy)return;const now=Date.now();if(now-(window.__lastFeedAttempt||0)<60000)return;loadBusy=true;window.__lastFeedAttempt=now;window.__lastLoad=now;try{await loadData(opts.force===true);await loadStock();await loadExp();}finally{loadBusy=false;}}
 function manualRefresh(){return load({force:true})}
-async function loadData(force=false){try{status='Updating...';render();let b;try{b=await fetchLatest(force);status=window.__slim?'Limited view: full history not loaded':'';}catch(e){b=LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):'No data yet: '+e.message;if(data||!b){render();return;}}
- const dd=await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){status='Could not read update: '+e.message;}render();}
+async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=window.__slim?'Limited view: full history not loaded':'';}catch(e){b=LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):'No data yet: '+e.message;if(data||!b){render();return;}}
+ const dd=await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');feedSave('dj_last',b);feedSave('dj_slim',window.__slim?'1':'0');acceptFeed();data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){status='Could not read update: '+e.message;}render();}
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='bills'?'Retail bills':t==='dc'?k.split('|')[1]+' · '+new Date(k.split('|')[0]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?'Revenue today':t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
 /* order time as epoch ms: ts/at, else age in hours, else today's "h:mm AM" time (IST) */
@@ -1381,7 +1409,7 @@ function expView(){const E=data&&data.expenses;if(!E||!Array.isArray(E.months)||
  if(E.undated&&E.undated.items&&E.undated.items.length)h+=`<details class="fold"><summary>Undated invoices / documents · ${inrP(E.undated.paise)} · ${E.undated.items.length}</summary><p class="note">No reliable date - not placed in any month, not added to any total.</p><section class="glass list">${E.undated.items.map(row).join('')}</section></details>`;
  return h;}
 async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;let b=null,c=null;
- try{b=await lastComment(repo,87);LS.setItem('dj_exp',b);}catch(e){b=LS.getItem('dj_exp');if(!b){data.expenses=null;return}}
+ try{b=await lastComment(repo,87);feedSave('dj_exp',b);}catch(e){b=LS.getItem('dj_exp');if(!b){data.expenses=null;return}}
  try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=LS.getItem('dj_expc');}
  try{const ed=await decryptPayload(JSON.parse(b),priv,myKid);
   if(!(ed&&ed.kind==='expenses'&&Array.isArray(ed.months))){data.expenses=null;return}
@@ -1417,12 +1445,12 @@ function nextReadMount(){
 function loadStateMount(){
  const old=root.querySelector('#feed-state');if(old)old.remove();if(!data)return;
  const updating=status==='Updating...',failed=/failed|Could not|No data yet/i.test(status),offline=navigator.onLine===false;
- if(!updating&&!failed&&!offline)return;const header=root.querySelector('header');if(!header)return;
+ const header=root.querySelector('header');if(!header)return;
  const el=document.createElement('section');el.id='feed-state';el.className='glass';el.setAttribute('role','status');el.style.cssText='margin:12px 0;padding:14px 16px;border:1px solid rgba(230,195,120,.5);line-height:1.6';
- const title=document.createElement('strong');title.textContent=offline?'Stale - offline, showing last saved figures':updating?'Updating - showing last saved figures':'Stale - update failed, showing last saved figures';el.append(title);
+ const title=document.createElement('strong');title.textContent=offline?'Stale - offline, showing last saved figures':updating?'Updating - showing last saved figures':failed?'Stale - update failed, showing last saved figures':'Saved figures - source ages below';el.append(title);
  const stamp=v=>{const t=Date.parse(v||'');return Number.isFinite(t)?new Date(t).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true})+' IST':'time unavailable'};
- const clocks=document.createElement('div');clocks.style.fontSize='12px';clocks.textContent='Online source: '+stamp(data.snapshot&&data.snapshot.readAt)+' · Retail source: '+stamp(data.retail&&data.retail.readAt);el.append(clocks);
- const note=document.createElement('div');note.style.fontSize='12px';note.textContent=updating?'These are not a new reading. Waiting for the latest feed.':offline?'Reconnect, then tap Refresh.':status;el.append(note);header.insertAdjacentElement('afterend',el);
+ const clocks=document.createElement('div');clocks.style.fontSize='12px';const age=v=>{const n=Math.floor((Date.now()-Date.parse(v||''))/60000);return Number.isFinite(n)&&n>=0?' ('+(n<60?n+' min':Math.floor(n/60)+'h '+n%60+'m')+' old)':''};clocks.textContent='Online source: '+stamp(data.snapshot&&data.snapshot.readAt)+age(data.snapshot&&data.snapshot.readAt)+' · Retail source: '+stamp(data.retail&&data.retail.readAt)+age(data.retail&&data.retail.readAt);el.append(clocks);
+ const note=document.createElement('div');note.style.fontSize='12px';note.textContent=updating?'These are not a new reading. Waiting for the latest feed.':offline?'Reconnect, then tap Refresh.':failed?status:'Encrypted feed via '+(feedTransport||'last saved data')+'. Feed delivery does not change source read times.';el.append(note);header.insertAdjacentElement('afterend',el);
 }
 function renderNow(){renderNowCore();nextReadMount();loadStateMount();}
 
@@ -1778,10 +1806,10 @@ function initNav(){if(navOn)return;navOn=true;
  addEventListener('popstate',e=>{const s=e.state;
   if(s&&s.g){if(exitArm){exitArm=false;history.back();return;}exitArm=true;toast('Press back again to exit');setTimeout(()=>{exitArm=false},2000);history.pushState({n:1,k:'|today',d:null,t:'today'},'');detail=null;tab='today';render();return;}
   if(s&&s.n){dir='b';detail=s.d;tab=s.t;window.scrollTo(0,0);render();}});}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&priv&&Date.now()-(window.__lastLoad||0)>180000)load()});addEventListener('keydown',ev=>{if(ev.key==='/'&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')){const q0=document.querySelector('#q,#gq,.search input');if(q0){ev.preventDefault();q0.focus()}}});addEventListener('offline',()=>toast('Offline: showing last saved data'));addEventListener('online',()=>{toast('Back online');if(priv){try{load()}catch(e){}}});addEventListener('keydown',e=>{if(e.key==='Escape'&&detail&&!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'')){const bk=document.querySelector('#bk');if(bk)bk.click()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&priv&&Date.now()-(window.__lastLoad||0)>900000)load()});addEventListener('keydown',ev=>{if(ev.key==='/'&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')){const q0=document.querySelector('#q,#gq,.search input');if(q0){ev.preventDefault();q0.focus()}}});addEventListener('offline',()=>toast('Offline: showing last saved data'));addEventListener('online',()=>{toast('Back online');if(priv){try{load()}catch(e){}}});addEventListener('keydown',e=>{if(e.key==='Escape'&&detail&&!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'')){const bk=document.querySelector('#bk');if(bk)bk.click()}});
 function shareSummary(){try{if(pmOn()){toast('Turn off privacy mode to share');return}const s=data&&data.snapshot;if(!s){toast('No data yet');return}const rv=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v),RT=data.retail&&A(data.retail.stores),RR=retailReady(data.retail),RL=rollStale(s),L=['Dressjet Ops · '+new Date(IST()+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})];const OI=ordInfo(s);L.push(RL?'Online: not read yet today':'Online: '+inr(s.revenue)+' · '+ordN(OI)+' orders (as of '+(s.at||s.asOf||'unknown time')+')');const rs=RR&&RT&&RT.every(z=>rv(z.sales)!=null)?RT.reduce((q,z)=>q+rv(z.sales),0):null,rb=RR&&RT&&RT.every(z=>rv(z.bills)!=null)?RT.reduce((q,z)=>q+rv(z.bills),0):null;L.push(rs==null?'Retail: not read yet today':'Retail: '+inr(rs)+(rb!=null?' · '+rb+(rb===1?' bill':' bills'):'')+' (source '+retailTime(data.retail)+')');if(!RL&&rs!=null&&rv(s.revenue)!=null)L.push('Combined: '+inr(rv(s.revenue)+rs));const t=L.join('\n');if(navigator.share){navigator.share({text:t}).catch(()=>{})}else if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>toast('Summary copied'),()=>toast('Copy not allowed'))}else toast('Sharing not supported')}catch(e){toast('Could not share')}}
-let timer;function start(){initNav();load();clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)load()},((window.DJ_CONFIG||{}).pollMinutes||5)*60000);}
-/* Resume uses the existing three-minute foreground freshness gate above. */
+let timer;function start(){initNav();load();clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)load()},Math.max(15,Number((window.DJ_CONFIG||{}).pollMinutes)||15)*60000);}
+/* Foreground resume uses a fifteen-minute freshness gate above. */
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').then(r=>{window.__swr=r}).catch(()=>{});
 /* Auto-update: the installed app stays alive in memory, so it never re-reads new files by itself. Compare the live files with what is running; reload when they differ. */
 const UPD_FILES=['index.html','app.js','crypto.js','style.css','config.js'];let updBase=null,updBusy=false;
