@@ -1452,7 +1452,14 @@ function loadStateMount(){
  const clocks=document.createElement('div');clocks.style.fontSize='12px';const age=v=>{const n=Math.floor((Date.now()-Date.parse(v||''))/60000);return Number.isFinite(n)&&n>=0?' ('+(n<60?n+' min':Math.floor(n/60)+'h '+n%60+'m')+' old)':''};clocks.textContent='Online source: '+stamp(data.snapshot&&data.snapshot.readAt)+age(data.snapshot&&data.snapshot.readAt)+' · Retail source: '+stamp(data.retail&&data.retail.readAt)+age(data.retail&&data.retail.readAt);el.append(clocks);
  const note=document.createElement('div');note.style.fontSize='12px';note.textContent=updating?'These are not a new reading. Waiting for the latest feed.':offline?'Reconnect, then tap Refresh.':failed?status:'Encrypted feed via '+(feedTransport||'last saved data')+'. Feed delivery does not change source read times.';el.append(note);header.insertAdjacentElement('afterend',el);
 }
-function renderNow(){renderNowCore();nextReadMount();loadStateMount();}
+/* Keep the overview controls and figure tiles ahead of delivery/status notes. */
+function overviewOrderMount(){
+ if(!data||detail||tab!=='today')return;
+ const grid=root.querySelector('main > .grid2,main .yd-glance');if(!grid)return;
+ const state=root.querySelector('#feed-state'),plan=root.querySelector('.next-read-plan');
+ if(state){grid.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
+}
+function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();}
 
 function render(){return haloRender()}
 function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
