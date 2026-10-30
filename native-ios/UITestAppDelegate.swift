@@ -205,7 +205,7 @@ final class UITestDriver {
             }
             return of(url, opts);
           };
-          ['dj_feed_batch_v2', 'dj_last', 'dj_slim', 'dj_exp', 'dj_expc', 'dj_stk', 'dj_feed_pause_until'].forEach(function(k){ try { localStorage.removeItem(k); } catch (e) {} });
+          ['dj_feed_batch_v2', 'dj_last', 'dj_slim', 'dj_exp', 'dj_expc', 'dj_stk', 'dj_feed_pause_until', 'dj_api_fallback_after', 'dj_static_feed'].forEach(function(k){ try { localStorage.removeItem(k); } catch (e) {} });
           window.__djStub = 1;
         }
         var inputs = Array.prototype.slice.call(document.querySelectorAll('input')).filter(function(i){
