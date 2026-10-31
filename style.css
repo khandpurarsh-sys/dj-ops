@@ -2701,7 +2701,45 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 
 /* Give paired figures room without shrinking their existing type scale. */
 @media(max-width:430px){
- :root[data-th] body.lay-halo :is(.halo-kpis.halo-pair,.yd-glance){margin-left:-24px;margin-right:-24px}
+ :root[data-th] body.lay-halo :is(.halo-kpis.halo-pair,.yd-glance){margin-left:0;margin-right:0}
  :root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-online{padding-right:12px!important}
  :root[data-th] body.lay-halo .yd-glance button:first-child{padding-right:12px!important}
 }
+
+/* ===== Midnight reel skin v1 (31 Oct 2026): reel-matched glass, gold pill dock, blur-morph motion ===== */
+:root[data-halo-palette=midnight] body.lay-halo:not(.noanim)::view-transition-old(root){animation:mnOld .28s ease-out both}
+:root[data-halo-palette=midnight] body.lay-halo:not(.noanim)::view-transition-new(root){animation:mnNew .55s cubic-bezier(.65,0,.35,1) both}
+@keyframes mnOld{to{opacity:0;filter:blur(10px)}}
+@keyframes mnNew{from{opacity:0;filter:blur(14px)}to{opacity:1;filter:blur(0)}}
+@media(prefers-reduced-motion:reduce){:root[data-halo-palette=midnight] body.lay-halo::view-transition-old(root),:root[data-halo-palette=midnight] body.lay-halo::view-transition-new(root){animation:none!important}}
+:root[data-halo-palette=midnight] body.lay-halo .app{font-family:"Space Grotesk",-apple-system,"SF Pro Display",Inter,system-ui,sans-serif}
+:root[data-halo-palette=midnight] body.lay-halo h1{font-family:"Space Grotesk",-apple-system,Inter,system-ui,sans-serif;letter-spacing:-.02em}
+:root[data-halo-palette=midnight] body.lay-halo .glass,:root[data-halo-palette=midnight] body.lay-halo .halo-panel,:root[data-halo-palette=midnight] body.lay-halo .halo-panel>.glass,:root[data-halo-palette=midnight] body.lay-halo .halo-kpi,:root[data-halo-palette=midnight] body.lay-halo .halo-combined,:root[data-halo-palette=midnight] body.lay-halo .search,:root[data-halo-palette=midnight] body.lay-halo .pmrow,:root[data-halo-palette=midnight] body.lay-halo .halo-coverage,:root[data-halo-palette=midnight] body.lay-halo .halo-archive,:root[data-halo-palette=midnight] body.lay-halo .halo-finder,:root[data-halo-palette=midnight] body.lay-halo .ts-product[open]{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.014)),#191b20;border:1px solid #34353b;border-radius:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px rgba(0,0,0,.42)!important}
+@supports(backdrop-filter:blur(12px)){:root[data-halo-palette=midnight] body.lay-halo .glass,:root[data-halo-palette=midnight] body.lay-halo .halo-kpi,:root[data-halo-palette=midnight] body.lay-halo .halo-combined,:root[data-halo-palette=midnight] body.lay-halo .search{backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25)}}
+:root[data-halo-palette=midnight] body.lay-halo .halo-kpi>b{font-family:"Space Grotesk",-apple-system,Inter,system-ui,sans-serif;font-size:30px;letter-spacing:-.02em}
+:root[data-halo-palette=midnight] body.lay-halo .bar i{background:linear-gradient(90deg,#ead8b0,#d8c18f)}
+:root[data-halo-palette=midnight] body.lay-halo .pills button{border:1px solid #34353b;background:#1c1e24;color:#9b9da6;border-radius:99px}
+:root[data-halo-palette=midnight] body.lay-halo .pills button.on{background:linear-gradient(160deg,#ead8b0,#d8c18f);color:#15110b;border-color:transparent}
+:root[data-halo-palette=midnight] body.lay-halo .btn{background:linear-gradient(160deg,#ead8b0,#d8c18f);color:#15110b;border-radius:16px}
+:root[data-halo-palette=midnight] body.lay-halo .btn.alt{background:#1c1e24;color:#f8f1e4;border:1px solid #34353b}
+:root[data-halo-palette=midnight] body.lay-halo .refresh,:root[data-halo-palette=midnight] body.lay-halo .halo-settings,:root[data-halo-palette=midnight] body.lay-halo .halo-insights-link{border:1px solid #34353b;background:#1c1e24;color:#f8f1e4;border-radius:99px}
+:root[data-halo-palette=midnight] body.lay-halo .st{border-radius:99px}
+:root[data-halo-palette=midnight] body.lay-halo .st.processing{background:rgba(224,200,151,.16);color:#e0c897}
+:root[data-halo-palette=midnight] body.lay-halo .st.complete{background:rgba(185,227,204,.14);color:#b9e3cc}
+:root[data-halo-palette=midnight] body.lay-halo .st.verify{background:rgba(224,200,151,.12);color:#e6d3a8}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav{border-radius:99px!important;background:rgba(22,23,29,.82)!important;border:1px solid rgba(255,255,255,.09)!important;height:auto;min-height:56px;padding:5px!important;gap:1px;bottom:max(14px,env(safe-area-inset-bottom));box-shadow:0 18px 44px rgba(0,0,0,.6)!important}
+@supports(backdrop-filter:blur(12px)){:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav{backdrop-filter:blur(28px) saturate(1.3)!important;-webkit-backdrop-filter:blur(28px) saturate(1.3)!important}}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button{background:transparent!important;color:#9b9da6!important;border-radius:99px;padding:10px 1px;font-size:10.5px;font-weight:600;min-height:44px}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button svg{display:none}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button span{white-space:nowrap}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button.on{background:transparent!important;color:#15110b!important}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav .ind{display:block;top:5px;bottom:5px;border-radius:99px;background:linear-gradient(160deg,#ead8b0,#d8c18f);box-shadow:0 0 18px rgba(224,200,151,.35)}
+:root[data-halo-palette=midnight] body.lay-halo .order{border-radius:20px}
+:root[data-halo-palette=midnight] body.lay-halo .order .ometa b{font-family:"Space Grotesk",-apple-system,Inter,system-ui,sans-serif}
+/* fixes: card chrome over halo-dark strip rules; dock single row */
+:root[data-halo-palette=midnight] body.lay-halo .glass,:root[data-halo-palette=midnight] body.lay-halo .halo-panel,:root[data-halo-palette=midnight] body.lay-halo .halo-panel>.glass,:root[data-halo-palette=midnight] body.lay-halo .halo-kpis .halo-kpi,:root[data-halo-palette=midnight] body.lay-halo .halo-combined,:root[data-halo-palette=midnight] body.lay-halo .search,:root[data-halo-palette=midnight] body.lay-halo .pmrow,:root[data-halo-palette=midnight] body.lay-halo .halo-coverage,:root[data-halo-palette=midnight] body.lay-halo .halo-archive,:root[data-halo-palette=midnight] body.lay-halo .halo-finder{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.014)),#191b20!important;border:1px solid #34353b!important}
+:root[data-halo-palette=midnight] body.lay-halo .halo-kpis.halo-focus-strip .halo-kpi{border-radius:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 34px rgba(0,0,0,.42)!important}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav{flex-wrap:nowrap}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button{font-size:9.5px;padding:9px 0;min-width:0;overflow:hidden}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important}
+:root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button span{font-size:9.5px!important;letter-spacing:-.01em}
