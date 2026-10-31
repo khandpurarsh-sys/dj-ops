@@ -1,5 +1,5 @@
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
-const WEB_BUILD_ID='20261029-static-ciphertext-feed-v1';
+const WEB_BUILD_ID='20261031-mobile-pair-inset-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':p===0?'0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
