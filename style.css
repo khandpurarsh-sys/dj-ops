@@ -2701,7 +2701,7 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 
 /* Give paired figures room without shrinking their existing type scale. */
 @media(max-width:430px){
- :root[data-th] body.lay-halo :is(.halo-kpis.halo-pair,.yd-glance){margin-left:-24px;margin-right:-24px}
+ :root[data-th] body.lay-halo :is(.halo-kpis.halo-pair,.yd-glance){margin-left:0;margin-right:0}
  :root[data-th] body.lay-halo .halo-kpis.halo-pair .halo-online{padding-right:12px!important}
  :root[data-th] body.lay-halo .yd-glance button:first-child{padding-right:12px!important}
 }
