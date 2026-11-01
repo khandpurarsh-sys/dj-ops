@@ -1915,7 +1915,7 @@ function mnTodayHourly(){const {s,OI,RL,RR,RT}=mnTodayNums();const on=Array(24).
  if(first!=null)for(let h=first;h<=nowH;h++){run+=on[h]+rt[h];cum[h]={v:run};}
  let note='';
  if(first!=null&&first>0)note='Reads earlier today were not retained, so the first read of the day includes those sales - the line starts at '+mnFmtH(first)+'.';
- return{cum,approx,note,empty:first==null};}
+ return{cum,approx:approx||rtH,note,empty:first==null};}
 function mnYesterdayHourly(){const yi=addD(IST(),-1),hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);const H=hr&&A(hr.hourly);
  if(!H||!H.length||!H.some(x=>mnFeedHour(x.h)!=null))return null;
  const rt=Array(24).fill(0);H.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null)rt[h]+=Number(x.sales||0);});
@@ -1937,7 +1937,7 @@ function mnHourChart(hr,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=70;
  const gid='mgh';
  return '<svg viewBox="0 0 '+W+' '+H+'" class="mn-chart" role="img" aria-label="'+(opts.aria||'Hourly revenue chart')+'"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0c897" stop-opacity=".34"/><stop offset="1" stop-color="#e0c897" stop-opacity="0"/></linearGradient></defs>'
  +'<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(W-PR)+'" y2="'+Y(0)+'" class="mn-grid"/>'
- +(yd!=null?'<line x1="'+PL+'" y1="'+Y(yd).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(yd).toFixed(1)+'" class="mn-ref"/><text x="'+(W-PR+6)+'" y="'+(Y(yd)+4).toFixed(1)+'" class="mn-xl mn-refl">Yday</text>':'')
+ +(yd!=null?'<line x1="'+PL+'" y1="'+Y(yd).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(yd).toFixed(1)+'" class="mn-ref"/><text x="'+(W-PR+6)+'" y="'+(Y(yd)+4).toFixed(1)+'" class="mn-xl mn-refl">Yday tot</text>':'')
  +cmpPath
  +(area?'<path d="'+area+'" fill="url(#'+gid+')"/>':'')+'<path d="'+line+'" class="mn-line"/>'
  +(last?'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="5" class="mn-dot"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="10" class="mn-dot-halo"/>':'')
@@ -1961,7 +1961,7 @@ function mnToday(){const {s,OI,RL,RR,RT,on,rt,rb}=mnTodayNums(),yd=mnYesterday()
   const hr=mnTodayHourly(),yc=mnYesterdayHourly();
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills()}</div>`
   +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">Online + Retail, today so far</div>`
-  +`<div class="mn-legend"><span><i class="mn-swatch"></i>Today</span>${yd.comb!=null?`<span><i class="mn-swatch dash"></i>Yesterday total ${mnL(yd.comb)}</span>`:''}</div>`
+  +`<div class="mn-legend"><span><i class="mn-swatch"></i>Today</span>${yd.comb!=null?`<span><i class="mn-swatch dash"></i>Yesterday, full day ${mnL(yd.comb)}</span>`:''}</div>`
   +mnHourChart(hr,{yd:yd.comb,cmp:yc,aria:'Cumulative revenue today by hour; dashed line marks yesterday total'})
   +(hr.approx?'<p class="note" style="padding:6px 2px 0">Retail hours are approximate - the feed records when a bill was seen, not the sale time.</p>':'')
   +(hr.note?'<p class="note" style="padding:6px 2px 0">'+esc(hr.note)+'</p>':'')
@@ -2027,7 +2027,7 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
  const rng=mnRetRange==='30'?30:7,iso=IST(),RH=A(data.retailHistory)||[];
  const dayRev=(d,name)=>{if(d===iso){if(!RR)return null;const pool=name?(RT0||[]).filter(x=>x.name===name):(RT0||[]);if(!pool.length)return null;return pool.every(x=>mnNum(x.sales)!=null)?pool.reduce((q,z)=>q+mnNum(z.sales),0):null;}
   const e=RH.find(z=>z.d===d);if(!e)return null;
-  if(name){if(!e.by)return null;const k=retailStoreKey(e.by,name);return k?mnNum(e.by[k]&&(e.by[k].rev!=null?e.by[k].rev:e.by[k].sales)):null;}
+  if(name){if(['drj jaipur','drj jaipur pacific'].includes(String(name).trim().toLowerCase())&&d<'2026-10-11')return null;if(!e.by)return null;const k=retailStoreKey(e.by,name);return k?mnNum(e.by[k]&&(e.by[k].rev!=null?e.by[k].rev:e.by[k].sales)):null;}
   return mnNum(e.rev!=null?e.rev:e.sales);};
  const wk=[],pw=[];let wsum=0,wcov=0;
  for(let i=rng-1;i>=0;i--){const d=addD(iso,-i);const v=dayRev(d,rf==='All'?null:rf);
