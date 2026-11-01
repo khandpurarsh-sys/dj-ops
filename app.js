@@ -938,7 +938,7 @@ function haloCompose(html){
  }
  if(detail==='halo:Insights'){head.classList.add('hi-header');rail.classList.add('hi-rail');main.innerHTML=haloInsights();haloInsightDesk(main);cleanInsights(main);dailyPanel(main);main.classList.add('hi-main');title.textContent='Insights';if(hp)hp.textContent='Business signals & ideas to test';}
  if(detail==='halo:Production'){main.innerHTML=prodView();title.textContent='Production';if(hp)hp.textContent='Daily production sheet';}
- const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights'&&!noctOn())rail.append(insightLink);
+ const insightLink=document.createElement('button');insightLink.className='halo-insights-link';insightLink.dataset.d='halo:Insights';insightLink.textContent='Insights ↗';if(detail!=='halo:Insights'&&!noctOn())rail.insertBefore(insightLink,(mnOn()&&rf&&rf.parentElement===rail)?rf:null);
  if(detail){const hero=main.querySelector('.hero,.glass');if(hero)hero.classList.add('halo-detail-focus');}
  
  rolloverCompose(main);yesterdayCompose(f,main,head);atelierCompose(f,main);haloThemeSettings(main);
@@ -2045,7 +2045,7 @@ function mnToday(){const {s,OI,RL,RR,RT,on,rt,rb}=mnTodayNums(),yd=mnYesterday()
  const chn=Object.entries(CM.m||{}).map(([k,v])=>[k,typeof v==='object'&&v?Number(v.amt||0):Number(v)||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,4);
  const chnRows=chn.length?`<div class="mn-split2w">${chn.map(([k,v])=>`<div class="mn-split2"${k==='Not itemised'?'':' data-d="c:'+esc(k)+'"'}><span>${esc(k)}</span><b>${inr(v)}</b></div>`).join('')}</div>${CM.full?'':'<p class="mn-note2">Channel split estimated from listed orders.</p>'}`:'';
  const stRows=RR&&RT&&RT.length?`<div class="mn-split2w">${RT.map(st2=>`<div class="mn-split2" data-d="rt:${esc(st2.name||'Store')}"><span>${esc(st2.name||'Store')}</span><b>${mnNum(st2.sales)==null?'—':inr(mnNum(st2.sales))}</b></div>`).join('')}</div>`:'';
- return mnHead("Today's<br>Overview")+mnFresh()
+ return mnHead("Today's Overview")+mnFresh()
  +revCard
  +`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${on==null?'—':mnL(on)}</b><span class="mn-exact">${on==null?'':inr(on)+' today'}</span><span class="mn-sub2">${RL?'Today not read yet':ordN(OI)+' orders today'}</span><div class="mn-drow">${!RL&&yd.o!=null?mnDelta(mnPct(on,yd.o))+'<span class="mn-vs">vs yesterday</span>':''}</div>${chnRows}</section>`
  +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${!RR?'—':rt==null?'unavailable':mnL(rt)}</b><span class="mn-exact">${RR&&rt!=null?inr(rt)+' today':''}</span><span class="mn-sub2">${!RR?'Today not read yet':(rb==null?'—':rb)+' bills today'}</span><div class="mn-drow">${RR&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div>${stRows}</section></div>`
