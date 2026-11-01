@@ -1,5 +1,5 @@
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
-const WEB_BUILD_ID='20261101-nocturne-ios-v1';
+const WEB_BUILD_ID='20261101-android-match-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':p===0?'0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
@@ -1515,7 +1515,7 @@ function nextReadMount(){
  if(!data)return;const head=root.querySelector('header');if(!head)return;
  let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
  const retail=nextReadPlan(new Date(),'retail'),online=nextReadPlan(new Date(),'online');if(!retail||!online){el.remove();return;}
- el.replaceChildren();for(const [name,p] of [['Retail',retail],['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
+ el.replaceChildren();for(const [name,p] of [['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
  if(root.querySelector('#feed-state'))overviewOrderMount();
 }
 function loadStateMount(){
