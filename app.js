@@ -100,8 +100,58 @@ async function staticFeedRead(force=false){
   staticFeed=j;feedTransport='static';return j;
  })();try{return await staticFeedFlight}finally{staticFeedFlight=null}
 }
+/*FEEDV2 START - feed-v2: generation-pinned static feed, reader-first with high-water replay protection */
+const FEEDV2_MAX=2*1024*1024,FEEDV2_ROW_MAX=1024*1024,FEEDV2_BOOTSTRAP=1;
+function readFeedV2(){try{const j=JSON.parse(LS.getItem('dj_feed_v2')||'null');return j&&j.repo===(window.DJ_CONFIG||{}).repo&&Number.isSafeInteger(j.generation)?j:null}catch{return null}}
+async function fetchCapped(url,max){
+ const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('Static feed v2 HTTP '+r.status);
+ const rd=r.body&&r.body.getReader?r.body.getReader():null;
+ if(!rd){const t=await r.text();if(new TextEncoder().encode(t).length>max)throw Error('Static feed v2 too large');return t}
+ const chunks=[];let n=0;
+ for(;;){const{done,value}=await rd.read();if(done)break;n+=value.byteLength;if(n>max){try{await rd.cancel()}catch{}throw Error('Static feed v2 too large')}chunks.push(value)}
+ const all=new Uint8Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length}
+ return new TextDecoder().decode(all);
+}
+const shaHex=async t=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('')};
+async function staticFeedV2Read(){
+ const repo=(window.DJ_CONFIG||{}).repo;
+ const text=await fetchCapped('feed-v2.json',FEEDV2_MAX);
+ let j;try{j=JSON.parse(text)}catch{throw Error('Static feed v2 malformed')}
+ if(!j||j.version!==2||j.repo!==repo)throw Error('Static feed v2 format invalid');
+ if(!Number.isSafeInteger(j.generation)||j.generation<FEEDV2_BOOTSTRAP)throw Error('Static feed v2 generation invalid');
+ if(j.generation===FEEDV2_BOOTSTRAP){if(j.previous!=null)throw Error('Static feed v2 genesis must have null previous')}
+ else if(typeof j.previous!=='string'||!/^[a-f0-9]{64}$/.test(j.previous))throw Error('Static feed v2 previous missing');
+ if(j.policyVersion===undefined||j.policyVersion===null||(typeof j.policyVersion!=='string'&&typeof j.policyVersion!=='number'))throw Error('Static feed v2 policyVersion invalid');
+ if(!j.rows||typeof j.rows!=='object'||Array.isArray(j.rows))throw Error('Static feed v2 rows invalid');
+ if(Object.keys(j.rows).sort().join(',')!=='1,2,3,87,88')throw Error('Static feed v2 rows must be exactly 1,2,3,87,88');
+ for(const row of Object.values(j.rows)){
+  if(!row||typeof row.body!=='string'||!/^[a-f0-9]{64}$/.test(row.sha256||''))throw Error('Static feed v2 row invalid');
+  const bl=new TextEncoder().encode(row.body).length;
+  if(bl>FEEDV2_ROW_MAX)throw Error('Static feed v2 row too large');
+  if(row.byteLength!==undefined&&row.byteLength!==bl)throw Error('Static feed v2 row length mismatch');
+  if(await shaHex(row.body)!==row.sha256)throw Error('Static feed v2 hash mismatch');
+  const e=JSON.parse(row.body);if(!e.ct||!Array.isArray(e.msgs))throw Error('Static feed v2 is not encrypted');
+ }
+ const full=JSON.parse(j.rows['3'].body),slim=JSON.parse(j.rows['1'].body);
+ if(!full.sid||full.sid!==slim.sid||j.sid!==full.sid||full.slim||!slim.slim)throw Error('Static feed v2 snapshots mismatch');
+ const hw=readFeedV2(),feedSHA=await shaHex(text);
+ if(hw){
+  if(j.generation<hw.generation)throw Error('Static feed v2 older than last accepted update');
+  if(j.generation===hw.generation){
+   if(feedSHA!==hw.feedSHA)throw Error('Static feed v2 conflicts with last accepted update');
+   staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
+  }
+ }
+ /* higher generation or first accept: prove the slim row decrypts for this phone before pinning the high-water */
+ if(priv&&myKid){try{const dd=await decryptPayload(slim,priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload')}catch(e){throw Error('Static feed v2 decrypt failed: '+e.message)}}
+ if(!feedSave('dj_feed_v2',JSON.stringify({repo,generation:j.generation,feedSHA,sid:j.sid})))throw Error('Cannot save feed v2 state');
+ staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
+}
+/*FEEDV2 END*/
 async function prepareFeed(){
- staticFeed=null;try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
+ staticFeed=null;
+ try{await staticFeedV2Read();return}catch(e2){if(readFeedV2())throw e2}
+ try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
  const now=Date.now(),next=Math.max(apiFallbackAfter,Number(LS.getItem('dj_api_fallback_after')||0));if(now<next)throw Error('Static feed unavailable; API fallback paused until '+new Date(next).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'})+' IST');
  apiFallbackAfter=now+900000;feedSave('dj_api_fallback_after',String(apiFallbackAfter));await feedBatch((window.DJ_CONFIG||{}).repo,true);
 }

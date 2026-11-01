@@ -14,7 +14,7 @@ export async function setup(pass){
 export async function unlock(vault,pass){
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(vault.iv)},await pbkdf(pass,ub64(vault.salt)),ub64(vault.ct));
  return crypto.subtle.importKey('jwk',JSON.parse(dec.decode(pt)),{name:'ECDH',namedCurve:'P-256'},false,['deriveBits']);}
-async function inflate(buf){const r=new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')));return new Uint8Array(await r.arrayBuffer())}
+async function inflate(buf){let n=0;const cap=new TransformStream({transform(ch,ctl){n+=ch.byteLength;if(n>8388608)ctl.error(new Error('Decompressed update too large'));else ctl.enqueue(ch)}});const r=new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')).pipeThrough(cap));return new Uint8Array(await r.arrayBuffer())}
 async function toText(payload,bytes){return dec.decode(payload.z?await inflate(bytes):bytes)}
 export async function decryptPayload(payload,privKey,myKid){
  const m=payload.msgs.find(x=>x.kid===myKid);if(!m)throw new Error('This update was not encrypted for this phone');

@@ -3,5 +3,5 @@ const SHELL=['./','index.html','app.js','crypto.js','style.css','config.js','man
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(SHELL.map(u=>fetch(u,{cache:'reload'}).then(r=>c.put(u,r))))));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.origin!==location.origin)return; // never cache GitHub API data
- if(u.pathname.endsWith('/feed.json')){e.respondWith(fetch(e.request,{cache:'no-store'}));return;}
+ if(u.pathname.endsWith('/feed.json')||u.pathname.endsWith('/feed-v2.json')){e.respondWith(fetch(e.request,{cache:'no-store'}));return;}
  e.respondWith(fetch(e.request,{cache:'no-cache'}).then(r=>{const c=r.clone();caches.open(V).then(x=>x.put(e.request,c));return r;}).catch(()=>caches.match(e.request)));});
