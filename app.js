@@ -181,7 +181,7 @@ function gsearch(){let r='';const q=gq.trim();
    +sec('Sellers',SL,x=>`<div class="line" data-d="s:${esc(x.sku)}"><span>${SV(esc(x.sku)+(x.name?'<br><small>'+esc(productDisplayName(x.name))+'</small>':''))}</span><b><small>${SV((x.week!=null?x.week+' in 7d':'')+(x.week!=null&&x.month!=null?' · ':'')+(x.month!=null?x.month+' in 30d':''))}</small></b></div>`);
   if(!r)r='<p class="note" style="text-align:left">No matches in orders, bills, stock or sellers.</p>';}
  return `<div class="glass search" style="margin:0 0 12px"><input id="gq" type="search" autocomplete="off" placeholder="Search orders, SKUs, bills, sellers" value="${esc(gq)}"></div>${r}`;}
-let stk=null;
+let stk=null,stockStatus="";
 function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
  const newer=(incoming,current)=>{const a=Date.parse(incoming||''),b=Date.parse(current||'');return Number.isFinite(a)&&(!Number.isFinite(b)||a>=b)};
  if(R&&Array.isArray(R.rows)&&R.rows.length&&newer(R.asOf,data.retailStockAsOf)){data.retailStock=Array.isArray(R.rows[0][1])?R.rows.flatMap(r=>(r[1]||[]).map(z=>({sku:String(((r[0]||'')+' '+(z[0]||'')).trim()),item:String(r[0]||''),size:String(z[0]==null?'':z[0]),onHand:pgNum(z[1])}))):R.rows.map(r=>({sku:String(((r[0]||'')+' '+(r[1]||'')).trim()),item:String(r[0]||''),size:String(r[1]==null?'':r[1]),onHand:pgNum(r[2])}));data.retailStockAsOf=R.asOf||null;data.retailStockTotal={skus:new Set(data.retailStock.map(x=>x.sku)).size,units:pgSum(data.retailStock,'onHand').value};}
@@ -190,9 +190,11 @@ function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
   data.stockMeta={tot:nn(O.totalSkus)||rows.length,cov:rows.length,oos:rows.filter(x=>x.onHand!==null&&x.onHand<=0).length,units:pgSum(rows,'onHand').value};
   if(data._deadDerived||(!A(data.deadStock)&&rows.some(x=>x.sold30!=null))){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));data.deadStock=d;data._deadDerived=true;}}
  }catch(e){}}
-async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
- try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');render();}
- if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){}}
+async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;stockStatus='';
+ // Supplementary stock must never obscure the primary feed failure or bypass its acceptance.
+ if(!data||!staticFeed){stockStatus='Stock supplement unavailable: no accepted feed for this refresh.';render();return;}
+ try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_stk');stockStatus='Stock supplement check failed: '+e.message+(b?'. Checking last saved stock.':'. Supplement unavailable; main figures retain their source times.');render();}
+ if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){stockStatus='Stock supplement unavailable: '+e.message+'. Main figures retain their source times.';render();}}
 async function load(opts={}){if(loadBusy)return;const now=Date.now();if(now-(window.__lastFeedAttempt||0)<60000)return;loadBusy=true;window.__lastFeedAttempt=now;window.__lastLoad=now;try{await loadData(opts.force===true);await loadStock();await loadExp();}finally{loadBusy=false;}}
 function manualRefresh(){return load({force:true})}
 async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=v2Result?.status||(window.__slim?'Limited view: full history not loaded':'');}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):data?'Feed check failed: '+e.message+'. Showing last saved data with original source times':'No data yet: '+e.message;if(data||!b){render();return;}}
@@ -1475,7 +1477,8 @@ function overviewOrderMount(){
  const combined=overviewDay==='yesterday'?root.querySelector('.yd-combined'):null;const anchor=combined||grid;
  if(state){anchor.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
 }
-function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();}
+function stockStatusMount(){const old=root.querySelector('#stock-state');if(old)old.remove();if(!stockStatus)return;const note=document.createElement('p');note.id='stock-state';note.className='note';note.style.cssText='padding:8px 16px;text-align:left;overflow-wrap:anywhere';note.textContent=stockStatus;const head=root.querySelector('header');if(head)head.insertAdjacentElement('afterend',note);}
+function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();stockStatusMount();}
 
 function render(){return haloRender()}
 function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
