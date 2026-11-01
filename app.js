@@ -1524,7 +1524,7 @@ function loadStateMount(){
  const updating=status==='Updating...',failed=/failed|Could not|No data yet/i.test(status),offline=navigator.onLine===false;
  const header=root.querySelector('header');if(!header)return;
  const el=document.createElement('section');el.id='feed-state';el.className='glass';el.setAttribute('role','status');el.style.cssText='margin:12px 0;padding:14px 16px;border:1px solid rgba(230,195,120,.5);line-height:1.6';
- const title=document.createElement('strong');title.textContent=offline?'Stale - offline, showing last saved figures':updating?'Updating - showing last saved figures':failed?'Stale - update failed, showing last saved figures':'Saved figures - source ages below';el.append(title);
+ const mnCtx=document.body&&document.body.classList&&document.body.classList.contains('mn-tab');const title=document.createElement('strong');title.textContent=offline?'Stale - offline, showing last saved figures':updating?'Updating - showing last saved figures':failed?'Stale - update failed, showing last saved figures':(mnCtx?'Saved figures - up to date':'Saved figures - source ages below');el.append(title);
  const stamp=v=>{const t=Date.parse(v||'');return Number.isFinite(t)?new Date(t).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true})+' IST':'time unavailable'};
  const clocks=document.createElement('div');clocks.style.fontSize='12px';const age=v=>{const n=Math.floor((Date.now()-Date.parse(v||''))/60000);return Number.isFinite(n)&&n>=0?' ('+(n<60?n+' min':Math.floor(n/60)+'h '+n%60+'m')+' old)':''};clocks.textContent='Online source: '+stamp(data.snapshot&&data.snapshot.readAt)+age(data.snapshot&&data.snapshot.readAt)+' · Retail source: '+stamp(data.retail&&data.retail.readAt)+age(data.retail&&data.retail.readAt);el.append(clocks);
  const note=document.createElement('div');note.style.fontSize='12px';note.textContent=updating?'These are not a new reading. Waiting for the latest feed.':offline?'Reconnect, then tap Refresh.':failed?status:'Encrypted feed via '+(feedTransport||'last saved data')+'. Feed delivery does not change source read times.';el.append(note);header.insertAdjacentElement('afterend',el);el.classList.toggle('fs-bad',failed||offline);el.addEventListener('click',()=>el.classList.toggle('open'));
@@ -2104,16 +2104,17 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
  const chips=names.length>1?`<div class="mn-chips">${['All',...names].map(z=>`<button data-mn="store:${esc(z)}" class="${(z==='All'?rf==='All':rf===z)?'on':''}">${z==='All'?'All stores':esc(z)}</button>`).join('')}</div>`:'';
  const retPills='<span class="mn-pills">'+[['today','Today'],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="retrange:'+v+'" class="'+(mnRetRange===v?'on':'')+'">'+l+'</button>').join('')+'</span>';
  const todayHr=name=>{const arr=Array(24).fill(0);
+  const dayKnown=R&&R.day?String(R.day):null;
   (RT0||[]).filter(x=>!name||x.name===name).forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);
    if(ms!=null){const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;arr[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);return;}
-   const hm=mnNum(b._hm);if(hm==null)return;arr[Math.min(23,Math.floor(hm/60))]+=Number(b.amt||0);}));
+   const hm=mnNum(b._hm);if(hm==null)return;const bd=st2.day||dayKnown;if(bd!==IST())return;arr[Math.min(23,Math.floor(hm/60))]+=Number(b.amt||0);}));
   const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
-  let first=null;for(let h=0;h<24;h++){if(arr[h]>0){first=h;break;}}
-  const cum=Array(24).fill(null);let run=0;if(first!=null)for(let h=first;h<=nowH;h++){run+=arr[h];cum[h]={v:run};}
+  let first=null,lastB=null;for(let h=0;h<24;h++){if(arr[h]>0){if(first==null)first=h;lastB=h;}}
+  const cum=Array(24).fill(null);let run=0;if(first!=null){const hi=Math.max(nowH,lastB);for(let h=first;h<=hi;h++){run+=arr[h];cum[h]={v:run};}}
   return{cum,empty:first==null};};
- const todayCard=(name,uid)=>{const hr=todayHr(name);const tt=hr.empty?null:hr.cum.filter(Boolean).slice(-1)[0].v;
+ const todayCard=(name,uid)=>{const hr=todayHr(name);const ts=dayRev(iso,name);
   return `<section class="mn-card"><div class="mn-cardh"><span>${esc(name||storeName)}</span>${retPills}</div>`
-  +`<div class="mn-big">${tt==null?'—':inr(tt)}</div><div class="mn-sub">today · ${esc(name||storeName)}</div>`
+  +`<div class="mn-big">${ts==null?'—':inr(ts)}</div><div class="mn-sub">today · ${esc(name||storeName)}${ts==null?' · not supplied':''}</div>`
   +mnHourChart(hr)
   +(hr.empty?'':'<p class="mn-note2">Approximate: bills by their listed time - today still counting.</p>')+'</section>';};
  const dayCard=(name,uid)=>{const wk2=[],pw2=[];let s2=0,c2=0;
