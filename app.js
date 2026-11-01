@@ -1865,7 +1865,7 @@ lockScreen();
 
 /*MN START - Midnight overview screens (Today / Orders / Stock / Retail / Sellers) */
 const mnOn=()=>noctOn()||(haloOn()&&(LS.getItem('dj_halo_mode')||'midnight')==='midnight');
-let mnRevRange='7',mnRetRange='7',mnSheet=false;
+let mnRevMode='today',mnRetRange='7',mnSheet=false;
 const mnNum=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const mnPct=(a,b)=>a!=null&&b!=null&&b>0?Math.round((a-b)/b*100):null;
 const mnDelta=p=>p===null?'':'<span class="mn-delta '+(p<0?'down':'up')+'">'+(p<0?'▼ ':'▲ ')+Math.abs(p)+'%</span>';
@@ -1900,6 +1900,48 @@ function mnSeries(days){const iso=IST(),H=A(data.history)||[],RH=A(data.retailHi
   else{const e=H.find(z=>z.d===d);on=e?mnNum(e.rev):null;const r=RH.find(z=>z.d===d);rt=r?mnNum(r.rev!=null?r.rev:r.sales):null;}
   out.push({d,on,rt,tot:on!=null||rt!=null?(on||0)+(rt||0):null,part:on==null!==(rt==null)});}
  return out;}
+const mnFmtH=h=>{h=((h%24)+24)%24;return (h%12===0?12:h%12)+' '+(h<12?'AM':'PM');};
+const mnRevPills=()=>'<span class="mn-pills">'+[['today','Today'],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="revmode:'+v+'" class="'+(mnRevMode===v?'on':'')+'">'+l+'</button>').join('')+'</span>';
+const mnHourOf=o=>{const v=o&&(o.ts!=null?o.ts:o.at);if(v==null||v==='')return null;const d=typeof v==='number'?new Date(v<1e11?v*1000:v):new Date(v);if(isNaN(d))return null;if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return null;return Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;};
+const mnFeedHour=h=>{const m=String(h==null?'':h).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([aApP])[mM]/);if(!m)return null;let hr=Number(m[1])%12;if(/p/i.test(m[3]))hr+=12;return hr;};
+function mnTodayHourly(){const {s,OI,RL,RR,RT}=mnTodayNums();const on=Array(24).fill(0),rt=Array(24).fill(0);let rtH=false,approx=false;
+ if(!RL)(OI.live||[]).forEach(o=>{const h=mnHourOf(o);if(h!=null)on[h]+=Number(o.amt||0);});
+ if(RR&&RT){const FH=A(data.retail&&data.retail.hourly)||[];let used=false;
+  if(FH.length&&FH.some(x=>mnFeedHour(x.h)!=null)){FH.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null){rt[h]+=Number(x.sales||0);rtH=true;}});used=true;}
+  if(!used)RT.forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);if(ms==null)return;const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;rt[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);rtH=true;approx=true;}));}
+ const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
+ let first=null;for(let h=0;h<24;h++){if(on[h]>0||rt[h]>0){first=h;break;}}
+ const cum=Array(24).fill(null);let run=0;
+ if(first!=null)for(let h=first;h<=nowH;h++){run+=on[h]+rt[h];cum[h]={v:run};}
+ let note='';
+ if(first!=null&&first>0)note='Reads earlier today were not retained, so the first read of the day includes those sales - the line starts at '+mnFmtH(first)+'.';
+ return{cum,approx,note,empty:first==null};}
+function mnYesterdayHourly(){const yi=addD(IST(),-1),hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);const H=hr&&A(hr.hourly);
+ if(!H||!H.length||!H.some(x=>mnFeedHour(x.h)!=null))return null;
+ const rt=Array(24).fill(0);H.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null)rt[h]+=Number(x.sales||0);});
+ let first=null;for(let h=0;h<24;h++)if(rt[h]>0){first=h;break;}if(first==null)return null;
+ const cum=Array(24).fill(null);let run=0;for(let h=first;h<24;h++){run+=rt[h];cum[h]=run;}return cum;}
+function mnHourChart(hr,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=70;
+ const pts=hr.cum,yd=opts.yd!=null?Number(opts.yd):null,cmp=opts.cmp||null;
+ if(hr.empty)return '<p class="note" style="padding:10px 2px 0">No hourly reads in the feed yet today - the day\'s total appears after the first read.</p>';
+ const all=pts.map(p=>p?p.v:null).filter(v=>v!=null);if(yd!=null)all.push(yd);if(cmp)cmp.forEach(v=>{if(v!=null)all.push(v);});
+ const mx=(Math.max(...all)||1)*1.12;
+ const X=h=>PL+(W-PL-PR)*h/23,Y=v=>PT+(H-PT-PB)*(1-v/mx);
+ const smooth=seg=>{let d='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1);for(let i=0;i<seg.length-1;i++){const p0=seg[Math.max(0,i-1)],p1=seg[i],p2=seg[i+1],p3=seg[Math.min(seg.length-1,i+2)];d+='C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+' '+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+' '+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+p2[0].toFixed(1)+' '+p2[1].toFixed(1);}return d;};
+ const segs=[];let cur=[];pts.forEach((p,h)=>{if(p&&p.v!=null)cur.push([X(h),Y(p.v)]);else{if(cur.length)segs.push(cur);cur=[];}});if(cur.length)segs.push(cur);
+ let line='',area='';segs.forEach(seg=>{if(seg.length===1){line+='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1)+'l.2 0';}else{const d=smooth(seg);line+=d;area+=d+'L'+seg[seg.length-1][0].toFixed(1)+' '+Y(0)+'L'+seg[0][0].toFixed(1)+' '+Y(0)+'Z';}});
+ const last=segs.length?segs[segs.length-1][segs[segs.length-1].length-1]:null;
+ let cmpPath='';if(cmp){const cs=[];cmp.forEach((v,h)=>{if(v!=null)cs.push([X(h),Y(v)]);});if(cs.length>1)cmpPath='<path d="'+smooth(cs)+'" class="mn-cmp"/>';}
+ const lab={0:'12am',6:'6am',12:'12pm',18:'6pm'};
+ const lbl=Object.keys(lab).map(h=>'<text x="'+X(Number(h)).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" class="mn-xl">'+lab[h]+'</text>').join('');
+ const gid='mgh';
+ return '<svg viewBox="0 0 '+W+' '+H+'" class="mn-chart" role="img" aria-label="'+(opts.aria||'Hourly revenue chart')+'"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0c897" stop-opacity=".34"/><stop offset="1" stop-color="#e0c897" stop-opacity="0"/></linearGradient></defs>'
+ +'<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(W-PR)+'" y2="'+Y(0)+'" class="mn-grid"/>'
+ +(yd!=null?'<line x1="'+PL+'" y1="'+Y(yd).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(yd).toFixed(1)+'" class="mn-ref"/><text x="'+(W-PR+6)+'" y="'+(Y(yd)+4).toFixed(1)+'" class="mn-xl mn-refl">Yday</text>':'')
+ +cmpPath
+ +(area?'<path d="'+area+'" fill="url(#'+gid+')"/>':'')+'<path d="'+line+'" class="mn-line"/>'
+ +(last?'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="5" class="mn-dot"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="10" class="mn-dot-halo"/>':'')
+ +lbl+'</svg>';}
 function mnTodayNums(){const s=data.snapshot,OI=ordInfo(s),RL=rollStale(s),RR=retailReady(data.retail),RT=data.retail&&A(data.retail.stores);
  const on=RL?null:mnNum(s.revenue),rt=RR&&RT&&RT.every(z=>mnNum(z.sales)!=null)?RT.reduce((q,z)=>q+mnNum(z.sales),0):null,rb=RR&&RT&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null,ru=RR&&RT&&RT.every(z=>mnNum(z.units)!=null)?RT.reduce((q,z)=>q+mnNum(z.units),0):null;
  return{s,OI,RL,RR,RT,on,rt,rb,ru};}
@@ -1910,21 +1952,36 @@ function mnYesterday(){const yi=addD(IST(),-1),ho=(A(data.history)||[]).find(z=>
 function mnBillsAll(){const out=[];(A(data.retail&&data.retail.stores)||[]).forEach(st=>(A(st.billList)||[]).forEach(b=>out.push({...b,store:st.name||'Store'})));
  const no=x=>{const m=String(x.no||'').match(/(\d+)/);return m?Number(m[1]):-1;};
  return out.sort((a,b)=>no(b)-no(a));}
-function mnToday(){const {s,OI,RL,RR,on,rt,rb}=mnTodayNums(),yd=mnYesterday();
+function mnToday(){const {s,OI,RL,RR,RT,on,rt,rb}=mnTodayNums(),yd=mnYesterday();
  const comb=on!=null||rt!=null?(on||0)+(rt||0):null;
- const rng=mnRevRange==='30'?30:7,ser=mnSeries(rng);
  const bills=mnBillsAll().slice(0,6);
  const avgB=RR&&rb&&rt?Math.round(rt/rb):null;
+ let revCard;
+ if(mnRevMode==='today'){
+  const hr=mnTodayHourly(),yc=mnYesterdayHourly();
+  revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills()}</div>`
+  +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">Online + Retail, today so far</div>`
+  +`<div class="mn-legend"><span><i class="mn-swatch"></i>Today</span>${yd.comb!=null?`<span><i class="mn-swatch dash"></i>Yesterday total ${mnL(yd.comb)}</span>`:''}</div>`
+  +mnHourChart(hr,{yd:yd.comb,cmp:yc,aria:'Cumulative revenue today by hour; dashed line marks yesterday total'})
+  +(hr.approx?'<p class="note" style="padding:6px 2px 0">Retail hours are approximate - the feed records when a bill was seen, not the sale time.</p>':'')
+  +(hr.note?'<p class="note" style="padding:6px 2px 0">'+esc(hr.note)+'</p>':'')
+  +(!yc&&yd.comb!=null?'<p class="note" style="padding:6px 2px 0">Yesterday\'s hourly shape is not in this feed, so no dotted line is shown; the dashed line is yesterday\'s full-day total.</p>':'')
+  +'</section>';
+ }else{
+  const rng=mnRevMode==='30'?30:7,ser=mnSeries(rng);
+  revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills()}</div>`
+  +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">Online + Retail, today</div>`
+  +`<div class="mn-legend"><span><i class="mn-swatch"></i>Online ${mnL(on)}</span><span><i class="mn-swatch dash"></i>Retail ${mnL(rt)}</span></div>`
+  +mnArea(ser.map(p=>({d:p.d,v:p.tot})),{labels:rng===7?'dow':'sparse',id:'t',aria:'Combined online and retail revenue, last '+rng+' days'})+'</section>';
+ }
+ const CM=RL?{m:{},full:true}:chanOf(s,OI);
+ const chn=Object.entries(CM.m||{}).map(([k,v])=>[k,typeof v==='object'&&v?Number(v.amt||0):Number(v)||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,4);
+ const chnRows=chn.length?`<div class="mn-split2w">${chn.map(([k,v])=>`<div class="mn-split2" data-d="r:rev"><span>${esc(k)}</span><b>${inr(v)}</b></div>`).join('')}</div>${CM.full?'':'<p class="note" style="padding:6px 2px 0">Channel split estimated from listed orders.</p>'}`:'';
+ const stRows=RR&&RT&&RT.length?`<div class="mn-split2w">${RT.map(st2=>`<div class="mn-split2" data-mn="store:${esc(st2.name||'Store')}"><span>${esc(st2.name||'Store')}</span><b>${mnNum(st2.sales)==null?'—':inr(mnNum(st2.sales))}</b></div>`).join('')}</div>`:'';
  return mnHead("Today's<br>Overview")+mnFresh()
- +mnKpis([{i:'rupee',v:comb==null?'—':inr(comb),l:'Revenue today',d:comb!=null&&yd.comb!=null?mnDelta(mnPct(comb,yd.comb)):''},
-          {i:'box',v:RL?'—':ordN(OI),l:'Online orders'},
-          {i:'receipt',v:RR?(rb==null?'—':rb):'—',l:'Retail bills'}])
- +`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span><span class="mn-pills"><button data-mn="revrange:7" class="${rng===7?'on':''}">7D</button><button data-mn="revrange:30" class="${rng===30?'on':''}">30D</button></span></div>`
- +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">Online + Retail, today</div>`
- +`<div class="mn-legend"><span><i class="mn-swatch"></i>Online ${mnL(on)}</span><span><i class="mn-swatch dash"></i>Retail ${mnL(rt)}</span></div>`
- +mnArea(ser.map(p=>({d:p.d,v:p.tot})),{labels:rng===7?'dow':'sparse',id:'t',aria:'Combined online and retail revenue, last '+rng+' days'})+'</section>'
- +`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${on==null?'—':mnL(on)}</b><span class="mn-exact">${on==null?'':inr(on)+' today'}</span><span class="mn-sub2">${RL?'Today not read yet':ordN(OI)+' orders today'}</span><div class="mn-drow">${!RL&&yd.o!=null?mnDelta(mnPct(on,yd.o))+'<span class="mn-vs">vs yesterday</span>':''}</div></section>`
- +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${!RR?'—':rt==null?'unavailable':mnL(rt)}</b><span class="mn-exact">${RR&&rt!=null?inr(rt)+' today':''}</span><span class="mn-sub2">${!RR?'Today not read yet':(rb==null?'—':rb)+' bills today'}</span><div class="mn-drow">${RR&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div></section></div>`
+ +revCard
+ +`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${on==null?'—':mnL(on)}</b><span class="mn-exact">${on==null?'':inr(on)+' today'}</span><span class="mn-sub2">${RL?'Today not read yet':ordN(OI)+' orders today'}</span><div class="mn-drow">${!RL&&yd.o!=null?mnDelta(mnPct(on,yd.o))+'<span class="mn-vs">vs yesterday</span>':''}</div>${chnRows}</section>`
+ +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${!RR?'—':rt==null?'unavailable':mnL(rt)}</b><span class="mn-exact">${RR&&rt!=null?inr(rt)+' today':''}</span><span class="mn-sub2">${!RR?'Today not read yet':(rb==null?'—':rb)+' bills today'}</span><div class="mn-drow">${RR&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div>${stRows}</section></div>`
  +`<div class="mn-sech"><h3>Latest bills</h3><span class="mn-note">by bill no.</span></div>`
  +(bills.length?`<div class="mn-bgrid">${bills.map(b=>`<div class="mn-bcard" data-d="rb:${esc(b.store)}||${esc(b.no||'')}"><span class="mn-bt"><b>${esc(b.no||'Bill')}</b> · ${esc(b.time||'')}${b.st?' · '+esc(b.st):''}</span><b class="mn-bamt">${b.amt==null?'—':inr(b.amt)}</b></div>`).join('')}</div>`:none('No retail bills supplied today.'))
  +`<div class="mn-yday" data-overview-day="yesterday"><span>Yesterday</span><b>${yd.comb!=null?inr(yd.comb):'See breakdown'} ›</b></div>`+attnToday();}
@@ -1959,25 +2016,39 @@ function mnOrderDetail(id){const o=[...(data.orders||[]),...(A(data.pending)||[]
  +`<section class="mn-card"><div class="mn-cardh"><span>Status</span></div><div class="mn-big" style="font-size:26px">${esc(o.status||'Unavailable')}</div><div class="mn-sub">${oT(o)?'Order placed '+esc(oT(o)):'Status time unavailable'}</div><p class="note" style="text-align:left;padding:10px 0 0">The feed carries the current status only, not each stage, so no step-by-step timeline is shown.</p></section>`
  +`<section class="mn-card"><div class="mn-cardh"><span>Items</span></div>${items.length?items.map(i=>`<div class="mn-row" style="padding:10px 2px"><span class="mn-ava">${esc(String(i.sku||'?').slice(0,2).toUpperCase())}</span><div class="mn-rm"><b>${esc(i.name||i.sku||'Item')}</b><span>${esc(i.sku||'')}${i.qty>1?' · ×'+i.qty:''}</span></div>${i.amt!=null?`<b class="mn-ramt">${inr(i.amt)}</b>`:''}</div>`).join(''):'<p class="note">Item detail unavailable for this order.</p>'}</section>`
  +`<section class="mn-card mn-list">${kv('Order no',oid(o))}${kv('Channel',esc(o.ch||'Channel unavailable'))}${awbOf(o)?kv('Tracking no.',SV(esc(awbOf(o)))):''}${crOf(o)?kv('Courier',esc(crOf(o))):''}${units!=null?kv('Units',units):''}</section>`;}
-function mnRetail(){const R=data.retail,RT=R&&A(R.stores),RR=retailReady(R);
- const rs=RR&&RT.every(z=>mnNum(z.sales)!=null)?RT.reduce((q,z)=>q+mnNum(z.sales),0):null,rb=RR&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null;
- const yi=addD(IST(),-1),hr=(A(data.retailHistory)||[]).find(z=>z.d===yi),yrev=hr?mnNum(hr.rev!=null?hr.rev:hr.sales):null;
+function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R);
+ const names=(RT0||[]).map(x=>x.name).filter(Boolean);
+ if(rf!=='All'&&!names.includes(rf))rf='All';
+ const RT=rf==='All'?RT0:(RT0||[]).filter(x=>x.name===rf);
+ const rs=RR&&RT&&RT.every(z=>mnNum(z.sales)!=null)?RT.reduce((q,z)=>q+mnNum(z.sales),0):null,rb=RR&&RT&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null;
+ const yi=addD(IST(),-1),hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);
+ let yrev=hr?mnNum(hr.rev!=null?hr.rev:hr.sales):null;
+ if(rf!=='All'&&hr&&hr.by){const k=retailStoreKey(hr.by,rf);yrev=k?mnNum(hr.by[k]&&(hr.by[k].rev!=null?hr.by[k].rev:hr.by[k].sales)):null;}
  const rng=mnRetRange==='30'?30:7,iso=IST(),RH=A(data.retailHistory)||[];
+ const dayRev=(d,name)=>{if(d===iso){if(!RR)return null;const pool=name?(RT0||[]).filter(x=>x.name===name):(RT0||[]);if(!pool.length)return null;return pool.every(x=>mnNum(x.sales)!=null)?pool.reduce((q,z)=>q+mnNum(z.sales),0):null;}
+  const e=RH.find(z=>z.d===d);if(!e)return null;
+  if(name){if(!e.by)return null;const k=retailStoreKey(e.by,name);return k?mnNum(e.by[k]&&(e.by[k].rev!=null?e.by[k].rev:e.by[k].sales)):null;}
+  return mnNum(e.rev!=null?e.rev:e.sales);};
  const wk=[],pw=[];let wsum=0,wcov=0;
- for(let i=rng-1;i>=0;i--){const d=addD(iso,-i);let v=null;
-  if(d===iso)v=rs;else{const e=RH.find(z=>z.d===d);v=e?mnNum(e.rev!=null?e.rev:e.sales):null;}
+ for(let i=rng-1;i>=0;i--){const d=addD(iso,-i);const v=dayRev(d,rf==='All'?null:rf);
   if(v!=null){wsum+=v;wcov++;}wk.push({d,v});
-  if(rng===7){const e2=RH.find(z=>z.d===addD(d,-7));pw.push({d,v:e2?mnNum(e2.rev!=null?e2.rev:e2.sales):null});}}
- const bills=mnBillsAll().slice(0,10);
- const storeName=RT&&RT.length===1?RT[0].name:'All stores';
- return mnHead('Retail<br>Store overview')
+  if(rng===7)pw.push({d,v:dayRev(addD(d,-7),rf==='All'?null:rf)});}
+ const storeName=rf==='All'?'All stores':rf;
+ const bills=(rf==='All'?mnBillsAll():mnBillsAll().filter(b=>b.store===rf)).slice(0,10);
+ const minis=rf==='All'&&names.length>1?`<div class="mn-sech"><h3>Stores</h3><span class="mn-note">tap a store for its bills</span></div><div class="mn-grid2">${names.map(nm=>{const ser2=[];for(let i2=6;i2>=0;i2--){const d=addD(iso,-i2);ser2.push({d,v:dayRev(d,nm)});}
+  const ts=dayRev(iso,nm);
+  return `<section class="mn-card mn-storecard" data-mn="store:${esc(nm)}"><span class="mn-eyebrow">${esc(nm)}</span><b class="mn-num">${ts==null?'—':mnL(ts)}</b><span class="mn-exact">${ts==null?'Today not supplied':inr(ts)+' today'}</span>${mnArea(ser2,{labels:'dow',id:'s'+nm.replace(/\W/g,''),aria:nm+' revenue, last 7 days'})}</section>`;}).join('')}</div>`:'';
+ const chips=names.length>1?`<div class="mn-chips">${['All',...names].map(z=>`<button data-mn="store:${esc(z)}" class="${(z==='All'?rf==='All':rf===z)?'on':''}">${z==='All'?'All stores':esc(z)}</button>`).join('')}</div>`:'';
+ return mnHead('Retail<br>'+(rf==='All'?'Store overview':esc(rf)))
  +mnKpis([{i:'rupee',v:!RR?'—':rs==null?'unavailable':mnL(rs),l:'Today',d:rs!=null&&yrev!=null?mnDelta(mnPct(rs,yrev)):''},{i:'receipt',v:RR?(rb==null?'—':rb):'—',l:'Bills'},{i:'tri',v:RR&&rb&&rs?mnL(Math.round(rs/rb)):'—',l:'Avg bill'}])
+ +chips
  +`<section class="mn-card"><div class="mn-cardh"><span>Store revenue</span><span class="mn-pills"><button data-mn="retrange:7" class="${rng===7?'on':''}">7D</button><button data-mn="retrange:30" class="${rng===30?'on':''}">30D</button></span></div>`
  +`<div class="mn-big">${wcov?inr(wsum):'—'}</div><div class="mn-sub">${rng===7?'this week':'last 30 days'} · ${esc(storeName)}${wcov<rng?' · '+wcov+' of '+rng+' days supplied':''}</div>`
  +(rng===7?`<div class="mn-legend"><span><i class="mn-swatch"></i>Store</span><span><i class="mn-swatch dash"></i>Last week</span></div>`:'')
  +mnArea(wk,{labels:rng===7?'dow':'sparse',cmp:rng===7?pw:null,id:'r',aria:'Retail store revenue, last '+rng+' days'})+'</section>'
- +`<div class="mn-sech"><h3>Bills</h3><span class="mn-note">newest first</span></div>`
- +(bills.length?`<section class="mn-card mn-list">${bills.map(b=>{const cust=b.customer||'';return `<div class="mn-row" data-d="rb:${esc(b.store)}||${esc(b.no||'')}"><span class="mn-ava">${esc(String(b.store||'S').trim()[0].toUpperCase())}</span><div class="mn-rm"><b>${esc(b.no||'Bill')}</b><span>${esc(b.time||'')}${A(b.items)?' · '+A(b.items).reduce((t,i)=>t+Number(i.qty||1),0)+' item'+(A(b.items).reduce((t,i)=>t+Number(i.qty||1),0)>1?'s':''):''}${b.st?' · '+esc(b.st):''}</span></div><b class="mn-ramt">${b.amt==null?'—':inr(b.amt)}</b></div>`}).join('')}</section>`:none('No bills supplied today.'))
+ +minis
+ +`<div class="mn-sech"><h3>Bills</h3><span class="mn-note">${rf==='All'?'newest first':'bill-wise report · '+esc(rf)}</span></div>`
+ +(bills.length?`<section class="mn-card mn-list">${bills.map(b=>{const cust=b.customer||'';return `<div class="mn-row" data-d="rb:${esc(b.store)}||${esc(b.no||'')}"><span class="mn-ava">${esc(String(b.store||'S').trim()[0].toUpperCase())}</span><div class="mn-rm"><b>${esc(b.no||'Bill')}</b><span>${esc(b.time||'')}${A(b.items)?' · '+A(b.items).reduce((t,i2)=>t+Number(i2.qty||1),0)+' item'+(A(b.items).reduce((t,i2)=>t+Number(i2.qty||1),0)>1?'s':''):''}${b.st?' · '+esc(b.st):''}</span></div><b class="mn-ramt">${b.amt==null?'—':inr(b.amt)}</b></div>`}).join('')}</section>`:none('No bills supplied today.'))
  +`<div class="line" data-d="bills:retail" style="padding:12px 6px"><span>All stores, every supplied bill</span><b>›</b></div>`;}
 function mnStock(){const st=A(data.stock);if(!st)return none('Waiting for stock data');
  const per={};const rows=st.map(x=>{const pd=x.perDay!=null?x.perDay:(per[x.sku]||0);return{...x,pd,days:pd>0&&pgNum(x.onHand)!==null?x.onHand/pd:null}});
@@ -2011,7 +2082,8 @@ function mnBest(){const retail=tsChannel==='retail';
 function mnBody(){if(detail&&/^o:/.test(detail))return mnOrderDetail(detail.slice(2));
  if(tab==='today')return mnToday();if(tab==='orders')return mnOrders();if(tab==='stock')return mnStock();if(tab==='retail')return mnRetail();if(tab==='best')return mnBest();return '';}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-mn]');if(!t)return;const p=t.dataset.mn.split(':'),a=p[0],v=p.slice(1).join(':');
- if(a==='revrange')mnRevRange=v;else if(a==='retrange')mnRetRange=v;else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
+ if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
+if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.addEventListener('scroll',()=>{if(__tk)return;__tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0;document.body.classList.toggle('mn-hide-pill',y>80&&y>__ly+6);if(y<__ly-6||y<=80)document.body.classList.remove('mn-hide-pill');__ly=y;__tk=false;});},{passive:true});}
 /*MN END*/
 
 
