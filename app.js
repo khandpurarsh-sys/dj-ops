@@ -82,11 +82,13 @@ async function feedBatch(repo,force=false){
  })();try{return await feedBatchFlight}finally{feedBatchFlight=null}
 }
 /* Same-origin ciphertext is primary. API fallback is one repository batch per 15 minutes. */
+const feedUrl=n=>{const b=(window.DJ_CONFIG||{}).feedBase;return b?new URL(n,b).href:n};
+
 let staticFeed=null,staticFeedFlight=null,feedLoadMode=false,feedTransport='';
 async function staticFeedRead(force=false){
  if(staticFeedFlight)return staticFeedFlight;
  staticFeedFlight=(async()=>{
-  const r=await fetch('feed.json',{cache:'no-store'});if(!r.ok)throw Error('Static feed HTTP '+r.status);
+  const r=await fetch(feedUrl('feed.json'),{cache:'no-store'});if(!r.ok)throw Error('Static feed HTTP '+r.status);
   const j=await r.json(),repo=(window.DJ_CONFIG||{}).repo;
   if(j.version!==1||j.repo!==repo||!j.rows||!j.rows['1']||!j.rows['3'])throw Error('Static feed format invalid');
   const stored=readFeedBatch(repo),previous=acceptedStatic(repo);
@@ -103,24 +105,38 @@ async function staticFeedRead(force=false){
 /*FEEDV2 START - feed-v2: generation-pinned static feed, reader-first with high-water replay protection */
 const FEEDV2_MAX=2*1024*1024,FEEDV2_ROW_MAX=1024*1024,FEEDV2_BOOTSTRAP=1;
 function readFeedV2(){try{const j=JSON.parse(LS.getItem('dj_feed_v2')||'null');return j&&j.repo===(window.DJ_CONFIG||{}).repo&&Number.isSafeInteger(j.generation)?j:null}catch{return null}}
-async function fetchCapped(url,max){
- const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('Static feed v2 HTTP '+r.status);
- const rd=r.body&&r.body.getReader?r.body.getReader():null;
- if(!rd){const t=await r.text();if(new TextEncoder().encode(t).length>max)throw Error('Static feed v2 too large');return t}
- const chunks=[];let n=0;
- for(;;){const{done,value}=await rd.read();if(done)break;n+=value.byteLength;if(n>max){try{await rd.cancel()}catch{}throw Error('Static feed v2 too large')}chunks.push(value)}
- const all=new Uint8Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length}
- return new TextDecoder().decode(all);
+async function fetchCapped(url,max,timeoutMs=15000){
+ const ac=new AbortController(),to=setTimeout(()=>ac.abort(),timeoutMs);
+ try{
+  const r=await fetch(url,{cache:'no-store',signal:ac.signal});if(!r.ok)throw Error('Static feed v2 HTTP '+r.status);
+  const rd=r.body&&r.body.getReader?r.body.getReader():null;
+  if(!rd){const t=await r.text();if(new TextEncoder().encode(t).length>max)throw Error('Static feed v2 too large');return t}
+  const chunks=[];let n=0;
+  for(;;){const{done,value}=await rd.read();if(done)break;n+=value.byteLength;if(n>max){try{await rd.cancel()}catch{}throw Error('Static feed v2 too large')}chunks.push(value)}
+  const all=new Uint8Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length}
+  return new TextDecoder().decode(all);
+ }catch(e){if(e&&e.name==='AbortError')throw Error('Static feed v2 timed out');throw e}
+ finally{clearTimeout(to)}
 }
 const shaHex=async t=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('')};
 async function staticFeedV2Read(){
  const repo=(window.DJ_CONFIG||{}).repo;
- const text=await fetchCapped('feed-v2.json',FEEDV2_MAX);
+ const text=await fetchCapped(feedUrl('feed-v2.json'),FEEDV2_MAX);
  let j;try{j=JSON.parse(text)}catch{throw Error('Static feed v2 malformed')}
  if(!j||j.version!==2||j.repo!==repo)throw Error('Static feed v2 format invalid');
  if(!Number.isSafeInteger(j.generation)||j.generation<FEEDV2_BOOTSTRAP)throw Error('Static feed v2 generation invalid');
+ let prevSha=null,prevGen=null;
  if(j.generation===FEEDV2_BOOTSTRAP){if(j.previous!=null)throw Error('Static feed v2 genesis must have null previous')}
- else if(typeof j.previous!=='string'||!/^[a-f0-9]{64}$/.test(j.previous))throw Error('Static feed v2 previous missing');
+ else{
+  const p=j.previous;
+  if(typeof p==='string'){if(!/^[a-f0-9]{64}$/.test(p))throw Error('Static feed v2 previous missing');prevSha=p;}
+  else if(p&&typeof p==='object'&&!Array.isArray(p)){
+   if(!Number.isSafeInteger(p.generation)||!/^[a-f0-9]{64}$/.test(p.sha256||''))throw Error('Static feed v2 previous invalid');
+   if(p.generation!==j.generation-1)throw Error('Static feed v2 previous generation mismatch');
+   prevGen=p.generation;prevSha=p.sha256;
+  }
+  else throw Error('Static feed v2 previous missing');
+ }
  if(j.policyVersion===undefined||j.policyVersion===null||(typeof j.policyVersion!=='string'&&typeof j.policyVersion!=='number'))throw Error('Static feed v2 policyVersion invalid');
  if(!j.rows||typeof j.rows!=='object'||Array.isArray(j.rows))throw Error('Static feed v2 rows invalid');
  if(Object.keys(j.rows).sort().join(',')!=='1,2,3,87,88')throw Error('Static feed v2 rows must be exactly 1,2,3,87,88');
@@ -137,13 +153,20 @@ async function staticFeedV2Read(){
  const hw=readFeedV2(),feedSHA=await shaHex(text);
  if(hw){
   if(j.generation<hw.generation)throw Error('Static feed v2 older than last accepted update');
+  if(j.generation>hw.generation&&(prevGen===hw.generation||(prevGen===null&&j.generation===hw.generation+1))&&prevSha!==hw.feedSHA)throw Error('Static feed v2 previous hash does not match last accepted update');
   if(j.generation===hw.generation){
    if(feedSHA!==hw.feedSHA)throw Error('Static feed v2 conflicts with last accepted update');
    staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
   }
  }
  /* higher generation or first accept: prove the slim row decrypts for this phone before pinning the high-water */
- if(priv&&myKid){try{const dd=await decryptPayload(slim,priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload')}catch(e){throw Error('Static feed v2 decrypt failed: '+e.message)}}
+ if(priv&&myKid){try{
+  const dd=await decryptPayload(slim,priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');
+  const df=await decryptPayload(full,priv,myKid);if(!df||!df.snapshot)throw new Error('unexpected payload');
+  if(dd.sid&&df.sid&&dd.sid!==df.sid)throw Error('decrypted snapshots mismatch');
+  const da=dd.snapshot.at||dd.snapshot.asOf,fa=df.snapshot.at||df.snapshot.asOf;
+  if(da&&fa&&da!==fa)throw Error('full and slim snapshots are from different reads');
+ }catch(e){throw Error('Static feed v2 decrypt failed: '+e.message)}}
  if(!feedSave('dj_feed_v2',JSON.stringify({repo,generation:j.generation,feedSHA,sid:j.sid})))throw Error('Cannot save feed v2 state');
  staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
 }

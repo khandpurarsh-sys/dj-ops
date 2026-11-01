@@ -15,6 +15,7 @@ import {decryptPayload} from ${JSON.stringify(cryptoUrl)};
 const LS={store:{},quota:false,getItem(k){return k in this.store?this.store[k]:null},setItem(k,v){if(this.quota)throw new Error('quota');this.store[k]=String(v)}};
 const window={DJ_CONFIG:{repo:${JSON.stringify(REPO)}}};
 function feedSave(k,v){try{LS.setItem(k,v);return true}catch{return false}}
+const feedUrl=n=>{const b=(window.DJ_CONFIG||{}).feedBase;return b?new URL(n,b).href:n};
 let staticFeed=null,feedTransport='',priv=null,myKid=null;
 `;
 const src=prelude+block+`
@@ -145,6 +146,34 @@ await throws('404 surfaces',()=>M.staticFeedV2Read(),/HTTP 404/);
 t('no high-water after 404 (v1 fallback allowed)',M.readFeedV2()===null);
 M.LS.store['dj_feed_v2']=JSON.stringify({repo:REPO,generation:1,feedSHA:'x',sid:'s'});
 t('high-water present after prior accept (v1 fallback forbidden)',M.readFeedV2()!==null);
+
+// 19. gen2 object previous accepted when chained to accepted gen1
+reset();const g1=await feed({gen:1,prev:null});const g1text=JSON.stringify(g1);
+mockFetch(g1text);await M.staticFeedV2Read();
+const g2=await feed({gen:2,prev:{generation:1,sha256:shaHex(g1text)}});mockFetch(JSON.stringify(g2));
+await M.staticFeedV2Read();
+t('gen2 object previous accepted',M.readFeedV2().generation===2);
+// 20. object previous with wrong sha256 rejected
+reset();M.LS.store['dj_feed_v2']=JSON.stringify({repo:REPO,generation:1,feedSHA:shaHex(g1text),sid:'SID-1'});
+const g2b=await feed({gen:2,prev:{generation:1,sha256:'f'.repeat(64)}});mockFetch(JSON.stringify(g2b));
+await throws('object previous wrong sha rejected',()=>M.staticFeedV2Read(),/previous hash does not match/);
+// 21. object previous generation must be gen-1
+reset();const g2c=await feed({gen:2,prev:{generation:5,sha256:'f'.repeat(64)}});mockFetch(JSON.stringify(g2c));
+await throws('object previous generation mismatch rejected',()=>M.staticFeedV2Read(),/previous generation mismatch/);
+// 22. string previous adjacent generation validated against high-water
+reset();M.LS.store['dj_feed_v2']=JSON.stringify({repo:REPO,generation:1,feedSHA:shaHex(g1text),sid:'SID-1'});
+const g2d=await feed({gen:2,prev:shaHex(g1text)});mockFetch(JSON.stringify(g2d));
+await M.staticFeedV2Read();
+t('string previous adjacent accepted',M.readFeedV2().generation===2);
+reset();M.LS.store['dj_feed_v2']=JSON.stringify({repo:REPO,generation:1,feedSHA:shaHex(g1text),sid:'SID-1'});
+const g2e=await feed({gen:2,prev:'e'.repeat(64)});mockFetch(JSON.stringify(g2e));
+await throws('string previous adjacent wrong hash rejected',()=>M.staticFeedV2Read(),/previous hash does not match/);
+// 23. skipped generation with object previous beyond high-water still allowed
+reset();M.LS.store['dj_feed_v2']=JSON.stringify({repo:REPO,generation:1,feedSHA:shaHex(g1text),sid:'SID-1'});
+const g4=await feed({gen:4,prev:{generation:3,sha256:'c'.repeat(64)}});mockFetch(JSON.stringify(g4));
+await M.staticFeedV2Read();
+t('skip with object previous allowed',M.readFeedV2().generation===4);
+
 // 18. source wiring: prepareFeed guard, sw.js no-store rule, crypto decompressed cap
 t('prepareFeed fatal post-accept',/if\(readFeedV2\(\)\)throw e2/.test(appSrc));
 const sw=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
