@@ -1,3 +1,4 @@
+import {PROPOSED_POLICY,createV2Loader,indexedStore} from './feed-v2-loader.mjs';
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
 const WEB_BUILD_ID='20261031-midnight-reel-v1';
 const $=s=>document.querySelector(s),root=$('#root');
@@ -61,10 +62,15 @@ if(pu){const inp=$('#pn'),e=$('#err');inp.focus();inp.oninput=async()=>{inp.valu
 function showKey(t){root.innerHTML=shell(`<div class="lock">${logo}<h1>Almost done</h1><p>Send this public key to your assistant. It is not secret. It lets updates be locked so only this phone can read them.</p><div class="glass"><div class="keybox" id="k">${esc(t)}</div><button class="btn" id="cp">Copy key</button><button class="btn alt" id="sh">Share key</button><button class="btn alt" id="nx">Continue</button></div></div>`);
  $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(t);$('#cp').textContent='Copied'}catch{}};
  $('#sh').onclick=()=>navigator.share?navigator.share({text:t}):0;$('#nx').onclick=lockScreen;}
-const feedCache={};let acceptedStaticMemory=null,feedBatchMemory=null,apiFallbackAfter=0;
+const feedCache={};
+let v2Loader=null,v2Result=null;
+function getV2Loader(){if(!v2Loader)v2Loader=createV2Loader({policy:PROPOSED_POLICY,store:indexedStore(window.indexedDB),location:window.location.href,
+ decrypt:(e,maxPlaintextBytes)=>decryptPayload(e,priv,myKid,{maxPlaintextBytes})});return v2Loader;}
+async function v2BlocksLegacy(){return PROPOSED_POLICY.cutover||await getV2Loader().blocksLegacy()}
+let acceptedStaticMemory=null,feedBatchMemory=null,apiFallbackAfter=0;
 function feedSave(k,v){try{LS.setItem(k,v);return true}catch{return false}}
 function acceptedStatic(repo){if(acceptedStaticMemory?.repo===repo)return acceptedStaticMemory;try{const j=JSON.parse(LS.getItem('dj_static_feed')||'null');return j?.repo===repo?j:null}catch{return null}}
-function acceptFeed(){if(staticFeed){acceptedStaticMemory=staticFeed;feedSave('dj_static_feed',JSON.stringify(staticFeed));}}
+function acceptFeed(){if(v2Result)return;if(staticFeed){acceptedStaticMemory=staticFeed;feedSave('dj_static_feed',JSON.stringify(staticFeed));}}
 let feedPauseUntil=Number(LS.getItem('dj_feed_pause_until')||0)||0,loadBusy=false,feedBatchFlight=null;
 function feedError(){return new Error('GitHub feed rate-limited. Next check after '+new Date(feedPauseUntil).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM')+' IST');}
 async function feedJson(url){feedPauseUntil=Math.max(feedPauseUntil,Number(LS.getItem('dj_feed_pause_until')||0)||0);if(Date.now()<feedPauseUntil)throw feedError();const r=await fetch(url,{cache:'no-cache',headers:{Accept:'application/vnd.github+json'}});if(!r.ok){const err=await r.json().catch(()=>({}));if(r.status===429||(r.status===403&&(r.headers.get('x-ratelimit-remaining')==='0'||/rate limit/i.test(err.message||'')))){const reset=Number(r.headers.get('x-ratelimit-reset')||0)*1000,ra=r.headers.get('retry-after')||'',seconds=Number(ra),retry=ra?(Number.isFinite(seconds)?Date.now()+seconds*1000:Date.parse(ra)):0;feedPauseUntil=Math.max(Date.now()+60000,reset,Number.isFinite(retry)?retry:0);feedSave('dj_feed_pause_until',String(feedPauseUntil));throw feedError();}throw new Error('GitHub feed HTTP '+r.status+(err.message?': '+err.message:''));}return r.json();}
@@ -101,12 +107,16 @@ async function staticFeedRead(force=false){
  })();try{return await staticFeedFlight}finally{staticFeedFlight=null}
 }
 async function prepareFeed(){
- staticFeed=null;try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
+ staticFeed=null;v2Result=null;
+ if(PROPOSED_POLICY.enabled){try{v2Result=await getV2Loader().load();staticFeed=v2Result.feed;feedTransport=v2Result.stale?'static v2 cached':'static v2';return;}catch(e){if(await v2BlocksLegacy())throw e;feedTransport='Static v2 unavailable before cutover: '+e.message;}}
+ if(await v2BlocksLegacy())throw Error('Static v2 reader required; historical fallback disabled');
+ try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
  const now=Date.now(),next=Math.max(apiFallbackAfter,Number(LS.getItem('dj_api_fallback_after')||0));if(now<next)throw Error('Static feed unavailable; API fallback paused until '+new Date(next).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'})+' IST');
  apiFallbackAfter=now+900000;feedSave('dj_api_fallback_after',String(apiFallbackAfter));await feedBatch((window.DJ_CONFIG||{}).repo,true);
 }
 async function lastComment(repo,num,back,force=false){
  if(!back&&staticFeed&&staticFeed.repo===repo){const row=staticFeed.rows[String(num)];if(!row)throw Error('Static supplementary feed unavailable');return row.body;}
+ if(await v2BlocksLegacy())throw Error('Historical API feed cannot replace accepted static v2');
  // One batch is shared across all channels. No per-issue count/page fallback.
  const b=readFeedBatch(repo),row=b&&b.rows[String(num)];
  if(!row||!(b.seen[String(num)]||b.complete))throw Error('Feed channel unavailable in bounded fallback');
@@ -114,7 +124,7 @@ async function lastComment(repo,num,back,force=false){
  const accepted=acceptedStatic(repo);if(accepted?.rows?.[String(num)]?.commentId>row.id)throw Error('API feed older than last accepted static update');
  return row.body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();
 }
-async function fetchLatest(force=false){const repo=(window.DJ_CONFIG||{}).repo;let body=await lastComment(repo,1,0,force);window.__slim=false;/* reuse a cached full copy only when it is exactly this slim snapshot */try{const o=JSON.parse(body);if(o&&o.slim){let full=false;try{const old=LS.getItem('dj_last'),po=old&&JSON.parse(old);if(po&&!po.slim&&po.z&&po.sid&&po.sid===o.sid){body=old;full=true;}else{const f=await lastComment(repo,3),p=JSON.parse(f);if(p&&!p.slim&&p.z&&p.sid&&p.sid===o.sid){body=f;full=true}}}catch(e){}window.__slim=!full}}catch(e){}return body;}
+async function fetchLatest(force=false){if(v2Result){window.__slim=false;return v2Result.body;}const repo=(window.DJ_CONFIG||{}).repo;let body=await lastComment(repo,1,0,force);window.__slim=false;/* reuse a cached full copy only when it is exactly this slim snapshot */try{const o=JSON.parse(body);if(o&&o.slim){let full=false;try{const old=LS.getItem('dj_last'),po=old&&JSON.parse(old);if(po&&!po.slim&&po.z&&po.sid&&po.sid===o.sid){body=old;full=true;}else{const f=await lastComment(repo,3),p=JSON.parse(f);if(p&&!p.slim&&p.z&&p.sid&&p.sid===o.sid){body=f;full=true}}}catch(e){}window.__slim=!full}}catch(e){}return body;}
 function dl(a,b,k){const n=a.length,m=b.length;if(Math.abs(n-m)>k)return k+1;let p2=null,p1=Array.from({length:m+1},(_,j)=>j);for(let i=1;i<=n;i++){const c=[i];let mn=i;for(let j=1;j<=m;j++){let v=Math.min(p1[j]+1,c[j-1]+1,p1[j-1]+(a[i-1]===b[j-1]?0:1));if(p2&&i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])v=Math.min(v,p2[j-2]+1);c[j]=v;if(v<mn)mn=v;}if(mn>k)return k+1;p2=p1;p1=c;}return p1[m];}
 const fzn=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\s]+/g,' ').replace(/\s+/g,' ').trim();
 function fzMatch(q,text){const t=fzn(text),toks=fzn(q).split(' ').filter(Boolean);if(!toks.length)return 0;const flat=t.replace(/ /g,''),words=t.split(' ');let worst=0;
@@ -181,12 +191,12 @@ function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
   if(data._deadDerived||(!A(data.deadStock)&&rows.some(x=>x.sold30!=null))){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));data.deadStock=d;data._deadDerived=true;}}
  }catch(e){}}
 async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
- try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');render();}
+ try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');render();}
  if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){}}
 async function load(opts={}){if(loadBusy)return;const now=Date.now();if(now-(window.__lastFeedAttempt||0)<60000)return;loadBusy=true;window.__lastFeedAttempt=now;window.__lastLoad=now;try{await loadData(opts.force===true);await loadStock();await loadExp();}finally{loadBusy=false;}}
 function manualRefresh(){return load({force:true})}
-async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=window.__slim?'Limited view: full history not loaded':'';}catch(e){b=LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):'No data yet: '+e.message;if(data||!b){render();return;}}
- const dd=await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');feedSave('dj_last',b);feedSave('dj_slim',window.__slim?'1':'0');acceptFeed();data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){status='Could not read update: '+e.message;}render();}
+async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=v2Result?.status||(window.__slim?'Limited view: full history not loaded':'');}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):data?'Feed check failed: '+e.message+'. Showing last saved data with original source times':'No data yet: '+e.message;if(data||!b){render();return;}}
+ const dd=v2Result?v2Result.data:await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');feedSave('dj_last',b);feedSave('dj_slim',window.__slim?'1':'0');acceptFeed();data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){status='Could not read update: '+e.message;}render();}
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='bills'?'Retail bills':t==='dc'?k.split('|')[1]+' · '+new Date(k.split('|')[0]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?'Revenue today':t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
 /* order time as epoch ms: ts/at, else age in hours, else today's "h:mm AM" time (IST) */
@@ -1409,8 +1419,8 @@ function expView(){const E=data&&data.expenses;if(!E||!Array.isArray(E.months)||
  if(E.undated&&E.undated.items&&E.undated.items.length)h+=`<details class="fold"><summary>Undated invoices / documents · ${inrP(E.undated.paise)} · ${E.undated.items.length}</summary><p class="note">No reliable date - not placed in any month, not added to any total.</p><section class="glass list">${E.undated.items.map(row).join('')}</section></details>`;
  return h;}
 async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;let b=null,c=null;
- try{b=await lastComment(repo,87);feedSave('dj_exp',b);}catch(e){b=LS.getItem('dj_exp');if(!b){data.expenses=null;return}}
- try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=LS.getItem('dj_expc');}
+ try{b=await lastComment(repo,87);feedSave('dj_exp',b);}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_exp');if(!b){data.expenses=null;return}}
+ try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=await v2BlocksLegacy()?null:LS.getItem('dj_expc');}
  try{const ed=await decryptPayload(JSON.parse(b),priv,myKid);
   if(!(ed&&ed.kind==='expenses'&&Array.isArray(ed.months))){data.expenses=null;return}
   if(c){try{const cd=await decryptPayload(JSON.parse(c),priv,myKid);
