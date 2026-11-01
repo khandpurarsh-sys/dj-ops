@@ -2105,12 +2105,12 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
  const retPills='<span class="mn-pills">'+[['today','Today'],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="retrange:'+v+'" class="'+(mnRetRange===v?'on':'')+'">'+l+'</button>').join('')+'</span>';
  const todayHr=name=>{const arr=Array(24).fill(0);
   const dayKnown=R&&R.day?String(R.day):null;
-  (RT0||[]).filter(x=>!name||x.name===name).forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);
-   if(ms!=null){const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;arr[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);return;}
-   const hm=mnNum(b._hm);if(hm==null)return;const bd=st2.day||dayKnown;if(bd!==IST())return;arr[Math.min(23,Math.floor(hm/60))]+=Number(b.amt||0);}));
   const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
-  let first=null,lastB=null;for(let h=0;h<24;h++){if(arr[h]>0){if(first==null)first=h;lastB=h;}}
-  const cum=Array(24).fill(null);let run=0;if(first!=null){const hi=Math.max(nowH,lastB);for(let h=first;h<=hi;h++){run+=arr[h];cum[h]={v:run};}}
+  (RT0||[]).filter(x=>!name||x.name===name).forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);
+   if(ms!=null){const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;const hh=Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;if(hh>nowH)return;arr[hh]+=Number(b.amt||0);return;}
+   const hm=mnNum(b._hm);if(hm==null)return;const bd=st2.day||dayKnown;if(bd!==IST())return;const hh=Math.min(23,Math.floor(hm/60));if(hh>nowH)return;arr[hh]+=Number(b.amt||0);}));
+  let first=null;for(let h=0;h<=nowH;h++){if(arr[h]>0){first=h;break;}}
+  const cum=Array(24).fill(null);let run=0;if(first!=null)for(let h=first;h<=nowH;h++){run+=arr[h];cum[h]={v:run};}
   return{cum,empty:first==null};};
  const todayCard=(name,uid)=>{const hr=todayHr(name);const ts=dayRev(iso,name);
   return `<section class="mn-card"><div class="mn-cardh"><span>${esc(name||storeName)}</span>${retPills}</div>`
