@@ -1478,7 +1478,17 @@ function overviewOrderMount(){
  if(state){anchor.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
 }
 function stockStatusMount(){const old=root.querySelector('#stock-state');if(old)old.remove();if(!stockStatus)return;const note=document.createElement('p');note.id='stock-state';note.className='note';note.style.cssText='padding:8px 16px;text-align:left;overflow-wrap:anywhere';note.textContent=stockStatus;const head=root.querySelector('header');if(head)head.insertAdjacentElement('afterend',note);}
-function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();stockStatusMount();}
+function feedDiagnosticMount(){
+ const old=root.querySelector('#feed-diagnostic');if(old)old.remove();const head=root.querySelector('header');if(!head)return;
+ const wrap=document.createElement('section');wrap.id='feed-diagnostic';wrap.style.cssText='margin:8px 16px;overflow-wrap:anywhere';
+ const button=document.createElement('button');button.type='button';button.className='refresh';button.textContent='Feed diagnostic';wrap.append(button);
+ button.onclick=async()=>{button.disabled=true;let id='unavailable';try{const v=JSON.parse(LS.getItem('dj_vault')||'null');if(v&&v.pub&&typeof v.pub.x==='string'&&typeof v.pub.y==='string')id=await kid(v.pub);}catch(e){}
+ const note=document.createElement('p');note.className='note';note.style.cssText='text-align:left;white-space:pre-line';
+ const generation=v2Result?.record?.generation??'not accepted this refresh';
+ note.textContent='Browser ID: '+id+'\nIn approved main roster: '+(id==='unavailable'?'unknown':PROPOSED_POLICY.requiredKids.includes(id)?'yes':'no')+'\nAccepted generation: '+generation+'\nPolicy: '+PROPOSED_POLICY.policyVersion+'\nMain feed state: '+(status||'accepted')+'\nThis diagnostic does not change browser data.';
+ wrap.append(note);button.remove();};head.insertAdjacentElement('afterend',wrap);
+}
+function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();stockStatusMount();feedDiagnosticMount();}
 
 function render(){return haloRender()}
 function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
