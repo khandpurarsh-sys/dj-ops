@@ -1436,11 +1436,15 @@ function nextReadPlan(now=new Date(),kind='online'){
  const tomorrow=new Date(start+offset).getUTCDate()!==local.getUTCDate();
  return {start,read:(tomorrow?'Tomorrow, ':'')+fmt(start)+' IST',update:(tomorrow?'Tomorrow, ':'')+fmt(start+25*60000)+'-'+fmt(start+30*60000)+' IST'};
 }
+// Temporary display-only hold, parent1Nov21:22:57. Resumption needs separate review.
+const RETAIL_READS_HELD=true;
 function nextReadMount(){
  if(!data)return;const head=root.querySelector('header');if(!head)return;
  let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
  const retail=nextReadPlan(new Date(),'retail'),online=nextReadPlan(new Date(),'online');if(!retail||!online){el.remove();return;}
- el.replaceChildren();for(const [name,p] of [['Retail',retail],['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update]){const line=document.createElement('span');line.textContent=text;el.append(line);}
+ el.replaceChildren();const add=text=>{const line=document.createElement('span');line.textContent=text;el.append(line);};
+ if(RETAIL_READS_HELD)add('Retail reads paused while the feed update is prepared. Showing the last verified retail figures.');
+ for(const [name,p] of (RETAIL_READS_HELD?[['Online',online]]:[['Retail',retail],['Online',online]]))for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update])add(text);
  if(root.querySelector('#feed-state'))overviewOrderMount();
 }
 function loadStateMount(){
