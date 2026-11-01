@@ -2115,7 +2115,7 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
  return (rf==='All'?'':'<button class="mn-backlink" data-mn="store:">‹ Retail</button>')+mnHead('Retail<br>'+(rf==='All'?'Store overview':esc(rf)))
  +mnKpis([{i:'rupee',v:!RR?'—':rs==null?'unavailable':mnL(rs),l:'Today',d:rs!=null&&yrev!=null?mnDelta(mnPct(rs,yrev)):''},{i:'receipt',v:RR?(rb==null?'—':rb):'—',l:'Bills'},{i:'tri',v:RR&&rb&&rs?mnL(Math.round(rs/rb)):'—',l:'Avg bill'}])
  +chips
-+(rf==='All'?chartCard+minis+billsSec:billsSec+chartCard)
++(rf==='All'?minis+chartCard+billsSec:billsSec+chartCard)
   +`<div class="line" data-d="bills:retail" style="padding:12px 6px"><span>All stores, every supplied bill</span><b>›</b></div>`;}
 function mnStock(){const st=A(data.stock);if(!st)return none('Waiting for stock data');
  const per={};const rows=st.map(x=>{const pd=x.perDay!=null?x.perDay:(per[x.sku]||0);return{...x,pd,days:pd>0&&pgNum(x.onHand)!==null?x.onHand/pd:null}});
