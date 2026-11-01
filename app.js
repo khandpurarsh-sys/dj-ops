@@ -103,7 +103,7 @@ async function staticFeedRead(force=false){
  })();try{return await staticFeedFlight}finally{staticFeedFlight=null}
 }
 /*FEEDV2 START - feed-v2: generation-pinned static feed, reader-first with high-water replay protection */
-const FEEDV2_MAX=2*1024*1024,FEEDV2_ROW_MAX=1024*1024,FEEDV2_BOOTSTRAP=1;
+const FEEDV2_MAX=2*1024*1024,FEEDV2_ROW_MAX=1024*1024,FEEDV2_BOOTSTRAP=1,FEEDV2_POLICY='dressjet-static-v2-proposed-1';
 function readFeedV2(){try{const j=JSON.parse(LS.getItem('dj_feed_v2')||'null');return j&&j.repo===(window.DJ_CONFIG||{}).repo&&Number.isSafeInteger(j.generation)?j:null}catch{return null}}
 async function fetchCapped(url,max,timeoutMs=15000){
  const ac=new AbortController(),to=setTimeout(()=>ac.abort(),timeoutMs);
@@ -137,7 +137,7 @@ async function staticFeedV2Read(){
   }
   else throw Error('Static feed v2 previous missing');
  }
- if(j.policyVersion===undefined||j.policyVersion===null||(typeof j.policyVersion!=='string'&&typeof j.policyVersion!=='number'))throw Error('Static feed v2 policyVersion invalid');
+ if(j.policyVersion!==FEEDV2_POLICY)throw Error('Static feed v2 policyVersion invalid');
  if(!j.rows||typeof j.rows!=='object'||Array.isArray(j.rows))throw Error('Static feed v2 rows invalid');
  if(Object.keys(j.rows).sort().join(',')!=='1,2,3,87,88')throw Error('Static feed v2 rows must be exactly 1,2,3,87,88');
  for(const row of Object.values(j.rows)){

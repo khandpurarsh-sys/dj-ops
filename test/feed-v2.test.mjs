@@ -51,7 +51,7 @@ async function envelope(data,pub,sid,slim){
  const e=await wc.subtle.exportKey('jwk',eph.publicKey);
  return JSON.stringify({v:2,iv:b64(div),ct:b64(dct),msgs:[{kid:await kid(pub),epk:{x:e.x,y:e.y},iv:b64(iv),wk:b64(wk)}],sid,slim});
 }
-async function feed({gen=1,prev=null,repo=REPO,sid='SID-1',pub=vA.vault.pub,policyVersion='2026-11-draft',dropKey=null,extraKey=null,tamperHash=false,tamperLen=false}={}){
+async function feed({gen=1,prev=null,repo=REPO,sid='SID-1',pub=vA.vault.pub,policyVersion='dressjet-static-v2-proposed-1',dropKey=null,extraKey=null,tamperHash=false,tamperLen=false}={}){
  const data={snapshot:{revenue:1,at:'2026-11-01T10:00:00+05:30'}};
  const slimBody=await envelope(data,pub,sid,true), fullBody=await envelope(data,pub,sid,false);
  const rows={};
@@ -133,9 +133,11 @@ reset();const fp=await feed({gen:1,prev:'abc'.padEnd(64,'0')});mockFetch(JSON.st
 await throws('genesis with previous rejected',()=>M.staticFeedV2Read(),/genesis/);
 const fp2=await feed({gen:2,prev:null});mockFetch(JSON.stringify(fp2));
 await throws('later generation without previous rejected',()=>M.staticFeedV2Read(),/previous missing/);
-// 15. policyVersion presence/type only
+// 15. policyVersion pinned
 reset();const fv=await feed({gen:1,prev:null});delete fv.policyVersion;mockFetch(JSON.stringify(fv));
 await throws('missing policyVersion rejected',()=>M.staticFeedV2Read(),/policyVersion/);
+const fv2=await feed({gen:1,prev:null});fv2.policyVersion='dressjet-static-v2-proposed-2';mockFetch(JSON.stringify(fv2));
+await throws('wrong policyVersion rejected',()=>M.staticFeedV2Read(),/policyVersion/);
 // 16. oversized response
 reset();const big=JSON.stringify(await feed({gen:1,prev:null}));const pad=' '.repeat(2*1024*1024);
 mockFetch(big.slice(0,-1)+',"pad":"'+pad+'"}',{stream:true});
