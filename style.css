@@ -2775,6 +2775,7 @@ body.mn-tab .halo-insights-link{order:1}
 body.mn-tab .halo-settings{order:3}
 body.mn-tab main{padding-top:14px;padding-bottom:110px}
 body.mn-tab .mn-head h2{margin:2px 0 8px}
+body.mn-tab:has(.mn-backlink[data-mn="store:"]) .halo-rail{display:none}
 .mn-backlink{display:inline-block;margin:2px 0 8px;padding:6px 0;background:none;border:0;color:#ECCF9A;font-weight:600;font-size:14px;cursor:pointer}
 /*MN CSS START - Midnight overview screens */
 :root[data-halo-palette="midnight"] body.lay-halo .mn-head h2{font-size:34px;line-height:1.08;font-weight:650;letter-spacing:-.03em;margin:6px 0 18px;color:#f8f1e4}
