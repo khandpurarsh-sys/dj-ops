@@ -2762,3 +2762,13 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette=midnight] body.lay-halo h1{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;letter-spacing:-.055em}
 :root[data-halo-palette=midnight] body.lay-halo .halo-kpi>b{font-family:inherit!important;letter-spacing:-.045em}
 :root[data-halo-palette=midnight] body.lay-halo .order .ometa b{font-family:inherit}
+
+/* Android parity: 0.95 density (Compose wrapper scales the whole tree; replicate with zoom) */
+html{zoom:.95}
+
+/* Android nocturne parity: mn screens carry no halo hero, scene nav or schedule lines; refresh sits in the rail */
+body.mn-tab header:not(.halo-detail-header){display:none}
+body.mn-tab .halo-scene-nav{display:none}
+body.mn-tab .next-read-plan{display:none}
+body.mn-tab .halo-rail .halo-refresh{position:static;margin-left:auto}
+.mn-backlink{display:inline-block;margin:2px 0 8px;padding:6px 0;background:none;border:0;color:#ECCF9A;font-weight:600;font-size:14px;cursor:pointer}
