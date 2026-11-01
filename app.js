@@ -2104,7 +2104,9 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
  const chips=names.length>1?`<div class="mn-chips">${['All',...names].map(z=>`<button data-mn="store:${esc(z)}" class="${(z==='All'?rf==='All':rf===z)?'on':''}">${z==='All'?'All stores':esc(z)}</button>`).join('')}</div>`:'';
  const retPills='<span class="mn-pills">'+[['today','Today'],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="retrange:'+v+'" class="'+(mnRetRange===v?'on':'')+'">'+l+'</button>').join('')+'</span>';
  const todayHr=name=>{const arr=Array(24).fill(0);
-  (RT0||[]).filter(x=>!name||x.name===name).forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);if(ms==null)return;const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;arr[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);}));
+  (RT0||[]).filter(x=>!name||x.name===name).forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);
+   if(ms!=null){const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;arr[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);return;}
+   const hm=mnNum(b._hm);if(hm==null)return;arr[Math.min(23,Math.floor(hm/60))]+=Number(b.amt||0);}));
   const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
   let first=null;for(let h=0;h<24;h++){if(arr[h]>0){first=h;break;}}
   const cum=Array(24).fill(null);let run=0;if(first!=null)for(let h=first;h<=nowH;h++){run+=arr[h];cum[h]={v:run};}
