@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+      - name: feed-v2 loader gates
+        run: node test/feed-v2.test.mjs
       - run: npm install
       - run: npm run prepare-www
       - name: Generate iOS project
