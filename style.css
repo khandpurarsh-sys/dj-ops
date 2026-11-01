@@ -2770,7 +2770,9 @@ html{zoom:.95}
 body.mn-tab header:not(.halo-detail-header){display:none}
 body.mn-tab .halo-scene-nav{display:none}
 body.mn-tab .next-read-plan{display:none}
-body.mn-tab .halo-rail .halo-refresh{position:static;margin-left:auto}
+body.mn-tab .halo-rail .halo-refresh{position:static;order:2;margin-left:0}
+body.mn-tab .halo-insights-link{order:1}
+body.mn-tab .halo-settings{order:3}
 body.mn-tab main{padding-top:14px;padding-bottom:110px}
 body.mn-tab .mn-head h2{margin:2px 0 8px}
 .mn-backlink{display:inline-block;margin:2px 0 8px;padding:6px 0;background:none;border:0;color:#ECCF9A;font-weight:600;font-size:14px;cursor:pointer}
