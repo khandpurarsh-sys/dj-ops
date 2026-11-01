@@ -848,8 +848,8 @@ function haloCompose(html){
  if(!detail){const scene=document.createElement('div');scene.className='halo-scene-nav';scene.innerHTML=(index>0?'<button data-t="'+tabs[index-1]+'" aria-label="Previous section: '+names[tabs[index-1]]+'">&#8592; '+names[tabs[index-1]]+'</button>':'<span></span>')+'<span aria-hidden="true"></span>'+(index<tabs.length-1?'<button data-t="'+tabs[index+1]+'" aria-label="Next section: '+names[tabs[index+1]]+'">'+names[tabs[index+1]]+' &#8594;</button>':'<span></span>');head.after(scene);}
  if(nav){if(noctOn()){
  nav.classList.add('halo-bottom-nav','noc-bottom-nav');nav.setAttribute('aria-label','Main sections');
- nav.querySelectorAll('button[data-t]').forEach(b=>{const key=b.dataset.t;b.innerHTML=haloIcon(key)+'<span>'+(names[key]||key)+'</span>';b.setAttribute('aria-current',key===tab&&!/^halo:/.test(detail||'')?'page':'false');b.classList.toggle('on',key===tab&&!/^halo:/.test(detail||''));});
- const nib=document.createElement('button');nib.dataset.d='halo:Insights';nib.className='halo-insights-tab'+(detail==='halo:Insights'?' on':'');nib.setAttribute('aria-current',detail==='halo:Insights'?'page':'false');nib.setAttribute('aria-label','Insights');nib.innerHTML=haloIcon('insights')+'<span>Insights</span>';nav.append(nib);
+ nav.querySelectorAll('button[data-t]').forEach(b=>{const key=b.dataset.t;b.innerHTML='<span>'+(names[key]||key)+'</span>';b.setAttribute('aria-current',key===tab&&!/^halo:/.test(detail||'')?'page':'false');b.classList.toggle('on',key===tab&&!/^halo:/.test(detail||''));});
+ const nib=document.createElement('button');nib.dataset.d='halo:Insights';nib.className='halo-insights-tab'+(detail==='halo:Insights'?' on':'');nib.setAttribute('aria-current',detail==='halo:Insights'?'page':'false');nib.setAttribute('aria-label','Insights');nib.innerHTML='<span>Insights</span>';nav.append(nib);
  const npanel=document.createElement('div');npanel.className='halo-menu-panel noc-menu-panel';npanel.id='halo-destination-menu';npanel.setAttribute('aria-label','Destinations');npanel.setAttribute('inert','');
  [['today','Today','t'],['orders','Orders','t'],['best','Sellers','t'],['stock','Stock','t'],['retail','Retail','t'],['exp','Expenses','t'],['halo:Insights','Insights','d'],['halo:Production','Production','d']].forEach(x=>{if(x[0]==='exp'&&!(data&&data.expenses))return;const b=document.createElement('button');if(x[2]==='t')b.dataset.t=x[0];else b.dataset.d=x[0];const cur=(x[2]==='t'&&x[0]===tab&&!/^halo:/.test(detail||''))||(x[2]==='d'&&detail===x[0]);b.className='noc-mc'+(cur?' on':'');b.setAttribute('aria-current',cur?'page':'false');b.setAttribute('aria-label',x[1]);b.innerHTML=haloIcon(x[0]==='halo:Insights'?'insights':x[0]==='halo:Production'?'production':x[0])+'<span>'+x[1]+'</span>';npanel.append(b);});
  nav.after(npanel);
@@ -1916,7 +1916,7 @@ function mnToday(){const {s,OI,RL,RR,on,rt,rb}=mnTodayNums(),yd=mnYesterday();
  const bills=mnBillsAll().slice(0,6);
  const avgB=RR&&rb&&rt?Math.round(rt/rb):null;
  return mnHead("Today's<br>Overview")+mnFresh()
- +mnKpis([{i:'rupee',v:comb==null?'—':mnL(comb),l:'Revenue today',d:comb!=null&&yd.comb!=null?mnDelta(mnPct(comb,yd.comb)):''},
+ +mnKpis([{i:'rupee',v:comb==null?'—':inr(comb),l:'Revenue today',d:comb!=null&&yd.comb!=null?mnDelta(mnPct(comb,yd.comb)):''},
           {i:'box',v:RL?'—':ordN(OI),l:'Online orders'},
           {i:'receipt',v:RR?(rb==null?'—':rb):'—',l:'Retail bills'}])
  +`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span><span class="mn-pills"><button data-mn="revrange:7" class="${rng===7?'on':''}">7D</button><button data-mn="revrange:30" class="${rng===30?'on':''}">30D</button></span></div>`
