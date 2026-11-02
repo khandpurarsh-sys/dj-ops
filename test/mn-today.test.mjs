@@ -165,4 +165,11 @@ ok('fresh: one Share row, one Settings row, retail series drawn dashed',()=>{
   assert.ok(!h.includes('class="mn-cmp"'),'no dashed yesterday overlay in hourly chart');
 });
 
+ok('legend swatch matches drawing when retail has no times',()=>{
+  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:nowH()}}});
+  assert.ok(!h.includes('class="mn-rt"'),'no retail series without bill times');
+  assert.ok(!h.includes('mn-swatch dash'),'legend uses non-series swatch when no retail curve');
+  assert.ok(h.includes('mn-swatch dim'),'dim swatch shown for retail legend entry');
+});
+
 console.log('\nALL PASS ('+n+')');process.exit(0);

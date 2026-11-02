@@ -2084,7 +2084,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
  const hideY=ds.bothUndated;
  const comp=(onH!=null&&rtH2!=null)?'Online + Retail':(onH!=null?'Online':(rtH2!=null?'Retail':'Online + Retail'));
  const wMode=mnRevMode!=='today',sfxOnW=wMode?(ds.on&&ds.onSt!=='undated'?' · '+mnDayLbl(ds.on):' · not dated'):sfxOn,sfxRtW=wMode?(ds.rt&&ds.rtSt!=='undated'?' · '+mnDayLbl(ds.rt):' · not dated'):sfxRt;
- const legend='<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOnW+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch dash"></i>Retail '+mnL(rtRaw)+sfxRtW+'</span>':'')+'</div>';
+ const legendF=rtDrawn=>'<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOnW+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch '+(rtDrawn?'dash':'dim')+'"></i>Retail '+mnL(rtRaw)+sfxRtW+'</span>':'')+'</div>';
  let revCard;
  if(mnRevMode==='today'){
   const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay,{on:inclOn,rt:inclRt}),yTot=hideY?null:(inclOn&&inclRt?yd.comb:(inclOn?yd.o:(inclRt?yd.r:null)));
@@ -2092,7 +2092,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   const tail=(ds.refDay===IST()?'this hour still counting':(ds.bothUndated?'still counting':'full day'))+(yTot!=null?' · - - yesterday '+mnL(yTot)+' total':'');
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
   +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">${comp}, hour by hour</div>`
-  +legend
+  +legendF(hr.cumRt!=null)
   +mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'})
   +(hr.empty?'':'<p class="mn-note2">'+esc(head+' · '+tail)+'</p>')
   +(hr.note&&!hr.feed?'<p class="mn-note2">'+esc(hr.note)+'</p>':'')
@@ -2107,7 +2107,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   const pw=rng===7?mnWindowSeries(14).slice(0,7):null;
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
   +`<div class="mn-big">${sup?inr(tot):'—'}</div><div class="mn-sub">${compW}, ${wA} to ${wB}</div>`
-  +legend
+  +legendF(true)
   +(sup?mnArea(ser.map(p=>({d:p.d,v:p.tot})),{labels:rng===7?'dow':'sparse',cmp:pw?pw.map(p=>({d:p.d,v:p.tot})):null,id:'t',aria:'Combined online and retail revenue, '+wA+' to '+wB}):'<p class="mn-note2">No daily history supplied yet.</p>')
   +(sup&&sup<rng?'<p class="mn-note2">'+sup+' of '+rng+' days supplied - missing days are left out, not zero.</p>':'')
   +'</section>';
