@@ -2804,7 +2804,7 @@ body.mn-tab #feed-state.open>div{display:block;padding-top:4px;font-size:12px;co
 :root[data-halo-palette="midnight"] body.lay-halo .mn-big{font-size:34px;font-weight:680;letter-spacing:-.025em;color:#f7f4ec;margin:2px 0}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-sub{font-size:12.5px;color:#9b9da6}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-sub2{font-size:12px;color:#9b9da6;display:block}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-legend{display:flex;gap:18px;font-size:12px;color:#b9bfc9;margin:12px 0 4px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-legend{display:flex;flex-wrap:wrap;column-gap:18px;row-gap:6px;font-size:12px;color:#b9bfc9;margin:12px 0 4px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-legend span{display:flex;align-items:center;gap:7px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-split2w{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-split2{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:#b9bfc9}
@@ -2818,8 +2818,8 @@ body.mn-tab #feed-state.open>div{display:block;padding-top:4px;font-size:12px;co
 .mn-ref{fill:none;stroke:#e0c897;stroke-width:1.6;stroke-dasharray:3 5;opacity:.85}
 .mn-refl{fill:#e0c897}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid{stroke:rgba(255,255,255,.09);stroke-dasharray:3 6}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-dot{fill:#e0c897;stroke:#171a22;stroke-width:2}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-dot-halo{fill:none;stroke:rgba(236,207,154,.35);stroke-width:1.4}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-dot{fill:#191b20;stroke:#e0c897;stroke-width:2.5}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-dot-halo{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-xl{font-size:11px;fill:#7d8492}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid2 .mn-card{margin-bottom:0}
@@ -2900,6 +2900,7 @@ body.mn-tab #feed-state.open>div{display:block;padding-top:4px;font-size:12px;co
 :root[data-halo-palette="midnight"] body.lay-halo .mn-kt b{font-size:17px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-yday{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;font-size:13.5px;color:#c3c9d2;cursor:pointer}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-yday b{color:#f0ede4;font-weight:620}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-sub3{color:#8f97a3;font-size:12px;font-weight:400}
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .next-read-plan,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .asof,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .ranged-freshness{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-fresh{font-size:12px;color:#8f97a3;padding:2px 2px 10px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-note2{font-size:12px;color:#8f97a3;padding:8px 2px 0;line-height:1.5}
