@@ -261,4 +261,14 @@ ok('legend swatch matches drawing when retail has no times',()=>{
   assert.ok(h.includes('mn-swatch dim'),'dim swatch shown for retail legend entry');
 });
 
+// 8. retail 7D/30D graphs end at the last completed day, never on today's partial value
+ok('retail 7D/30D: window ends yesterday, today partial excluded',()=>{
+  const RH=[];for(let i=7;i>=1;i--)RH.push({d:addD(TODAY,-i),rev:10000+i*100,by:{PTG:{rev:10000+i*100}}});
+  T.set(base({retailHistory:RH,retail:{day:TODAY,status:'ok',at:'3 Nov, 1:00 AM',stores:[{name:'PTG',sales:50,bills:1,units:1,billList:[]}]}}));
+  T.retRange('7');let h=T.mnRetail();T.retRange('30');const h30=T.mnRetail();T.retRange('today');
+  assert.ok(h.includes('through '+LBL(YDAY)),'7D labelled through yesterday');
+  assert.ok(h30.includes('through '+LBL(YDAY)),'30D labelled through yesterday');
+  assert.ok(!h.includes('days supplied'),'all 7 completed days supplied, today not counted as a missing day');
+});
+
 console.log('\nALL PASS ('+n+')');process.exit(0);

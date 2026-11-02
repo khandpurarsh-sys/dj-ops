@@ -2173,7 +2173,7 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
   return mnNum(e.rev!=null?e.rev:e.sales);};
  const storeName=rf==='All'?'All stores':rf;
  const bills=(rf==='All'?mnBillsAll():mnBillsAll().filter(b=>b.store===rf)).slice(0,10);
- const minis=rf==='All'&&names.length>1?`<div class="mn-sech"><h3>Stores</h3><span class="mn-note">tap a store for its bills</span></div><div class="mn-grid2">${names.map(nm=>{const ser2=[];for(let i2=6;i2>=0;i2--){const d=addD(iso,-i2);ser2.push({d,v:dayRev(d,nm)});}
+ const minis=rf==='All'&&names.length>1?`<div class="mn-sech"><h3>Stores</h3><span class="mn-note">tap a store for its bills</span></div><div class="mn-grid2">${names.map(nm=>{const ser2=[];for(let i2=7;i2>=1;i2--){const d=addD(iso,-i2);ser2.push({d,v:dayRev(d,nm)});}
   const ts=dayRev(iso,nm);
   return `<section class="mn-card mn-storecard" data-mn="store:${esc(nm)}"><span class="mn-eyebrow">${esc(nm)}</span><b class="mn-num">${ts==null?'—':mnL(ts)}</b><span class="mn-exact">${ts==null?'Today not supplied':inr(ts)+' today'}</span>${mnHasData(ser2)?mnArea(ser2,{labels:'dow',id:'s'+nm.replace(/\W/g,''),aria:nm+' revenue, last 7 days'}):'<p class="mn-note2">No daily history yet.</p>'}</section>`;}).join('')}</div>`:'';
  const chips=names.length>1?`<div class="mn-chips">${['All',...names].map(z=>`<button data-mn="store:${esc(z)}" class="${(z==='All'?rf==='All':rf===z)?'on':''}">${z==='All'?'All stores':esc(z)}</button>`).join('')}</div>`:'';
@@ -2193,9 +2193,9 @@ function mnRetail(){const R=data.retail,RT0=R?A(R.stores):null,RR=retailReady(R)
   +mnHourChart(hr,{emptyMsg:'The feed does not supply bill times, so no hour-by-hour graph today. The total above is live.'})
   +(hr.empty?'':'<p class="mn-note2">Approximate: bills by their listed time - today still counting.</p>')+'</section>';};
  const dayCard=(name,uid)=>{const wk2=[],pw2=[];let s2=0,c2=0;
-  for(let i=rng-1;i>=0;i--){const d=addD(iso,-i);const v=dayRev(d,name);if(v!=null){s2+=v;c2++;}wk2.push({d,v});if(rng===7)pw2.push({d,v:dayRev(addD(d,-7),name)});}
+  for(let i=rng;i>=1;i--){/* completed days only: today is partial/unread and would drag the line down */const d=addD(iso,-i);const v=dayRev(d,name);if(v!=null){s2+=v;c2++;}wk2.push({d,v});if(rng===7)pw2.push({d,v:dayRev(addD(d,-7),name)});}
   return `<section class="mn-card"><div class="mn-cardh"><span>${esc(name||storeName)}</span>${retPills}</div>`
-  +`<div class="mn-big">${c2?inr(s2):'—'}</div><div class="mn-sub">${rng===7?'this week':'last 30 days'} · ${esc(name||storeName)}${c2<rng?' · '+c2+' of '+rng+' days supplied':''}</div>`
+  +`<div class="mn-big">${c2?inr(s2):'—'}</div><div class="mn-sub">${rng===7?'last 7 days':'last 30 days'} through ${mnDayLbl(addD(iso,-1))} · ${esc(name||storeName)}${c2<rng?' · '+c2+' of '+rng+' days supplied':''}</div>`
   +(rng===7?`<div class="mn-legend"><span><i class="mn-swatch"></i>Store</span> <span><i class="mn-swatch dash"></i>Last week</span></div>`:'')
   +(mnHasData(wk2)?mnArea(wk2,{labels:rng===7?'dow':'sparse',cmp:rng===7?pw2:null,id:uid,aria:(name||'All stores')+' revenue, last '+rng+' days'}):'<p class="mn-note2">No daily history supplied yet.</p>')+'</section>';};
  const chartCards=mnRetRange==='today'?(rf==='All'&&names.length?names.map((nm,i)=>todayCard(nm,'t'+i)):[todayCard(rf==='All'?null:rf,'t0')]).join(''):(rf==='All'&&names.length?names.map((nm,i)=>dayCard(nm,'r'+i)):[dayCard(rf==='All'?null:rf,'r0')]).join('');
@@ -2241,6 +2241,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
  if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
 if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.addEventListener('scroll',()=>{if(__tk)return;__tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0;document.body.classList.toggle('mn-hide-pill',y>80&&y>__ly+6);if(y<__ly-6||y<=80)document.body.classList.remove('mn-hide-pill');__ly=y;__tk=false;});},{passive:true});}
 /*MN END*/
-export const __mnTest={set:d=>{data=d},mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext};
+export const __mnTest={set:d=>{data=d},retRange:m=>{mnRetRange=m},mnRetail,mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext};
 
 
