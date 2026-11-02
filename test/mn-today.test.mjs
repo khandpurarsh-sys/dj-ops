@@ -243,14 +243,14 @@ ok('7D: legend day-suffixed, half cards dated, no "today" counts',()=>{
 
 // 7. fresh render sanity: single Share/Settings rows, hollow dot, legend matches drawing
 ok('fresh: one Share row, one Settings row, retail series drawn dashed',()=>{
-  const oth=nowH();
-  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:oth,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
-    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now(),items:[{qty:1}]}]}]}});
+  const D0=new Date(TODAY+'T00:10:00+05:30').getTime(),D1=new Date(TODAY+'T01:10:00+05:30').getTime();
+  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:0,rev:800},{h:1,rev:700}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:23}},
+    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:2,units:2,billList:[{no:'R-1',amt:100,_ms:D0,items:[{qty:1}]},{no:'R-2',amt:200,_ms:D1,items:[{qty:1}]}]}]}});
   assert.equal((h.match(/data-share="1"/g)||[]).length,1,'one Share row');
   assert.equal((h.match(/data-pm="1"/g)||[]).length,1,'one Settings row');
   const hr=T.mnTodayHourly();
   assert.ok(hr.cumRt&&hr.cumRt.some(p=>p&&p.v!=null),'retail series present (legend swatch matches a real series)');
-  assert.ok(nowH()<2||h.includes('class="mn-rt"'),'retail path drawn when the series has 2+ points (single-point midnight hour draws no line - known, unchanged)');
+  assert.ok(nowH()<1||h.includes('class="mn-rt"'),'retail path drawn when the series has 2+ points (single-point midnight hour draws no line - known, unchanged)');
   assert.ok(!h.includes('class="mn-cmp"'),'no dashed yesterday overlay in hourly chart');
 });
 
@@ -269,6 +269,9 @@ ok('retail 7D/30D: window ends yesterday, today partial excluded',()=>{
   assert.ok(h.includes('through '+LBL(YDAY)),'7D labelled through yesterday');
   assert.ok(h30.includes('through '+LBL(YDAY)),'30D labelled through yesterday');
   assert.ok(!h.includes('days supplied'),'all 7 completed days supplied, today not counted as a missing day');
+  const tot=RH.reduce((q,z)=>q+z.rev,0),fmtI=v=>v.toLocaleString('en-IN');
+  assert.ok(h.includes('₹'+fmtI(tot)),'7D total = 7 completed days, got '+(h.match(/mn-big">[^<]*/)||['none'])[0]);
+  assert.ok(!h.includes('₹'+fmtI(tot+50)),'today partial (50) not added to the total');
 });
 
 console.log('\nALL PASS ('+n+')');process.exit(0);

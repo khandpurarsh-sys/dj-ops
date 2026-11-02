@@ -1952,7 +1952,7 @@ function mnDayState(){const s=data.snapshot||{},R=data.retail||{};
  const refDay=(anyToday||noToday)?today:([on,rt].filter(d=>d&&d<=today).sort().pop()||null);
  let title;if(anyToday||noToday)title="Today's Overview";else if(bothUndated||!refDay)title='Overview';else title=mnDayLbl(refDay)+' Overview';
  const tm=v=>{const t=Date.parse(v||'');return Number.isFinite(t)?new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM'):null;};
- const rAt=tm(s.readAt||s.at)||tm(R.readAt||R.at);
+ const oAt=tm(s.readAt||s.at),rAt0=tm(R.readAt||R.at),rAt=onSt==='stale'&&rtSt!=='stale'?oAt:(rtSt==='stale'&&onSt!=='stale'?rAt0:(oAt||rAt0));/* the refreshed time belongs to the stale source(s) named in the banner */
  let banner='';
  if(bothUndated)banner='Data day unknown - freshness unverified (online not dated, retail not dated)';
  else{const st2=[];if(onSt==='stale')st2.push('online last read '+mnDayLbl(on));if(rtSt==='stale')st2.push('retail last read '+mnDayLbl(rt));if(onSt==='undated')st2.push('online not dated');if(rtSt==='undated')st2.push('retail not dated');
