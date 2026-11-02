@@ -1942,9 +1942,9 @@ const mnDayLbl=d=>{try{return new Date(d+'T12:00:00+05:30').toLocaleDateString('
 function mnDayState(){const s=data.snapshot||{},R=data.retail||{};
  const vd=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)?d:null;
  const on=vd(s.day),rt=vd(R.day),today=IST();
- const st=d=>d==null?'undated':(d===today?'today':(d<today?'stale':'today'));
+ const st=d=>d==null?'undated':(d===today?'today':(d<today?'stale':'undated'));
  const onSt=st(on),rtSt=st(rt),anyToday=onSt==='today'||rtSt==='today';
- const refDay=anyToday?today:([on,rt].filter(Boolean).sort().pop()||null);
+ const refDay=anyToday?today:([on,rt].filter(d=>d&&d<=today).sort().pop()||null);
  const bothUndated=onSt==='undated'&&rtSt==='undated';
  let title;if(anyToday)title="Today's Overview";else if(bothUndated||!refDay)title='Overview';else title=mnDayLbl(refDay)+' Overview';
  const tm=v=>{const t=Date.parse(v||'');return Number.isFinite(t)?new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM'):null;};
@@ -1996,21 +1996,21 @@ const mnRevPills=ds=>{const l0=!ds||ds.anyToday?'Today':(ds.bothUndated?'Undated
 const mnHourOf=o=>{const v=o&&(o.ts!=null?o.ts:o.at);if(v==null||v==='')return null;const d=typeof v==='number'?new Date(v<1e11?v*1000:v):new Date(v);if(isNaN(d))return null;if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return null;return Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;};
 const mnFeedHour=h=>{const m=String(h==null?'':h).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([aApP])[mM]/);if(!m)return null;let hr=Number(m[1])%12;if(/p/i.test(m[3]))hr+=12;return hr;};
 function mnTodayHourly(){const s=data.snapshot,OI=ordInfo(s),ds=mnDayState();const on=Array(24).fill(0),rt=Array(24).fill(0);let rtH=false,approx=false,feed=false;
- const TH=A(s&&s.todayHourlyOnline)||[];let thOk=false;
- if(TH.length&&TH.some(x=>mnNum(x&&x.h)!=null)){const pk=Object.keys(s||{}).find(k=>/todayHourly/i.test(k)&&s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&typeof s[k].day==='string');if(!pk||s[pk].day===ds.refDay){TH.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null)on[h]+=r;});thOk=true;feed=true;}}
+ const TH=A(s&&s.todayHourlyOnline)||[];let thOk=false,oth=null;
+ if(TH.length&&TH.some(x=>mnNum(x&&x.h)!=null)){const pk=Object.keys(s||{}).find(k=>/todayHourly/i.test(k)&&s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&typeof s[k].day==='string');if(!pk||s[pk].day===ds.refDay){if(pk){const v=mnNum(s[pk].observedThroughHour);if(v!=null&&v>=0&&v<=23)oth=v;}TH.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null)on[h]+=r;});thOk=true;feed=true;}}
  if(!thOk&&ds.onSt!=='stale')(OI.live||[]).forEach(o=>{const h=mnHourOf(o);if(h!=null){on[h]+=Number(o.amt||0);approx=true;}});
  const RT=data.retail&&A(data.retail.stores);
  if(ds.rtSt!=='stale'&&RT){const FH=A(data.retail&&data.retail.hourly)||[];
   if(FH.length&&FH.some(x=>mnFeedHour(x.h)!=null)){FH.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null){rt[h]+=Number(x.sales||0);rtH=true;}});}
   else RT.forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);if(ms==null)return;const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;rt[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);rtH=true;approx=true;}));}
  const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
- const lastH=ds.refDay===IST()?nowH:23;
+ let lastH=ds.refDay===IST()?nowH:23;if(oth!=null&&ds.refDay===IST())lastH=Math.min(nowH,oth);
  let first=null;for(let h=0;h<24;h++){if(on[h]>0||rt[h]>0){first=h;break;}}
- const cum=Array(24).fill(null);let run=0;
- if(first!=null)for(let h=first;h<=lastH;h++){run+=on[h]+rt[h];cum[h]={v:run};}
+ const csum=f=>{const c=Array(24).fill(null);let run=0;if(first!=null)for(let h=first;h<=lastH;h++){run+=f(h);c[h]={v:run};}return c;};
+ const cum=csum(h=>on[h]+rt[h]),cumOn=on.some(v=>v>0)?csum(h=>on[h]):null,cumRt=rtH&&rt.some(v=>v>0)?csum(h=>rt[h]):null;
  let note='';
  if(first!=null&&first>0)note='Reads earlier '+(ds.refDay===IST()?'today':'on '+mnDayLbl(ds.refDay))+' were not retained, so the first read of the day includes those sales - the line starts at '+mnFmtH(first)+'.';
- return{cum,approx,feed,note,empty:first==null};}
+ return{cum,cumOn,cumRt,approx,feed,note,empty:first==null};}
 function mnYesterdayHourly(refDay,inc){const rd=refDay||IST(),yi=addD(rd,-1),per=Array(24).fill(0);let hasOn=false,hasRt=false,hasComb=false;
  const want=inc||{on:true,rt:true};
  const dayOK=root=>{const pk=Object.keys(root||{}).find(k=>/esterdayHourly/i.test(k)&&root[k]&&typeof root[k]==='object'&&!Array.isArray(root[k])&&typeof root[k].day==='string');return !pk||root[pk].day===yi;};
@@ -2032,16 +2032,17 @@ function mnYesterdayHourly(refDay,inc){const rd=refDay||IST(),yi=addD(rd,-1),per
  const cum=Array(24).fill(null);let run=0;for(let h=first;h<=lastH;h++){run+=per[h];cum[h]=run;}
  return{cum,partial:miss.length===1?miss[0]:null};}
 function mnHourChart(hr,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=70;
- const pts=hr.cum,yd=opts.yd!=null?Number(opts.yd):null,cmp=opts.cmp||null;
+ const pts=hr.cum,yd=opts.yd!=null?Number(opts.yd):null,cmp=opts.cmp||null,rtS=opts.rt||null;
  if(hr.empty)return '<p class="mn-note2">'+esc(opts.emptyMsg||'No hourly reads in the feed yet today - the graph appears after the first read.')+'</p>';
- const all=pts.map(p=>p?p.v:null).filter(v=>v!=null);if(yd!=null)all.push(yd);if(cmp)cmp.forEach(v=>{if(v!=null)all.push(v);});
+ const all=pts.map(p=>p?p.v:null).filter(v=>v!=null);if(yd!=null)all.push(yd);if(cmp)cmp.forEach(v=>{if(v!=null)all.push(v);});if(rtS)rtS.forEach(p=>{if(p&&p.v!=null)all.push(p.v);});
  const mx=(Math.max(...all)||1)*1.12;
  const X=h=>PL+(W-PL-PR)*h/23,Y=v=>PT+(H-PT-PB)*(1-v/mx);
  const smooth=seg=>{let d='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1);for(let i=0;i<seg.length-1;i++){const p0=seg[Math.max(0,i-1)],p1=seg[i],p2=seg[i+1],p3=seg[Math.min(seg.length-1,i+2)];d+='C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+' '+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+' '+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+p2[0].toFixed(1)+' '+p2[1].toFixed(1);}return d;};
  const segs=[];let cur=[];pts.forEach((p,h)=>{if(p&&p.v!=null)cur.push([X(h),Y(p.v)]);else{if(cur.length)segs.push(cur);cur=[];}});if(cur.length)segs.push(cur);
  let line='',area='';segs.forEach(seg=>{if(seg.length===1){line+='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1)+'l.2 0';}else{const d=smooth(seg);line+=d;area+=d+'L'+seg[seg.length-1][0].toFixed(1)+' '+Y(0)+'L'+seg[0][0].toFixed(1)+' '+Y(0)+'Z';}});
  const last=segs.length?segs[segs.length-1][segs[segs.length-1].length-1]:null;
- let cmpPath='';if(cmp){const cs=[];cmp.forEach((v,h)=>{if(v!=null)cs.push([X(h),Y(v)]);});if(cs.length>1)cmpPath='<path d="'+smooth(cs)+'" class="mn-cmp"/>';}
+ let cmpPath='';if(cmp){const cs=[];cmp.forEach((v,h)=>{if(v!=null)cs.push([X(h),Y(v)]);});if(cs.length>1)cmpPath='<path d="'+smooth(cs)+'" class="mn-yov"/>';}
+ let rtPath='';if(rtS){const rs=[];rtS.forEach((p,h)=>{if(p&&p.v!=null)rs.push([X(h),Y(p.v)]);});if(rs.length>1)rtPath='<path d="'+smooth(rs)+'" class="mn-rt"/>';}
  const oh=[];pts.forEach((p,h)=>{if(p&&p.v!=null)oh.push(h);});const hf=oh.length?oh[0]:0,hl=oh.length?oh[oh.length-1]:0;
  const pos=[];for(let i=0;i<=4;i++){const h=Math.round(hf+(hl-hf)*i/4);if(pos.indexOf(h)<0)pos.push(h);}
  const lab2=h=>{const hh=((h%24)+24)%24;return (hh%12===0?12:hh%12)+(hh<12?'a':'p');};
@@ -2050,7 +2051,7 @@ function mnHourChart(hr,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=70;
  return '<svg viewBox="0 0 '+W+' '+H+'" class="mn-chart" role="img" aria-label="'+(opts.aria||'Hourly revenue chart')+'"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0c897" stop-opacity=".34"/><stop offset="1" stop-color="#e0c897" stop-opacity="0"/></linearGradient></defs>'
  +'<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(W-PR)+'" y2="'+Y(0)+'" class="mn-grid"/>'
  +(yd!=null?'<line x1="'+PL+'" y1="'+Y(yd).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(yd).toFixed(1)+'" class="mn-ref"/><text x="'+(W-PR+6)+'" y="'+(Y(yd)+4).toFixed(1)+'" class="mn-xl mn-refl">Yday tot</text>':'')
- +cmpPath
+ +cmpPath+rtPath
  +(area?'<path d="'+area+'" fill="url(#'+gid+')"/>':'')+'<path d="'+line+'" class="mn-line"/>'
  +(last?'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="5" class="mn-dot"/><circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="10" class="mn-dot-halo"/>':'')
  +lbl+'</svg>';}
@@ -2082,16 +2083,17 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
  const subRt=ds.rtSt==='today'?'today':(ds.rtSt==='undated'?'(not dated)':'on '+mnDayLbl(ds.rt));
  const hideY=ds.bothUndated;
  const comp=(onH!=null&&rtH2!=null)?'Online + Retail':(onH!=null?'Online':(rtH2!=null?'Retail':'Online + Retail'));
- const legend='<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOn+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch dash"></i>Retail '+mnL(rtRaw)+sfxRt+'</span>':'')+'</div>';
+ const wMode=mnRevMode!=='today',sfxOnW=wMode?(ds.on&&ds.onSt!=='undated'?' · '+mnDayLbl(ds.on):' · not dated'):sfxOn,sfxRtW=wMode?(ds.rt&&ds.rtSt!=='undated'?' · '+mnDayLbl(ds.rt):' · not dated'):sfxRt;
+ const legend='<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOnW+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch dash"></i>Retail '+mnL(rtRaw)+sfxRtW+'</span>':'')+'</div>';
  let revCard;
  if(mnRevMode==='today'){
-  const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay,{on:inclOn,rt:inclRt}),yTot=hideY?null:yd.comb;
+  const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay,{on:inclOn,rt:inclRt}),yTot=hideY?null:(inclOn&&inclRt?yd.comb:(inclOn?yd.o:(inclRt?yd.r:null)));
   const head=hr.feed?'Hourly shape from the feed':'Approximate: orders and bills by their listed times';
   const tail=(ds.refDay===IST()?'this hour still counting':(ds.bothUndated?'still counting':'full day'))+(yTot!=null?' · - - yesterday '+mnL(yTot)+' total':'');
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
   +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">${comp}, hour by hour</div>`
   +legend
-  +mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'})
+  +mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'})
   +(hr.empty?'':'<p class="mn-note2">'+esc(head+' · '+tail)+'</p>')
   +(hr.note&&!hr.feed?'<p class="mn-note2">'+esc(hr.note)+'</p>':'')
   +(yc&&yc.partial?'<p class="mn-note2">Dotted line is yesterday\'s '+(yc.partial==='retail'?'online':'retail')+' shape only - the '+(yc.partial==='retail'?'retail':'online')+' hourly split is not supplied.</p>':'')
@@ -2110,11 +2112,11 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   +(sup&&sup<rng?'<p class="mn-note2">'+sup+' of '+rng+' days supplied - missing days are left out, not zero.</p>':'')
   +'</section>';
  }
- const oc=OI.n!=null?ordN(OI)+' order'+(OI.n===1?'':'s')+' '+subOn:'—';
+ const oc=OI.n!=null?ordN(OI)+' order'+(OI.n===1?'':'s')+' '+(wMode?(ds.on&&ds.onSt!=='undated'?'on '+mnDayLbl(ds.on):'(not dated)'):subOn):'—';
  const p=(!hideY&&onRaw!=null&&yd.o!=null&&yd.o>=1000)?mnPct(onRaw,yd.o):null;
  const chip=p!=null&&Math.abs(p)<=999?'<span class="mn-delta '+(p<0?'down':'up')+'">'+(p<0?'▼ ':'▲ ')+Math.abs(p)+'% vs yesterday</span>':'';
  const grid=`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${onRaw==null?'—':inr(onRaw)}</b><span class="mn-sub2">${oc}</span><div class="mn-drow">${chip}</div></section>`
- +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${rtRaw==null?'—':inr(rtRaw)}</b><span class="mn-sub2">${rAvail?(rb==null?'—':rb+' bill'+(rb===1?'':'s')+' '+subRt):'Not read yet'}</span><div class="mn-drow">${rAvail&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div></section></div>`;
+ +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${rtRaw==null?'—':inr(rtRaw)}</b><span class="mn-sub2">${rAvail?(rb==null?'—':rb+' bill'+(rb===1?'':'s')+' '+(wMode?(ds.rt&&ds.rtSt!=='undated'?'on '+mnDayLbl(ds.rt):'(not dated)'):subRt)):'Not read yet'}</span><div class="mn-drow">${rAvail&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div></section></div>`;
  const bills=mnBillsAll().slice(0,6);
  const billsHtml=bills.length?`<section class="mn-card mn-list">${bills.map(b=>{const qc=mnBillQty(b);return `<div class="mn-row" data-d="rb:${esc(b.store)}||${esc(b.no||'')}"><span class="mn-ava">${esc(String(b.store||'S').trim()[0].toUpperCase())}</span><div class="mn-rm"><b>${esc(b.no||'Bill')}</b><span>${esc(b.store||'')} · ${esc(b.customer||'Walk-in')}${qc?' · '+esc(qc):(b.time?' · '+esc(b.time):'')}</span></div><b class="mn-ramt">${b.amt==null?'—':inr(b.amt)}</b></div>`}).join('')}</section>`:none('No retail bills supplied today.');
  return mnHead(ds.title)+mnFresh()
@@ -2240,5 +2242,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
  if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
 if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.addEventListener('scroll',()=>{if(__tk)return;__tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0;document.body.classList.toggle('mn-hide-pill',y>80&&y>__ly+6);if(y<__ly-6||y<=80)document.body.classList.remove('mn-hide-pill');__ly=y;__tk=false;});},{passive:true});}
 /*MN END*/
+export const __mnTest={set:d=>{data=d},mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills};
 
 

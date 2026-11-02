@@ -1,0 +1,168 @@
+// Tests for the mn* Today-port functions. Run: node test/mn-today.test.mjs
+import assert from 'node:assert/strict';
+
+// --- minimal DOM/browser stubs so app.js (a browser module) imports in node ---
+const cl=()=>({toggle(){},add(){},remove(){},contains:()=>false});
+const store=()=>({getItem:()=>null,setItem(){},removeItem(){}});
+globalThis.localStorage=store();
+globalThis.sessionStorage=store();
+const el=()=>({remove(){},content:"",clientWidth:0,innerHTML:'',textContent:'',value:'',style:{},classList:cl(),dataset:{},append(){},appendChild(){},setAttribute(){},getAttribute:()=>null,addEventListener(){},querySelector:()=>null,querySelectorAll:()=>[],focus(){},blur(){},click(){}});
+globalThis.document={documentElement:{dataset:{}},body:{classList:cl(),dataset:{},appendChild(){}},addEventListener(){},removeEventListener(){},querySelector:()=>el(),querySelectorAll:()=>[],getElementById:()=>el(),createElement:()=>el()};
+globalThis.location={reload(){},href:'http://localhost/'};
+globalThis.fetch=()=>Promise.reject(new Error('offline test stub'));
+if(typeof globalThis.window==='undefined')globalThis.window=globalThis;
+window.addEventListener=window.addEventListener||(()=>{});
+window.scrollTo=()=>{};
+globalThis.requestAnimationFrame=()=>0;
+globalThis.MutationObserver=class{constructor(){}observe(){}disconnect(){}};
+
+const T=(await import('../app.js')).__mnTest;
+
+// --- helpers ---
+const IST=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});
+const addD=(iso,n)=>{const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
+const nowH=()=>Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
+const LBL=iso=>new Date(iso+'T00:00:00+05:30').toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'});
+function base(over={}){
+  const d={snapshot:{day:IST(),revenue:5000,orderCount:2,readAt:new Date().toISOString()},
+    orders:[],
+    retail:{day:IST(),status:'ok',at:'2 Nov, 5:00 PM',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]},
+    history:[],retailHistory:[]};
+  return Object.assign(d,over);
+}
+
+let n=0;const ok=(name,fn)=>{fn();n++;console.log('PASS',name);};
+const TODAY=IST(),YDAY=addD(TODAY,-1),FUT=addD(TODAY,3);
+
+// 1. mnDayState: future feed day is never treated as today
+ok('dayState future day -> undated',()=>{
+  T.set(base({snapshot:{day:FUT,revenue:100,readAt:new Date().toISOString()}}));
+  const ds=T.mnDayState();
+  assert.equal(ds.onSt,'undated');
+});
+ok('dayState both future -> bothUndated, neutral title, refDay not future',()=>{
+  T.set(base({snapshot:{day:FUT,revenue:100,readAt:new Date().toISOString()},retail:{day:FUT,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]}}));
+  const ds=T.mnDayState();
+  assert.equal(ds.onSt,'undated');assert.equal(ds.rtSt,'undated');
+  assert.equal(ds.bothUndated,true);assert.equal(ds.title,'Overview');
+  assert.notEqual(ds.refDay,FUT);
+});
+ok('dayState today/stale/undated basics',()=>{
+  T.set(base());
+  let ds=T.mnDayState();
+  assert.equal(ds.onSt,'today');assert.equal(ds.rtSt,'today');assert.equal(ds.title,"Today's Overview");
+  T.set(base({snapshot:{day:YDAY,revenue:100,readAt:new Date().toISOString()}}));
+  ds=T.mnDayState();
+  assert.equal(ds.onSt,'stale');assert.equal(ds.rtSt,'today');assert.equal(ds.title,"Today's Overview");
+});
+
+// 2. mnTodayHourly: observedThroughHour truncation (feed source clock)
+ok('todayHourly truncates at observedThroughHour',()=>{
+  const oth=Math.max(0,nowH()-3);
+  const TH=[];for(let h=9;h<=23;h++)TH.push({h,rev:100});
+  T.set(base({snapshot:{day:TODAY,revenue:1500,readAt:new Date().toISOString(),todayHourlyOnline:TH,todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}}}));
+  const hr=T.mnTodayHourly();
+  assert.equal(hr.feed,true);
+  let last=-1;hr.cum.forEach((p,h)=>{if(p&&p.v!=null)last=h;});
+  assert.equal(last,oth,'series must end at observedThroughHour '+oth+', got '+last);
+  assert.ok(hr.cum.slice(oth+1).every(p=>p==null),'no points beyond observedThroughHour');
+});
+ok('todayHourly empty feed never throws',()=>{
+  T.set(base({snapshot:{day:TODAY,revenue:0,orderCount:0,readAt:new Date().toISOString()},retail:{day:TODAY,status:'ok',stores:[]}}));
+  const hr=T.mnTodayHourly();
+  assert.equal(hr.empty,true);assert.equal(hr.cum.length,24);
+});
+ok('todayHourly returns per-source series',()=>{
+  const oth=nowH();
+  T.set(base({snapshot:{day:TODAY,revenue:1500,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1000},{h:10,rev:500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
+    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now()-3600e3,items:[{qty:1}]}]}]}}));
+  const hr=T.mnTodayHourly();
+  assert.ok(hr.cumOn,'online series present');
+  assert.ok(hr.cumRt,'retail series present (bill times derived)');
+  const lastC=hr.cum.filter(p=>p&&p.v!=null).pop().v;
+  const lastO=hr.cumOn.filter(p=>p&&p.v!=null).pop().v;
+  const lastR=hr.cumRt.filter(p=>p&&p.v!=null).pop().v;
+  assert.equal(lastC,lastO+lastR,'combined = online + retail at the last point');
+});
+
+// 3. mnYesterdayHourly: spec key variants
+ok('yesterday: {h,rev} under snapshot',()=>{
+  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:[{h:5,rev:200},{h:6,rev:300}],yesterdayHourlyOnlineProv:{day:YDAY}}}));
+  const y=T.mnYesterdayHourly(TODAY);
+  assert.equal(y.cum[5],200);assert.equal(y.cum[6],500);
+});
+ok('yesterday: plain 24-number array, top-level',()=>{
+  const arr=Array(24).fill(0);arr[4]=50;arr[7]=150;
+  T.set(base({top:{},snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString()}}));
+  const d=T.mnDayState&&base();const dd=base();dd.yesterdayHourly=arr;T.set(dd);
+  const y=T.mnYesterdayHourly(TODAY);
+  assert.ok(y,'overlay exists');assert.equal(y.cum[7],200,'plain array is hour-indexed and cumulated');
+});
+ok('yesterday: retail key + combined adds on top; composition filter',()=>{
+  const d=base();d.yesterdayHourlyRetail=[{h:6,rev:100}];d.yesterdayHourly=[{h:6,rev:40}];
+  T.set(d);
+  const both=T.mnYesterdayHourly(TODAY,{on:true,rt:true});
+  assert.equal(both.cum[6],140,'retail + combined summed');
+  const onOnly=T.mnYesterdayHourly(TODAY,{on:true,rt:false});
+  assert.equal(onOnly.cum[6],40,'retail excluded when hero is online-only; combined still adds');
+});
+ok('yesterday: day-mismatched provenance is rejected',()=>{
+  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:[{h:5,rev:200}],yesterdayHourlyOnlineProv:{day:FUT}}}));
+  const y=T.mnYesterdayHourly(TODAY);
+  assert.equal(y,null);
+});
+
+// 4. delta pill edge cases (0.1.118 rules), verified line by line
+function todayHtml(over){T.set(base(over));T.mode('today');return T.mnToday();}
+ok('delta: baseline exactly 1000 shows; under 1000 hidden',()=>{
+  let h=todayHtml({snapshot:{day:TODAY,revenue:2000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
+  assert.ok(h.includes('100% vs yesterday'),'baseline 1000, +100% shown');
+  h=todayHtml({snapshot:{day:TODAY,revenue:2000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:999}]});
+  assert.ok(!h.includes('vs yesterday'),'baseline 999 hidden');
+});
+ok('delta: |pct| over 999 hidden, 999 shown',()=>{
+  let h=todayHtml({snapshot:{day:TODAY,revenue:100000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
+  assert.ok(!h.includes('vs yesterday'),'+9900% hidden');
+  h=todayHtml({snapshot:{day:TODAY,revenue:10990,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
+  assert.ok(h.includes('999% vs yesterday'),'+999% shown');
+});
+ok('delta: undated day hides chip and Yesterday row',()=>{
+  const h=todayHtml({snapshot:{day:null,revenue:2000,orderCount:2,readAt:new Date().toISOString()},retail:{day:null,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[]}]},history:[{d:YDAY,rev:1000}]});
+  assert.ok(!h.includes('vs yesterday'),'chip hidden when undated');
+  assert.ok(!h.includes('data-overview-day="yesterday"'),'Yesterday row hidden when undated');
+  assert.ok(h.includes('Undated'),'chip shows Undated');
+});
+
+// 5. mixed: hero online-only -> marker/note use online-only yesterday
+ok('mixed: yesterday marker/note match hero composition',()=>{
+  const h=todayHtml({history:[{d:YDAY,rev:4000}],retailHistory:[{d:YDAY,rev:1000}],
+    snapshot:{day:TODAY,revenue:1500,orderCount:1,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:nowH()}},
+    retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]}});
+  assert.ok(h.includes('yesterday ₹4K total'),'note uses online-only yesterday, got: '+(h.match(/yesterday [^ ]+ total/)||['none'])[0]);
+  assert.ok(!h.includes('yesterday ₹5K total'),'combined yesterday not used for the chart note');
+  assert.ok(h.includes('Retail ₹3K · '+LBL(YDAY)),'retail legend carries stale-day suffix');
+});
+
+// 6. 7D window: legend + half cards use window-appropriate labels
+ok('7D: legend day-suffixed, half cards dated, no "today" counts',()=>{
+  T.set(base({history:[{d:YDAY,rev:4000}],retailHistory:[{d:YDAY,rev:1000}]}));
+  T.mode('7');const h=T.mnToday();T.mode('today');
+  assert.ok(h.includes('Online ₹5K · '+LBL(TODAY)),'online legend carries explicit day: '+(h.match(/Online ₹[^<]+/)||['none'])[0]);
+  assert.ok(h.includes('Retail ₹3K · '+LBL(TODAY)),'retail legend carries explicit day');
+  assert.ok(h.includes('2 orders on '+LBL(TODAY)),'half card dated: '+(h.match(/\d+ orders?[^(<]*/)||['none'])[0]);
+  assert.ok(!h.includes('orders today'),'no today-flavored count in window mode');
+  assert.ok(h.includes('Online + Retail,'),'window composition line present');
+});
+
+// 7. fresh render sanity: single Share/Settings rows, hollow dot, legend matches drawing
+ok('fresh: one Share row, one Settings row, retail series drawn dashed',()=>{
+  const oth=nowH();
+  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
+    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now()-3600e3,items:[{qty:1}]}]}]}});
+  assert.equal((h.match(/data-share="1"/g)||[]).length,1,'one Share row');
+  assert.equal((h.match(/data-pm="1"/g)||[]).length,1,'one Settings row');
+  assert.ok(h.includes('class="mn-rt"'),'retail series drawn (dashed, matches legend)');
+  assert.ok(!h.includes('class="mn-cmp"'),'no dashed yesterday overlay in hourly chart');
+});
+
+console.log('\nALL PASS ('+n+')');process.exit(0);
