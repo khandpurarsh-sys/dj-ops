@@ -59,7 +59,7 @@ ok('dayState today/stale/undated basics',()=>{
 // 2. mnTodayHourly: observedThroughHour truncation (feed source clock)
 ok('todayHourly truncates at observedThroughHour',()=>{
   const oth=Math.max(0,nowH()-3);
-  const TH=[];for(let h=9;h<=23;h++)TH.push({h,rev:100});
+  const TH=[];for(let h=0;h<=23;h++)TH.push({h,rev:100});
   T.set(base({snapshot:{day:TODAY,revenue:1500,readAt:new Date().toISOString(),todayHourlyOnline:TH,todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}}}));
   const hr=T.mnTodayHourly();
   assert.equal(hr.feed,true);
@@ -74,8 +74,9 @@ ok('todayHourly empty feed never throws',()=>{
 });
 ok('todayHourly returns per-source series',()=>{
   const oth=nowH();
-  T.set(base({snapshot:{day:TODAY,revenue:1500,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1000},{h:10,rev:500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
-    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now()-3600e3,items:[{qty:1}]}]}]}}));
+  const pts=[];for(let h=0;h<=oth;h++)pts.push({h,rev:100});
+  T.set(base({snapshot:{day:TODAY,revenue:1500,readAt:new Date().toISOString(),todayHourlyOnline:pts,todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
+    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now(),items:[{qty:1}]}]}]}}));
   const hr=T.mnTodayHourly();
   assert.ok(hr.cumOn,'online series present');
   assert.ok(hr.cumRt,'retail series present (bill times derived)');
@@ -87,24 +88,26 @@ ok('todayHourly returns per-source series',()=>{
 
 // 3. mnYesterdayHourly: spec key variants
 ok('yesterday: {h,rev} under snapshot',()=>{
-  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:[{h:5,rev:200},{h:6,rev:300}],yesterdayHourlyOnlineProv:{day:YDAY}}}));
+  const hh=nowH();
+  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:[{h:0,rev:200},{h:hh,rev:300}],yesterdayHourlyOnlineProv:{day:YDAY}}}));
   const y=T.mnYesterdayHourly(TODAY);
-  assert.equal(y.cum[5],200);assert.equal(y.cum[6],500);
+  assert.equal(y.cum[0],hh===0?500:200);assert.equal(y.cum[hh],500);
 });
 ok('yesterday: plain 24-number array, top-level',()=>{
-  const arr=Array(24).fill(0);arr[4]=50;arr[7]=150;
+  const arr=Array(24).fill(0);arr[0]=50;arr[nowH()]=arr[nowH()]+150;
   T.set(base({top:{},snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString()}}));
   const d=T.mnDayState&&base();const dd=base();dd.yesterdayHourly=arr;T.set(dd);
   const y=T.mnYesterdayHourly(TODAY);
-  assert.ok(y,'overlay exists');assert.equal(y.cum[7],200,'plain array is hour-indexed and cumulated');
+  assert.ok(y,'overlay exists');assert.equal(y.cum[nowH()],200,'plain array is hour-indexed and cumulated');
 });
 ok('yesterday: retail key + combined adds on top; composition filter',()=>{
-  const d=base();d.yesterdayHourlyRetail=[{h:6,rev:100}];d.yesterdayHourly=[{h:6,rev:40}];
+  const hh=nowH();
+  const d=base();d.yesterdayHourlyRetail=[{h:hh,rev:100}];d.yesterdayHourly=[{h:hh,rev:40}];
   T.set(d);
   const both=T.mnYesterdayHourly(TODAY,{on:true,rt:true});
-  assert.equal(both.cum[6],140,'retail + combined summed');
+  assert.equal(both.cum[hh],140,'retail + combined summed');
   const onOnly=T.mnYesterdayHourly(TODAY,{on:true,rt:false});
-  assert.equal(onOnly.cum[6],40,'retail excluded when hero is online-only; combined still adds');
+  assert.equal(onOnly.cum[hh],40,'retail excluded when hero is online-only; combined still adds');
 });
 ok('yesterday: day-mismatched provenance is rejected',()=>{
   T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:[{h:5,rev:200}],yesterdayHourlyOnlineProv:{day:FUT}}}));
@@ -134,6 +137,66 @@ ok('undated day still hides Yesterday row and shows Undated',()=>{
   assert.ok(h.includes('Undated'),'Undated state shown');
 });
 
+ok('yesterday overlay: truncates at wall-clock hour on today, full day on past refDay',()=>{
+  // Kept behavior (approved with the Today port): on today the yesterday overlay is cut at the
+  // current wall-clock hour so it aligns with today's partial progress; the FULL yesterday total
+  // still comes from the one yesterday figure (note/marker/row), never from this series.
+  const full=Array(24).fill(100);
+  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:full,yesterdayHourlyOnlineProv:{day:YDAY}}}));
+  const y1=T.mnYesterdayHourly(TODAY);
+  let last1=-1;y1.cum.forEach((v,h)=>{if(v!=null)last1=h;});
+  assert.equal(last1,nowH(),'today ref: overlay ends at wall-clock hour '+nowH()+', got '+last1);
+  const d2=addD(YDAY,-1);
+  T.set(base({snapshot:{day:TODAY,revenue:100,readAt:new Date().toISOString(),yesterdayHourlyOnline:full,yesterdayHourlyOnlineProv:{day:d2}}}));
+  const y2=T.mnYesterdayHourly(YDAY);
+  let last2=-1;y2.cum.forEach((v,h)=>{if(v!=null)last2=h;});
+  assert.equal(last2,23,'past refDay: full day drawn, got '+last2);
+});
+
+// 4b. prior-day panel: close provenance + post-midnight retail reads
+const NOWISO=new Date().toISOString();
+const YNOON=new Date(YDAY+'T12:00:00+05:30').toISOString();
+function priorHtml(over){T.set(base(over));return T.priorDayContext();}
+ok('prior-day: final close provenance -> "Final close", post-midnight retail accepted',()=>{
+  const h=priorHtml({
+    snapshot:{day:YDAY,revenue:260511,orderCount:85,readAt:NOWISO,at:'3 Nov, 12:01 AM',dayComplete:true,reportingDay:YDAY,closeLabel:'final close for 2 Nov'},
+    retail:{day:YDAY,status:'ok',readAt:NOWISO,dayComplete:true,closeLabel:'final close for 2 Nov',stores:[{name:'PTG',sales:106630,bills:22,units:35,billList:[]}]}});
+  assert.ok(h!=='','panel renders');
+  assert.ok(h.includes('Retail'),'post-midnight retail snapshot shown');
+  assert.ok((h.match(/Final close/g)||[]).length>=2,'both channels show Final close');
+  assert.ok(!h.includes('not confirmed final'),'hardcoded not-final wording gone when all final');
+  assert.ok(h.includes('Final close figures, confirmed by the source'),'header reflects final close');
+});
+ok('prior-day: post-midnight retail read accepted without close provenance, still not final',()=>{
+  const h=priorHtml({
+    snapshot:{day:YDAY,revenue:2000,orderCount:2,readAt:NOWISO},
+    retail:{day:YDAY,status:'ok',readAt:NOWISO,stores:[{name:'PTG',sales:500,bills:1,units:1,billList:[]}]}});
+  assert.ok(h.includes('Retail'),'retail accepted when read after midnight');
+  assert.ok(h.includes('not confirmed final'),'not-final wording kept without provenance');
+  assert.ok(!h.includes('Final close'),'no final wording without provenance');
+});
+ok('prior-day: dayComplete with mismatched reportingDay is not final',()=>{
+  const h=priorHtml({
+    snapshot:{day:YDAY,revenue:2000,orderCount:2,readAt:NOWISO,dayComplete:true,reportingDay:'1999-01-01'},
+    retail:null});
+  assert.ok(h.includes('not confirmed final'),'mismatched reportingDay not final');
+  assert.ok(!h.includes('Final close'),'no final wording on day mismatch');
+});
+ok('prior-day: same-day retail read still accepted (regression), retail dayComplete binds to retail.day',()=>{
+  const h=priorHtml({
+    snapshot:{day:YDAY,revenue:2000,orderCount:2,readAt:NOWISO,dayComplete:true,reportingDay:YDAY},
+    retail:{day:YDAY,status:'ok',readAt:YNOON,dayComplete:true,stores:[{name:'PTG',sales:500,bills:1,units:1,billList:[]}]}});
+  assert.ok(h.includes('Retail'),'same-day read still accepted');
+  assert.ok((h.match(/Final close/g)||[]).length>=2,'retail dayComplete alone marks retail final');
+});
+ok('prior-day: retail read for today is not shown as a prior day',()=>{
+  const h=priorHtml({
+    snapshot:{day:YDAY,revenue:2000,orderCount:2,readAt:NOWISO},
+    retail:{day:TODAY,status:'ok',readAt:NOWISO,stores:[{name:'PTG',sales:500,bills:1,units:1,billList:[]}]}});
+  assert.ok(h.includes('Online'),'online still shown');
+  assert.ok(!h.includes('Retail'),'todays retail not a prior day');
+});
+
 // 5. mixed: hero online-only -> marker/note use online-only yesterday
 ok('mixed: yesterday marker/note match hero composition',()=>{
   const h=todayHtml({history:[{d:YDAY,rev:4000}],retailHistory:[{d:YDAY,rev:1000}],
@@ -158,11 +221,13 @@ ok('7D: legend day-suffixed, half cards dated, no "today" counts',()=>{
 // 7. fresh render sanity: single Share/Settings rows, hollow dot, legend matches drawing
 ok('fresh: one Share row, one Settings row, retail series drawn dashed',()=>{
   const oth=nowH();
-  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:9,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
-    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now()-3600e3,items:[{qty:1}]}]}]}});
+  const h=todayHtml({snapshot:{day:TODAY,revenue:1500,orderCount:2,readAt:new Date().toISOString(),todayHourlyOnline:[{h:oth,rev:1500}],todayHourlyOnlineProv:{day:TODAY,observedThroughHour:oth}},
+    retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[{no:'R-1',amt:300,_ms:Date.now(),items:[{qty:1}]}]}]}});
   assert.equal((h.match(/data-share="1"/g)||[]).length,1,'one Share row');
   assert.equal((h.match(/data-pm="1"/g)||[]).length,1,'one Settings row');
-  assert.ok(h.includes('class="mn-rt"'),'retail series drawn (dashed, matches legend)');
+  const hr=T.mnTodayHourly();
+  assert.ok(hr.cumRt&&hr.cumRt.some(p=>p&&p.v!=null),'retail series present (legend swatch matches a real series)');
+  assert.ok(nowH()<1||h.includes('class="mn-rt"'),'retail path drawn when the series has 2+ points (single-point midnight hour draws no line - known, unchanged)');
   assert.ok(!h.includes('class="mn-cmp"'),'no dashed yesterday overlay in hourly chart');
 });
 

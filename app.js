@@ -1226,12 +1226,16 @@ function priorDayContext(){
  const dateLabel=d=>{const p=new Date(d+'T12:00:00+05:30');return p.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',year:'numeric'})};
  const sum=(rows,k)=>Array.isArray(rows)&&rows.length&&rows.every(r=>num(r[k])!==null)?rows.reduce((t,r)=>t+num(r[k]),0):null;
  const oDay=s&&s.day,rStamp=R&&Date.parse(R.readAt||''),rReadDay=Number.isFinite(rStamp)?new Date(rStamp+19800000).toISOString().slice(0,10):null,rDay=R&&R.day;
- const online=validDay(oDay)&&rollStale(s),retail=validDay(rDay)&&rReadDay===rDay&&!retailReady(R);
+ const online=validDay(oDay)&&rollStale(s),retail=validDay(rDay)&&rReadDay!=null&&rReadDay>=rDay&&rReadDay<=iso&&!retailReady(R);
  if(!online&&!retail)return '';
+ /* Final close is same-day-bound provenance: online snapshot.reportingDay must match its day;
+    retail carries no reportingDay, so dayComplete binds to retail.day (its reporting day). */
+ const oFinal=online&&s.dayComplete===true&&typeof s.reportingDay==='string'&&s.reportingDay===oDay;
+ const rFinal=retail&&R.dayComplete===true;
  const money=v=>v===null?'Amount unavailable':inr(v);
- let h='<section class="prior-day-context" aria-label="Last available day"><div class="prior-day-title"><span>LAST AVAILABLE DAY</span><h2>While today catches up.</h2></div><p class="note prior-day-warning">Older source readings, not today\'s sales. These are not confirmed final totals.</p>';
- if(online)h+='<article class="prior-day-channel"><div class="prior-day-heading"><span>Online</span><span>'+esc(dateLabel(oDay))+'</span></div><b class="prior-day-value">'+SV(money(num(s.revenue)))+'</b><p class="note">Source read: '+esc(s.at||s.asOf||'time unavailable')+'</p><p class="note prior-day-status">Last snapshot only · not confirmed final</p></article>';
- if(retail)h+='<article class="prior-day-channel"><div class="prior-day-heading"><span>Retail</span><span>'+esc(dateLabel(rDay))+'</span></div><b class="prior-day-value">'+SV(money(sum(R.stores,'sales')))+'</b><p class="note">Source read: '+esc(retailTime(R))+'</p><p class="note prior-day-status">Last snapshot only · not confirmed final</p></article>';
+ let h='<section class="prior-day-context" aria-label="Last available day"><div class="prior-day-title"><span>LAST AVAILABLE DAY</span><h2>While today catches up.</h2></div><p class="note prior-day-warning">Older source readings, not today\'s sales.'+(((!online||oFinal)&&(!retail||rFinal))?' Final close figures, confirmed by the source.':' These are not confirmed final totals.')+'</p>';
+ if(online)h+='<article class="prior-day-channel"><div class="prior-day-heading"><span>Online</span><span>'+esc(dateLabel(oDay))+'</span></div><b class="prior-day-value">'+SV(money(num(s.revenue)))+'</b><p class="note">Source read: '+esc(s.at||s.asOf||'time unavailable')+'</p><p class="note prior-day-status">'+(oFinal?'Final close':'Last snapshot only · not confirmed final')+'</p></article>';
+ if(retail)h+='<article class="prior-day-channel"><div class="prior-day-heading"><span>Retail</span><span>'+esc(dateLabel(rDay))+'</span></div><b class="prior-day-value">'+SV(money(sum(R.stores,'sales')))+'</b><p class="note">Source read: '+esc(retailTime(R))+'</p><p class="note prior-day-status">'+(rFinal?'Final close':'Last snapshot only · not confirmed final')+'</p></article>';
  return h+'<p class="note prior-day-separate">Sources stay separate. Today remains unknown until each source is read for '+esc(dateLabel(iso))+'.</p></section>';
 }
 function rolloverCompose(main){
@@ -2235,6 +2239,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
  if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
 if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.addEventListener('scroll',()=>{if(__tk)return;__tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0;document.body.classList.toggle('mn-hide-pill',y>80&&y>__ly+6);if(y<__ly-6||y<=80)document.body.classList.remove('mn-hide-pill');__ly=y;__tk=false;});},{passive:true});}
 /*MN END*/
-export const __mnTest={set:d=>{data=d},mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail};
+export const __mnTest={set:d=>{data=d},mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext};
 
 
