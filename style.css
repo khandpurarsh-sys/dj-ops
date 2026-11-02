@@ -2806,6 +2806,9 @@ body.mn-tab #feed-state.open>div{display:block;padding-top:4px;font-size:12px;co
 :root[data-halo-palette="midnight"] body.lay-halo .mn-sub2{font-size:12px;color:#9b9da6;display:block}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-legend{display:flex;gap:18px;font-size:12px;color:#b9bfc9;margin:12px 0 4px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-legend span{display:flex;align-items:center;gap:7px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2w{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:#b9bfc9}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2 b{color:#ece7da;font-weight:600;white-space:nowrap}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch{width:8px;height:8px;border-radius:50%;background:#e0c897;display:inline-block}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch.dash{background:transparent;border-top:2px dashed #8f96a3;border-radius:0;width:16px;height:0}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch.dim{background:#5c6370}
