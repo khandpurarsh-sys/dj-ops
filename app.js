@@ -2011,16 +2011,26 @@ function mnTodayHourly(){const s=data.snapshot,OI=ordInfo(s),ds=mnDayState();con
  let note='';
  if(first!=null&&first>0)note='Reads earlier '+(ds.refDay===IST()?'today':'on '+mnDayLbl(ds.refDay))+' were not retained, so the first read of the day includes those sales - the line starts at '+mnFmtH(first)+'.';
  return{cum,approx,feed,note,empty:first==null};}
-function mnYesterdayHourly(refDay){const rd=refDay||IST(),yi=addD(rd,-1),per=Array(24).fill(0);let hasOn=false,hasRt=false;
- const s=data.snapshot,Y=A(s&&s.yesterdayHourlyOnline)||[];
- if(Y.length&&Y.some(x=>mnNum(x&&x.h)!=null)){const pk=Object.keys(s||{}).find(k=>/esterdayHourly/i.test(k)&&s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&typeof s[k].day==='string');if(!pk||s[pk].day===yi){Y.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null){per[h]+=r;hasOn=true;}});}}
- const hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);const H=hr&&A(hr.hourly);
- if(H&&H.length&&H.some(x=>mnFeedHour(x.h)!=null)){H.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null){per[h]+=Number(x.sales||0);hasRt=true;}});}
- if(!hasOn&&!hasRt)return null;
+function mnYesterdayHourly(refDay,inc){const rd=refDay||IST(),yi=addD(rd,-1),per=Array(24).fill(0);let hasOn=false,hasRt=false,hasComb=false;
+ const want=inc||{on:true,rt:true};
+ const dayOK=root=>{const pk=Object.keys(root||{}).find(k=>/esterdayHourly/i.test(k)&&root[k]&&typeof root[k]==='object'&&!Array.isArray(root[k])&&typeof root[k].day==='string');return !pk||root[pk].day===yi;};
+ const pour=(arr,kind)=>{if(!Array.isArray(arr)||!arr.length)return;
+  if(arr.every(x=>x==null||typeof x==='number')){if(arr.length===24)arr.forEach((v,h)=>{const r=mnNum(v);if(r!=null){per[h]+=r;if(kind==='on')hasOn=true;else if(kind==='rt')hasRt=true;else hasComb=true;}});return;}
+  arr.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null){per[h]+=r;if(kind==='on')hasOn=true;else if(kind==='rt')hasRt=true;else hasComb=true;}});};
+ const s=data.snapshot||{};
+ const pick=k=>A(s[k])||A(data[k]);
+ if(dayOK(s)&&dayOK(data)){
+  if(want.on)pour(pick('yesterdayHourlyOnline'),'on');
+  if(want.rt)pour(pick('yesterdayHourlyRetail'),'rt');
+  pour(pick('yesterdayHourly'),'comb');}
+ if(want.rt){const hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);const H=hr&&A(hr.hourly);
+  if(H&&H.length&&H.some(x=>mnFeedHour(x.h)!=null)){H.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null){per[h]+=Number(x.sales||0);hasRt=true;}});}}
+ const miss=[];if(!hasComb){if(want.on&&!hasOn)miss.push('online');if(want.rt&&!hasRt)miss.push('retail');}
+ if(!hasOn&&!hasRt&&!hasComb)return null;
  let first=null;for(let h=0;h<24;h++)if(per[h]>0){first=h;break;}if(first==null)return null;
  const lastH=rd===IST()?Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24:23;
  const cum=Array(24).fill(null);let run=0;for(let h=first;h<=lastH;h++){run+=per[h];cum[h]=run;}
- return{cum,partial:hasOn&&hasRt?null:(hasOn?'retail':'online')};}
+ return{cum,partial:miss.length===1?miss[0]:null};}
 function mnHourChart(hr,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=70;
  const pts=hr.cum,yd=opts.yd!=null?Number(opts.yd):null,cmp=opts.cmp||null;
  if(hr.empty)return '<p class="mn-note2">'+esc(opts.emptyMsg||'No hourly reads in the feed yet today - the graph appears after the first read.')+'</p>';
@@ -2075,7 +2085,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
  const legend='<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOn+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch dash"></i>Retail '+mnL(rtRaw)+sfxRt+'</span>':'')+'</div>';
  let revCard;
  if(mnRevMode==='today'){
-  const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay),yTot=hideY?null:yd.comb;
+  const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay,{on:inclOn,rt:inclRt}),yTot=hideY?null:yd.comb;
   const head=hr.feed?'Hourly shape from the feed':'Approximate: orders and bills by their listed times';
   const tail=(ds.refDay===IST()?'this hour still counting':(ds.bothUndated?'still counting':'full day'))+(yTot!=null?' · - - yesterday '+mnL(yTot)+' total':'');
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
