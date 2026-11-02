@@ -1946,17 +1946,19 @@ function mnDayState(){const s=data.snapshot||{},R=data.retail||{};
  const on=vd(s.day),rt=vd(R.day),today=IST();
  const st=d=>d==null?'undated':(d===today?'today':(d<today?'stale':'undated'));
  const onSt=st(on),rtSt=st(rt),anyToday=onSt==='today'||rtSt==='today';
- const refDay=anyToday?today:([on,rt].filter(d=>d&&d<=today).sort().pop()||null);
  const bothUndated=onSt==='undated'&&rtSt==='undated';
- let title;if(anyToday)title="Today's Overview";else if(bothUndated||!refDay)title='Overview';else title=mnDayLbl(refDay)+' Overview';
+ /* Dated-but-stale reads never stand in for today: after IST midnight the day is today, with unknown figures. */
+ const noToday=!anyToday&&!bothUndated&&(onSt==='stale'||rtSt==='stale');
+ const refDay=(anyToday||noToday)?today:([on,rt].filter(d=>d&&d<=today).sort().pop()||null);
+ let title;if(anyToday||noToday)title="Today's Overview";else if(bothUndated||!refDay)title='Overview';else title=mnDayLbl(refDay)+' Overview';
  const tm=v=>{const t=Date.parse(v||'');return Number.isFinite(t)?new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM'):null;};
  const rAt=tm(s.readAt||s.at)||tm(R.readAt||R.at);
  let banner='';
  if(bothUndated)banner='Data day unknown - freshness unverified (online not dated, retail not dated)';
- else{const st2=[];if(onSt==='stale')st2.push('online showing '+mnDayLbl(on));if(rtSt==='stale')st2.push('retail showing '+mnDayLbl(rt));if(onSt==='undated')st2.push('online not dated');if(rtSt==='undated')st2.push('retail not dated');
+ else{const st2=[];if(onSt==='stale')st2.push('online last read '+mnDayLbl(on));if(rtSt==='stale')st2.push('retail last read '+mnDayLbl(rt));if(onSt==='undated')st2.push('online not dated');if(rtSt==='undated')st2.push('retail not dated');
   if(st2.length&&st2.every(x=>/not dated$/.test(x)))banner='Data day unknown - freshness unverified ('+st2.join(', ')+')';
   else if(st2.length)banner="Today's numbers not published yet - "+st2.join(', ')+(rAt?' (refreshed '+rAt+')':'');}
- return{on,rt,onSt,rtSt,anyToday,refDay:refDay||today,bothUndated,title,banner};}
+ return{on,rt,onSt,rtSt,anyToday,noToday,refDay:refDay||today,bothUndated,title,banner};}
 function mnWindowSeries(rng){const iso=IST(),H=A(data.history)||[],RH=A(data.retailHistory)||[],out=[];
  for(let i=rng;i>=1;i--){const d=addD(iso,-i);const e=H.find(z=>z.d===d),on=e?mnNum(e.rev):null;const r=RH.find(z=>z.d===d),rt=r?mnNum(r.rev!=null?r.rev:r.sales):null;
   out.push({d,on,rt,tot:on!=null||rt!=null?(on||0)+(rt||0):null});}
@@ -1994,7 +1996,7 @@ function mnSeries(days){const iso=IST(),H=A(data.history)||[],RH=A(data.retailHi
  return out;}
 const mnFmtH=h=>{h=((h%24)+24)%24;return (h%12===0?12:h%12)+' '+(h<12?'AM':'PM');};
 const mnHasData=ser=>ser.some(p=>p&&p.v!=null);
-const mnRevPills=ds=>{const l0=!ds||ds.anyToday?'Today':(ds.bothUndated?'Undated':mnDayLbl(ds.refDay));return '<span class="mn-pills">'+[['today',l0],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="revmode:'+v+'" class="'+(mnRevMode===v?'on':'')+'">'+l+'</button>').join('')+'</span>';};
+const mnRevPills=ds=>{const l0=!ds||ds.anyToday||ds.noToday?'Today':(ds.bothUndated?'Undated':mnDayLbl(ds.refDay));return '<span class="mn-pills">'+[['today',l0],['7','7D'],['30','30D']].map(([v,l])=>'<button data-mn="revmode:'+v+'" class="'+(mnRevMode===v?'on':'')+'">'+l+'</button>').join('')+'</span>';};
 const mnHourOf=o=>{const v=o&&(o.ts!=null?o.ts:o.at);if(v==null||v==='')return null;const d=typeof v==='number'?new Date(v<1e11?v*1000:v):new Date(v);if(isNaN(d))return null;if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return null;return Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;};
 const mnFeedHour=h=>{const m=String(h==null?'':h).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([aApP])[mM]/);if(!m)return null;let hr=Number(m[1])%12;if(/p/i.test(m[3]))hr+=12;return hr;};
 function mnTodayHourly(){const s=data.snapshot,OI=ordInfo(s),ds=mnDayState();const on=Array(24).fill(0),rt=Array(24).fill(0);let rtH=false,approx=false,feed=false;
@@ -2061,7 +2063,7 @@ function mnTodayNums(){const s=data.snapshot,OI=ordInfo(s),RL=rollStale(s),RR=re
  const on=RL?null:mnNum(s.revenue),rt=RR&&RT&&RT.every(z=>mnNum(z.sales)!=null)?RT.reduce((q,z)=>q+mnNum(z.sales),0):null,rb=RR&&RT&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null,ru=RR&&RT&&RT.every(z=>mnNum(z.units)!=null)?RT.reduce((q,z)=>q+mnNum(z.units),0):null;
  return{s,OI,RL,RR,RT,on,rt,rb,ru};}
 function mnYesterday(refDay){const yi=addD(refDay||IST(),-1),ho=(A(data.history)||[]).find(z=>z.d===yi),hr=(A(data.retailHistory)||[]).find(z=>z.d===yi);
- let o=ho?mnNum(ho.rev):mnNum(data.snapshot.revenuePrev);let r=hr?mnNum(hr.rev!=null?hr.rev:hr.sales):null;
+ let o=ho?mnNum(ho.rev):(rollStale(data.snapshot)||(mnDayState().onSt==='stale')?null:mnNum(data.snapshot.revenuePrev));let r=hr?mnNum(hr.rev!=null?hr.rev:hr.sales):null;
  if(r==null&&hr&&hr.by){const v=Object.values(hr.by).map(q=>mnNum(q&&(q.rev!=null?q.rev:q.sales)));if(v.length&&v.every(q=>q!=null))r=v.reduce((a,b)=>a+b,0);}
  return{o,r,comb:o!=null||r!=null?(o||0)+(r||0):null};}
 function mnBillsAll(){const out=[];(A(data.retail&&data.retail.stores)||[]).forEach(st=>(A(st.billList)||[]).forEach(b=>out.push({...b,store:st.name||'Store'})));
@@ -2071,9 +2073,10 @@ const mnBillQty=b=>{const I=A(b&&b.items);if(!I||!I.length)return null;let sold=
 function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.refDay);
  const R=data.retail,RT=R&&A(R.stores);
  const rAvail=!!(R&&RT&&RT.length&&R.status!=='not_read_today'&&!/none yet/i.test(String(R.at||''))&&RT.every(z=>mnNum(z.sales)!=null));
- const onRaw=mnNum(s&&s.revenue);
- const rtRaw=rAvail?RT.reduce((q,z)=>q+mnNum(z.sales),0):null;
- const rb=rAvail&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null;
+ const onStale=ds.onSt==='stale',rtStale=ds.rtSt==='stale',dLbl=mnDayLbl(IST());
+ const onRaw=onStale?null:mnNum(s&&s.revenue);
+ const rtRaw=rAvail&&!rtStale?RT.reduce((q,z)=>q+mnNum(z.sales),0):null;
+ const rb=rAvail&&!rtStale&&RT.every(z=>mnNum(z.bills)!=null)?RT.reduce((q,z)=>q+mnNum(z.bills),0):null;
  const avgB=rAvail&&rb&&rtRaw?Math.round(rtRaw/rb):null;
  const inclOn=ds.onSt==='today'||ds.onSt==='undated'||(ds.onSt==='stale'&&ds.on===ds.refDay&&!ds.anyToday);
  const inclRt=ds.rtSt==='today'||ds.rtSt==='undated'||(ds.rtSt==='stale'&&ds.rt===ds.refDay&&!ds.anyToday);
@@ -2086,16 +2089,16 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
  const hideY=ds.bothUndated;
  const comp=(onH!=null&&rtH2!=null)?'Online + Retail':(onH!=null?'Online':(rtH2!=null?'Retail':'Online + Retail'));
  const wMode=mnRevMode!=='today',sfxOnW=wMode?(ds.on&&ds.onSt!=='undated'?' · '+mnDayLbl(ds.on):' · not dated'):sfxOn,sfxRtW=wMode?(ds.rt&&ds.rtSt!=='undated'?' · '+mnDayLbl(ds.rt):' · not dated'):sfxRt;
- const legendF=rtDrawn=>'<div class="mn-legend">'+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOnW+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch '+(rtDrawn?'dash':'dim')+'"></i>Retail '+mnL(rtRaw)+sfxRtW+'</span>':'')+'</div>';
+ const legendF=rtDrawn=>'<div class="mn-legend">'+(onStale?'<span><i class="mn-swatch dim"></i>Online last read '+mnDayLbl(ds.on)+'</span> ':'')+(rtStale?'<span><i class="mn-swatch dim"></i>Retail last read '+mnDayLbl(ds.rt)+'</span>':'')+(onRaw!=null?'<span><i class="mn-swatch"></i>Online '+mnL(onRaw)+sfxOnW+'</span> ':'')+(rtRaw!=null?'<span><i class="mn-swatch '+(rtDrawn?'dash':'dim')+'"></i>Retail '+mnL(rtRaw)+sfxRtW+'</span>':'')+'</div>';
  let revCard;
  if(mnRevMode==='today'){
   const hr=mnTodayHourly(),yc=hideY?null:mnYesterdayHourly(ds.refDay,{on:inclOn,rt:inclRt}),yTot=hideY?null:(inclOn&&inclRt?yd.comb:(inclOn?yd.o:(inclRt?yd.r:null)));
   const head=hr.feed?'Hourly shape from the feed':'Approximate: orders and bills by their listed times';
   const tail=(ds.refDay===IST()?'this hour still counting':(ds.bothUndated?'still counting':'full day'))+(yTot!=null?' · - - yesterday '+mnL(yTot)+' total':'');
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
-  +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">${comp}, hour by hour</div>`
+  +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">${ds.noToday&&comb==null?'No read yet for '+dLbl:comp+', hour by hour'}</div>`
   +legendF(hr.cumRt!=null)
-  +mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'})
+  +(ds.noToday&&comb==null?'':mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'}))
   +(hr.empty?'':'<p class="mn-note2">'+esc(head+' · '+tail)+'</p>')
   +(hr.note&&!hr.feed?'<p class="mn-note2">'+esc(hr.note)+'</p>':'')
   +(yc&&yc.partial?'<p class="mn-note2">Dotted line is yesterday\'s '+(yc.partial==='retail'?'online':'retail')+' shape only - the '+(yc.partial==='retail'?'retail':'online')+' hourly split is not supplied.</p>':'')
@@ -2115,15 +2118,14 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   +'</section>';
  }
  const oc=OI.n!=null?ordN(OI)+' order'+(OI.n===1?'':'s')+' '+(wMode?(ds.on&&ds.onSt!=='undated'?'on '+mnDayLbl(ds.on):'(not dated)'):subOn):'—';
- const grid=`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${onRaw==null?'—':inr(onRaw)}</b><span class="mn-sub2">${oc}</span></section>`
- +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${rtRaw==null?'—':inr(rtRaw)}</b><span class="mn-sub2">${rAvail?(rb==null?'—':rb+' bill'+(rb===1?'':'s')+' '+(wMode?(ds.rt&&ds.rtSt!=='undated'?'on '+mnDayLbl(ds.rt):'(not dated)'):subRt)):'Not read yet'}</span><div class="mn-drow">${rAvail&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div></section></div>`;
- const bills=mnBillsAll().slice(0,6);
+ const grid=`<div class="mn-grid2"><section class="mn-card" data-d="r:rev"><span class="mn-eyebrow">Online sales</span><b class="mn-num">${onRaw==null?'—':inr(onRaw)}</b><span class="mn-sub2">${onStale?'no orders read yet for '+dLbl:oc}</span></section>`
+ +`<section class="mn-card" data-t="retail"><span class="mn-eyebrow">Retail sales</span><b class="mn-num">${rtRaw==null?'—':inr(rtRaw)}</b><span class="mn-sub2">${rtStale?'no bills read yet for '+dLbl:rAvail?(rb==null?'—':rb+' bill'+(rb===1?'':'s')+' '+(wMode?(ds.rt&&ds.rtSt!=='undated'?'on '+mnDayLbl(ds.rt):'(not dated)'):subRt)):'Not read yet'}</span><div class="mn-drow">${rAvail&&avgB?`<span class="mn-vs2">${inr(avgB)} avg bill</span>`:''}</div></section></div>`;
+ const bills=rtStale?[]:mnBillsAll().slice(0,6);
  const billsHtml=bills.length?`<section class="mn-card mn-list">${bills.map(b=>{const qc=mnBillQty(b);return `<div class="mn-row" data-d="rb:${esc(b.store)}||${esc(b.no||'')}"><span class="mn-ava">${esc(String(b.store||'S').trim()[0].toUpperCase())}</span><div class="mn-rm"><b>${esc(b.no||'Bill')}</b><span>${esc(b.store||'')} · ${esc(b.customer||'Walk-in')}${qc?' · '+esc(qc):(b.time?' · '+esc(b.time):'')}</span></div><b class="mn-ramt">${b.amt==null?'—':inr(b.amt)}</b></div>`}).join('')}</section>`:none('No retail bills supplied today.');
  return mnHead(ds.title)+mnFresh()
  +(ds.banner?'<p class="mn-note2" style="margin:-2px 0 12px">'+esc(ds.banner)+'</p>':'')
  +revCard+grid
- +`<div class="mn-sech"><h3>Latest bills</h3><span class="mn-note" data-d="bills:retail" style="cursor:pointer">by bill no. ›</span></div>`
- +billsHtml
+ +(rtStale?'':`<div class="mn-sech"><h3>Latest bills</h3><span class="mn-note" data-d="bills:retail" style="cursor:pointer">by bill no. ›</span></div>`+billsHtml)
  +(hideY?'':`<div class="mn-yday" data-overview-day="yesterday"><span>Yesterday</span><b>${yd.comb!=null?inr(yd.comb):'See breakdown'} ›</b></div>`)
  +`<div class="mn-yday" data-share="1"><span>Share today's summary<br><small class="mn-sub3">As-of times included</small></span><b>›</b></div>`
  +`<div class="mn-yday" data-pm="1"><span>Settings<br><small class="mn-sub3">Privacy mode: ${pmOn()?'On':'Off'}</small></span><b>›</b></div>`

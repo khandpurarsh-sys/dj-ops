@@ -204,7 +204,30 @@ ok('mixed: yesterday marker/note match hero composition',()=>{
     retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]}});
   assert.ok(h.includes('yesterday ₹4K total'),'note uses online-only yesterday, got: '+(h.match(/yesterday [^ ]+ total/)||['none'])[0]);
   assert.ok(!h.includes('yesterday ₹5K total'),'combined yesterday not used for the chart note');
-  assert.ok(h.includes('Retail ₹3K · '+LBL(YDAY)),'retail legend carries stale-day suffix');
+  assert.ok(h.includes('Retail last read '+LBL(YDAY)),'stale retail legend says last read, no figure');
+  assert.ok(!h.includes('Retail ₹3K'),'stale retail figure not shown as today');
+});
+
+// 5b. IST-midnight rollover: dated-but-stale reads never fill Today
+ok('midnight: both sources stale -> dash hero, no fake zero, no stale figures, bills hidden',()=>{
+  const st=[{name:'PTG',sales:106630,bills:22,units:35,billList:[{no:'R-9',amt:500,items:[{qty:1}]}]}];
+  T.set(base({snapshot:{day:YDAY,revenue:260511,orderCount:85,readAt:YNOON,revenuePrev:111},retail:{day:YDAY,status:'ok',at:'2 Nov, 11:30 PM',stores:st},history:[{d:addD(YDAY,-1),rev:9}],retailHistory:[]}));
+  const ds=T.mnDayState();assert.equal(ds.refDay,TODAY);assert.ok(ds.noToday);
+  const h=T.mnToday();
+  assert.ok(h.includes('No read yet for '+LBL(TODAY)),'hero says no read yet');
+  assert.ok(h.includes('<div class="mn-big">—</div>'),'hero is a dash');
+  assert.ok(h.includes('no orders read yet for '+LBL(TODAY))&&h.includes('no bills read yet for '+LBL(TODAY)),'cards');
+  assert.ok(h.includes('Online last read '+LBL(YDAY))&&h.includes('Retail last read '+LBL(YDAY)),'legend');
+  assert.ok(!h.includes('2.6')&&!h.includes('260,511')&&!h.includes('1.07')&&!h.includes('106,630')&&!h.includes('₹0'),'no stale or zero figures');
+  assert.ok(!h.includes('Latest bills')&&!h.includes('R-9'),'latest bills hidden');
+  assert.ok(h.includes('data-overview-day="yesterday"'),'yesterday stays reachable');
+  assert.ok(!h.includes('>₹111'),'stale revenuePrev not used as yesterday');
+});
+ok('midnight: online fresh today, retail stale -> only retail dropped',()=>{
+  T.set(base({snapshot:{day:TODAY,revenue:1500,orderCount:1,readAt:NOWISO},retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[{no:'R-1',amt:3000,items:[{qty:1}]}]}]}}));
+  const h=T.mnToday();
+  assert.ok(h.includes('1.5K')||h.includes('1,500'),'online today shown');
+  assert.ok(h.includes('no bills read yet for '+LBL(TODAY))&&!h.includes('Latest bills'),'retail dropped, bills hidden');
 });
 
 // 6. 7D window: legend + half cards use window-appropriate labels
@@ -227,7 +250,7 @@ ok('fresh: one Share row, one Settings row, retail series drawn dashed',()=>{
   assert.equal((h.match(/data-pm="1"/g)||[]).length,1,'one Settings row');
   const hr=T.mnTodayHourly();
   assert.ok(hr.cumRt&&hr.cumRt.some(p=>p&&p.v!=null),'retail series present (legend swatch matches a real series)');
-  assert.ok(nowH()<1||h.includes('class="mn-rt"'),'retail path drawn when the series has 2+ points (single-point midnight hour draws no line - known, unchanged)');
+  assert.ok(nowH()<2||h.includes('class="mn-rt"'),'retail path drawn when the series has 2+ points (single-point midnight hour draws no line - known, unchanged)');
   assert.ok(!h.includes('class="mn-cmp"'),'no dashed yesterday overlay in hourly chart');
 });
 
