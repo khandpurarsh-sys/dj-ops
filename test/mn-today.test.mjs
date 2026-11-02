@@ -204,21 +204,22 @@ ok('mixed: yesterday marker/note match hero composition',()=>{
     retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]}});
   assert.ok(h.includes('yesterday ₹4K total'),'note uses online-only yesterday, got: '+(h.match(/yesterday [^ ]+ total/)||['none'])[0]);
   assert.ok(!h.includes('yesterday ₹5K total'),'combined yesterday not used for the chart note');
-  assert.ok(h.includes('Retail last read '+LBL(YDAY)),'stale retail legend says last read, no figure');
+  assert.ok(h.includes('Retail ₹0 · no bills read yet, last checked'),'unread retail legend shows zero + note');
   assert.ok(!h.includes('Retail ₹3K'),'stale retail figure not shown as today');
 });
 
 // 5b. IST-midnight rollover: dated-but-stale reads never fill Today
-ok('midnight: both sources stale -> dash hero, no fake zero, no stale figures, bills hidden',()=>{
+ok('midnight: both stale -> online unknown, retail zero + note, no stale figures, bills hidden',()=>{
   const st=[{name:'PTG',sales:106630,bills:22,units:35,billList:[{no:'R-9',amt:500,items:[{qty:1}]}]}];
   T.set(base({snapshot:{day:YDAY,revenue:260511,orderCount:85,readAt:YNOON,revenuePrev:111},retail:{day:YDAY,status:'ok',at:'2 Nov, 11:30 PM',stores:st},history:[{d:addD(YDAY,-1),rev:9}],retailHistory:[]}));
   const ds=T.mnDayState();assert.equal(ds.refDay,TODAY);assert.ok(ds.noToday);
   const h=T.mnToday();
-  assert.ok(h.includes('No read yet for '+LBL(TODAY)),'hero says no read yet');
-  assert.ok(h.includes('<div class="mn-big">—</div>'),'hero is a dash');
-  assert.ok(h.includes('no orders read yet for '+LBL(TODAY))&&h.includes('no bills read yet for '+LBL(TODAY)),'cards');
-  assert.ok(h.includes('Online last read '+LBL(YDAY))&&h.includes('Retail last read '+LBL(YDAY)),'legend');
-  assert.ok(!h.includes('2.6')&&!h.includes('260,511')&&!h.includes('1.07')&&!h.includes('106,630')&&!h.includes('₹0'),'no stale or zero figures');
+  assert.ok(h.includes('Retail only, online not read yet · no read yet for '+LBL(TODAY)),'hero says retail only, no online read');
+  assert.ok(h.includes('<div class="mn-big">₹0</div>'),'hero retail zero');
+  assert.ok(h.includes('no orders read yet for '+LBL(TODAY)),'online card unknown, not zero');
+  assert.ok(h.includes('0 bills · no bills read yet, last checked 2 Nov, 11:30 PM'),'retail card zero + note, got: '+(h.match(/0 bills[^<]*/)||['none'])[0]);
+  assert.ok(h.includes('Online last read '+LBL(YDAY))&&h.includes('Retail ₹0 · no bills read yet, last checked'),'legend');
+  assert.ok(!h.includes('2.6')&&!h.includes('260,511')&&!h.includes('1.07')&&!h.includes('106,630')&&!h.includes('22 bills'),'no 2 Nov figures under Today');
   assert.ok(!h.includes('Latest bills')&&!h.includes('R-9'),'latest bills hidden');
   assert.ok(h.includes('data-overview-day="yesterday"'),'yesterday stays reachable');
   assert.ok(!h.includes('>₹111'),'stale revenuePrev not used as yesterday');
@@ -227,7 +228,7 @@ ok('midnight: online fresh today, retail stale -> only retail dropped',()=>{
   T.set(base({snapshot:{day:TODAY,revenue:1500,orderCount:1,readAt:NOWISO},retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[{no:'R-1',amt:3000,items:[{qty:1}]}]}]}}));
   const h=T.mnToday();
   assert.ok(h.includes('1.5K')||h.includes('1,500'),'online today shown');
-  assert.ok(h.includes('no bills read yet for '+LBL(TODAY))&&!h.includes('Latest bills'),'retail dropped, bills hidden');
+  assert.ok(h.includes('0 bills · no bills read yet, last checked')&&!h.includes('Latest bills')&&!h.includes('₹3K'),'retail zero + note, bills hidden, no 2 Nov retail');
 });
 
 // 6. 7D window: legend + half cards use window-appropriate labels
@@ -272,6 +273,22 @@ ok('retail 7D/30D: window ends yesterday, today partial excluded',()=>{
   const tot=RH.reduce((q,z)=>q+z.rev,0),fmtI=v=>v.toLocaleString('en-IN');
   assert.ok(h.includes('₹'+fmtI(tot)),'7D total = 7 completed days, got '+(h.match(/mn-big">[^<]*/)||['none'])[0]);
   assert.ok(!h.includes('₹'+fmtI(tot+50)),'today partial (50) not added to the total');
+});
+
+// 9. Retail tab: unread today shows zero + note, never yesterday's figures
+ok('retail tab: stale retail -> Today zero, 0 bills, note, no 2 Nov figures',()=>{
+  T.set(base({retail:{day:YDAY,status:'ok',readAt:new Date(YDAY+'T23:30:00+05:30').toISOString(),stores:[{name:'PTG',sales:106630,bills:22,units:35,billList:[{no:'R-9',amt:500,items:[{qty:1}]}]}]},retailHistory:[]}));
+  T.retRange('today');const h=T.mnRetail();
+  assert.ok(h.includes('no bills read yet, last checked'),'note present');
+  assert.ok(h.includes('<div class="mn-big">₹0</div>'),'card zero');
+  assert.ok(!h.includes('106,630')&&!h.includes('1.07L')&&!h.includes('22 bills'),'no 2 Nov retail under Today');
+  assert.ok(!h.includes('R-9')&&h.includes('No bills read yet today'),'2 Nov bill not listed under Today');
+});
+ok('retail tab: real read today unchanged',()=>{
+  T.set(base({retail:{day:TODAY,status:'ok',readAt:new Date().toISOString(),stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[]}]}}));
+  T.retRange('today');const h=T.mnRetail();
+  assert.ok(h.includes('3,000')||h.includes('₹3K'),'real figure shown');
+  assert.ok(!h.includes('no bills read yet'),'no unread note on a real read');
 });
 
 console.log('\nALL PASS ('+n+')');process.exit(0);
