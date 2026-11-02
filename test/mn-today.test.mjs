@@ -217,7 +217,7 @@ ok('midnight: both stale -> online unknown, retail zero + note, no stale figures
   assert.ok(h.includes('Retail only, online not read yet · no read yet for '+LBL(TODAY)),'hero says retail only, no online read');
   assert.ok(h.includes('<div class="mn-big">₹0</div>'),'hero retail zero');
   assert.ok(h.includes('no orders read yet for '+LBL(TODAY)),'online card unknown, not zero');
-  assert.ok(h.includes('0 bills · no bills read yet, last checked 2 Nov, 11:30 PM'),'retail card zero + note, got: '+(h.match(/0 bills[^<]*/)||['none'])[0]);
+  assert.ok(h.includes('0 bills today · no bills read yet, last checked 2 Nov, 11:30 PM'),'retail card zero + note, got: '+(h.match(/0 bills[^<]*/)||['none'])[0]);
   assert.ok(h.includes('Online last read '+LBL(YDAY))&&h.includes('Retail ₹0 · no bills read yet, last checked'),'legend');
   assert.ok(!h.includes('2.6')&&!h.includes('260,511')&&!h.includes('1.07')&&!h.includes('106,630')&&!h.includes('22 bills'),'no 2 Nov figures under Today');
   assert.ok(!h.includes('Latest bills')&&!h.includes('R-9'),'latest bills hidden');
@@ -228,7 +228,7 @@ ok('midnight: online fresh today, retail stale -> only retail dropped',()=>{
   T.set(base({snapshot:{day:TODAY,revenue:1500,orderCount:1,readAt:NOWISO},retail:{day:YDAY,status:'ok',stores:[{name:'PTG',sales:3000,bills:2,units:3,billList:[{no:'R-1',amt:3000,items:[{qty:1}]}]}]}}));
   const h=T.mnToday();
   assert.ok(h.includes('1.5K')||h.includes('1,500'),'online today shown');
-  assert.ok(h.includes('0 bills · no bills read yet, last checked')&&!h.includes('Latest bills')&&!h.includes('₹3K'),'retail zero + note, bills hidden, no 2 Nov retail');
+  assert.ok(h.includes('0 bills today · no bills read yet, last checked')&&!h.includes('Latest bills')&&!h.includes('₹3K'),'retail zero + note, bills hidden, no 2 Nov retail');
 });
 
 // 6. 7D window: legend + half cards use window-appropriate labels
@@ -289,6 +289,33 @@ ok('retail tab: real read today unchanged',()=>{
   T.retRange('today');const h=T.mnRetail();
   assert.ok(h.includes('3,000')||h.includes('₹3K'),'real figure shown');
   assert.ok(!h.includes('no bills read yet'),'no unread note on a real read');
+});
+
+// 10. review follow-ups: window modes, share text, hourly, banner wording
+const stRt=()=>base({snapshot:{day:YDAY,revenue:260511,orderCount:85,readAt:YNOON},retail:{day:YDAY,status:'ok',readAt:new Date(YDAY+'T23:30:00+05:30').toISOString(),stores:[{name:'PTG',sales:106630,bills:22,units:35,billList:[{no:'R-9',amt:500,_ms:new Date(YDAY+'T22:00:00+05:30').getTime(),items:[{qty:1}]}]}],hourly:[{h:'10 PM',sales:500}]},history:[{d:addD(YDAY,-1),rev:9000}],retailHistory:[{d:addD(YDAY,-1),rev:7000}]});
+ok('7D/30D with retail unread: legend carries no Retail Rs 0 beside a window total; card says today',()=>{
+  for(const m of ['7','30']){T.set(stRt());T.mode(m);const h=T.mnToday();T.mode('today');
+    assert.ok(!h.includes('Retail ₹0'),m+'D legend has no Retail ₹0');
+    assert.ok(h.includes('Retail last checked'),m+'D legend says last checked');
+    assert.ok(h.includes('0 bills today · no bills read yet'),m+'D retail card is explicitly today');
+    assert.ok(!h.includes('106,630')&&!h.includes('1.07L')&&!h.includes('22 bills'),m+'D no 2 Nov retail figures');}
+});
+ok('Today hourly/cum retail cannot include 2 Nov bills or an old hourly feed',()=>{
+  T.set(stRt());const hr=T.mnTodayHourly();
+  assert.equal(hr.cumRt,null,'no retail series from a prior-day read');
+  T.set(Object.assign(stRt(),{retail:Object.assign(stRt().retail,{day:TODAY,status:'not_read_today'})}));
+  assert.equal(T.mnTodayHourly().cumRt,null,'not_read_today retail hourly feed ignored');
+});
+ok('share summary: unread retail is zero + note, never prior-day figures',()=>{
+  let txt='';Object.defineProperty(globalThis,'navigator',{value:{share:o=>{txt=o.text;return Promise.resolve()}},configurable:true});
+  T.set(stRt());T.shareSummary();
+  assert.ok(txt.includes('Retail: ₹0 · no bills read yet, last checked'),'share retail line: '+txt);
+  assert.ok(!txt.includes('1,06,630')&&!txt.includes('106,630'),'no 2 Nov retail in share');
+});
+ok('banner: per-source last read times, no ambiguous refreshed wording',()=>{
+  T.set(stRt());const ds=T.mnDayState();
+  assert.ok(/online last read .*11:41 PM|online last read/.test(ds.banner)&&ds.banner.includes('retail last read '+LBL(YDAY)+', 11:30 PM'),'banner: '+ds.banner);
+  assert.ok(!ds.banner.includes('refreshed'),'no refreshed wording');
 });
 
 console.log('\nALL PASS ('+n+')');process.exit(0);
