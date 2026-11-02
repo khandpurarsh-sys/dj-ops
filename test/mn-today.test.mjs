@@ -112,25 +112,26 @@ ok('yesterday: day-mismatched provenance is rejected',()=>{
   assert.equal(y,null);
 });
 
-// 4. delta pill edge cases (0.1.118 rules), verified line by line
+// 4. delta chips removed per user direction (2026-11-02): regression guard.
+// Arsh circled "X% vs yesterday full day" on Online sales + Retail store overview and said remove.
 function todayHtml(over){T.set(base(over));T.mode('today');return T.mnToday();}
-ok('delta: baseline exactly 1000 shows; under 1000 hidden',()=>{
+ok('delta chips removed: Online sales card renders no vs-yesterday chip',()=>{
   let h=todayHtml({snapshot:{day:TODAY,revenue:2000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
-  assert.ok(h.includes('100% vs yesterday'),'baseline 1000, +100% shown');
-  h=todayHtml({snapshot:{day:TODAY,revenue:2000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:999}]});
-  assert.ok(!h.includes('vs yesterday'),'baseline 999 hidden');
+  assert.ok(!h.includes('mn-delta'),'no mn-delta span');
+  assert.ok(!h.includes('vs yesterday'),'no vs-yesterday text');
+  assert.ok(h.includes('Online sales'),'card still renders');
 });
-ok('delta: |pct| over 999 hidden, 999 shown',()=>{
-  let h=todayHtml({snapshot:{day:TODAY,revenue:100000,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
-  assert.ok(!h.includes('vs yesterday'),'+9900% hidden');
-  h=todayHtml({snapshot:{day:TODAY,revenue:10990,orderCount:2,readAt:new Date().toISOString()},history:[{d:YDAY,rev:1000}]});
-  assert.ok(h.includes('999% vs yesterday'),'+999% shown');
+ok('delta chips removed: Retail store overview Today KPI has no delta',()=>{
+  T.set(base({retail:{day:TODAY,status:'ok',stores:[{name:'PTG',sales:5000,bills:3,units:3,billList:[]}]},retailHistory:[{d:YDAY,rev:3000}]}));
+  const h=T.mnRetail();
+  assert.ok(!h.includes('mn-delta'),'no mn-delta span in retail overview');
+  assert.ok(h.includes('Today'),'Today KPI still renders');
+  assert.ok(h.includes('Avg bill'),'other KPIs still render');
 });
-ok('delta: undated day hides chip and Yesterday row',()=>{
+ok('undated day still hides Yesterday row and shows Undated',()=>{
   const h=todayHtml({snapshot:{day:null,revenue:2000,orderCount:2,readAt:new Date().toISOString()},retail:{day:null,status:'ok',stores:[{name:'PTG',sales:300,bills:1,units:1,billList:[]}]},history:[{d:YDAY,rev:1000}]});
-  assert.ok(!h.includes('vs yesterday'),'chip hidden when undated');
   assert.ok(!h.includes('data-overview-day="yesterday"'),'Yesterday row hidden when undated');
-  assert.ok(h.includes('Undated'),'chip shows Undated');
+  assert.ok(h.includes('Undated'),'Undated state shown');
 });
 
 // 5. mixed: hero online-only -> marker/note use online-only yesterday
