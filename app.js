@@ -1936,6 +1936,7 @@ lockScreen();
 /*MN START - Midnight overview screens (Today / Orders / Stock / Retail / Sellers) */
 const mnOn=()=>noctOn()||(haloOn()&&(LS.getItem('dj_halo_mode')||'midnight')==='midnight');
 let mnRevMode='today',mnRetRange='today',mnSheet=false;
+let mnBCh='retail',mnBRg='today';
 const mnNum=v=>v==null||v===''||!Number.isFinite(Number(v))?null:Number(v);
 const mnL=v=>v==null?'—':Math.abs(v)>=100000?'₹'+(v/100000).toFixed(Math.abs(v)>=1000000?1:2).replace(/\.0+$/,'')+'L':Math.abs(v)>=1000?'₹'+(v/1000).toFixed(1).replace(/\.0$/,'')+'K':inr(v);
 const mnIco=n=>{const p={rupee:'<path d="M7 4h10M7 8h10M7 4c6 0 8 1.6 8 4s-2 4-8 4l7 8"/>',box:'<path d="m12 3 9 5-9 5-9-5zM3 8v9l9 5 9-5V8M12 13v9"/>',receipt:'<path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21zM9 8h6M9 12h6"/>',clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',tri:'<path d="M12 4l9 16H3z"/>',pin:'<path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/>',card:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18"/>',shirt:'<path d="M9 4 4 7l2 4 2-1v10h8V10l2 1 2-4-5-3a3 3 0 0 1-6 0z"/>',tag:'<path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="9" cy="9" r="1.8"/>',alert:'<path d="M12 4 2.8 20h18.4zM12 10v4.5M12 17.4v.1"/>'};return '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(p[n]||p.rupee)+'</svg>';};
@@ -2138,13 +2139,13 @@ function mnOrders(){const orders=data.orders||[],OI=ordInfo(data.snapshot),live=
  const qs=q.trim().toLowerCase();let list=orders.filter(o=>(ps==='All'||payOf(o)===ps)&&(!qs||(String(o.id)+' '+(o.items||[]).map(i=>i.sku+' '+(i.name||'')).join(' ')+' '+(o.ch||'')+' '+(o.status||'')+' '+payOf(o)).toLowerCase().includes(qs)));
  if(osrt==='high')list=list.slice().sort((a,b)=>Number(b.amt||0)-Number(a.amt||0));if(osrt==='old')list=list.slice().reverse();
  const pays=[...new Set(orders.map(o=>payOf(o)).filter(Boolean))];
- const ordSeq=['Processing','Pending verification','Packed','Shipped','Out for delivery','Delivered','Cancelled'];
+ const ordSeq=['Processing','Pending verification','Packed','Shipped','Out for delivery','Delivered','Complete','Cancelled'];
  const groups=new Map();list.forEach(o=>{const k=o.status||'Unknown';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(o);});
  const gkeys=[...groups.keys()].sort((a,b)=>{const ia=ordSeq.indexOf(a),ib=ordSeq.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});
  return mnHead('Order<br>Pipeline')
  +mnKpis([{i:'box',v:open.length,l:'Open orders'},{i:'rupee',v:mnL(val),l:'Value today'},{i:'clock',v:avg?mnL(avg):'—',l:'Avg order'}])
  +`<div class="glass search mn-search"><input id="q" placeholder="Search order, SKU, channel" value="${esc(q)}"></div>`
- +`<div class="mn-chips">${['All',...pays].map(c=>`<button data-ps="${esc(c)}" class="${ps===c?'on':''}">${c==='All'?'All':(c==='UPI'?'<span class="mn-mini">U</span> ':c==='COD'?'<span class="mn-mini">C</span> ':'<span class="mn-mini">P</span> ')+esc(c)}</button>`).join('')}</div>`
+ +`<div class="mn-chips">${['All',...pays].map(c=>`<button data-ps="${esc(c)}" class="${ps===c?'on':''}">${c==='All'?'All':(c==='UPI'?'<span class="mn-mini">U</span> ':c==='COD'?'<span class="mn-mini">C</span> ':'<span class="mn-mini">P</span> ')+esc(c)}</button>`).join('')}<button class="mn-schip" data-mn="sheet:open" aria-label="Sort and filter">⇅ Sort &amp; filter</button></div>`
  +(list.length?gkeys.map(k=>{
   const g=groups.get(k),gsum=g.reduce((t,o)=>t+Number(o.amt||0),0);
   const cards=g.map(o=>{
@@ -2153,8 +2154,8 @@ function mnOrders(){const orders=data.orders||[],OI=ordInfo(data.snapshot),live=
    return '<article class="mn-card mn-oc" data-d="o:'+esc(o.id)+'"><div class="mn-ot"><span>#'+esc(o.id)+(oT(o)?' · '+esc(oT(o)):'')+'</span><span class="mn-dots">···</span></div><b class="mn-os">'+esc(items)+'</b><div class="mn-om">'+meta+'</div><div class="mn-ob"><b>'+inr(o.amt)+'</b><span class="mn-st '+String(o.status||'').toLowerCase().replace(/\s+/g,'_')+'">'+esc(o.status||'')+'</span></div></article>';}).join('');
   return '<div class="mn-grp"><span class="mn-gdot '+(k==='Cancelled'?'off':/delivered/i.test(k)?'done':'')+'"></span><b>'+esc(k)+'</b><span class="mn-gn">'+g.length+'</span><span class="mn-gsum">'+mnL(gsum)+'</span></div><section class="mn-olist">'+cards+'</section>';}).join('')
  :none('No orders match'+(qs?' "'+esc(q.trim())+'"':'')+'.'))
- +`<button class="mn-fab" data-mn="sheet:open" aria-label="Sort and filter">⇅ Sort &amp; filter</button>`
- +(mnSheet?`<div class="mn-veil" data-mn="sheet:close"></div><div class="mn-sheet" role="dialog" aria-label="Sort and filter"><span class="mn-grip"></span><h3>Sort &amp; filter</h3>${[['new','Newest first'],['high','Highest value'],['old','Oldest first']].map(([v,l])=>`<button class="mn-opt" data-mn="sort:${v}"><span>${l}</span><i class="${osrt===v?'on':''}"></i></button>`).join('')}<div class="mn-chips" style="margin-top:14px">${['All',...pays].map(c=>`<button data-mn="pay:${esc(c)}" class="${ps===c?'on':''}">${c==='All'?'All channels':esc(c)}</button>`).join('')}</div></div>`:'');}
+
+ +(mnSheet?`<div class="mn-veil" data-mn="sheet:close"></div><div class="mn-dialog" role="dialog" aria-modal="true" aria-label="Sort and filter"><h3>Sort &amp; filter</h3>${[['new','Newest first'],['high','Highest value'],['old','Oldest first']].map(([v,l])=>`<button class="mn-opt" data-mn="sort:${v}"><span>${l}</span><i class="${osrt===v?'on':''}"></i></button>`).join('')}<div class="mn-chips" style="margin-top:14px">${['All',...pays].map(c=>`<button data-mn="pay:${esc(c)}" class="${ps===c?'on':''}">${c==='All'?'All channels':esc(c)}</button>`).join('')}</div><button class="mn-done" data-mn="sheet:close">Done</button></div>`:'');}
 function mnOrderDetail(id){const o=[...(data.orders||[]),...(A(data.pending)||[])].find(x=>String(x.id)===id);
  if(!o)return none('Order not in the latest data.');
  const items=o.items?o.items:(o.skus?String(o.skus).split(',').map(z=>({sku:z.trim(),qty:null})):[]);
@@ -2222,28 +2223,69 @@ function mnStock(){const st=A(data.stock);if(!st)return none('Waiting for stock 
  +`<div class="mn-chips">${['All','low','oos'].map(c=>`<button data-sf="${c}" class="${sf===c?'on':''}">${c==='All'?'All':c==='low'?'Low':'Out'}</button>`).join('')}</div>`
  +(RF.length?`<div class="mn-sgrid">${RF.slice(0,60).map(g=>{const single=g.single;const name=single?(single.name||single.sku):(g.name||g.key);const sizes=single?[String(single.sku).split('-').pop()]:(g.sizes||[]).map(z=>z.t);const total=single?pgNum(single.onHand):g.total;const[st2,wsize]=stateOf(g);return `<article class="mn-card mn-sc" ${single?`data-d="s:${esc(single.sku)}"`:`data-pg="${esc(g.key)}"`}><span class="mn-eyebrow">${esc(g.cat||'Style')}</span><b class="mn-sn">${esc(productDisplayName(name))}</b><span class="mn-ss">${sizes.join(' · ')}</span><div class="mn-sb"><b>${total===null?'—':total+' <small>pcs</small>'}</b><span class="mn-st ${st2==='out'?'cancelled':st2==='low'?'pending_verification':'complete'}">${st2==='out'?esc(wsize)+' out':st2==='low'?esc(wsize)+' low':'Healthy'}</span></div>${!single&&pgx[g.key]?`<div class="mn-sizes">${g.sizes.map(z=>`<div class="line" data-d="s:${esc(z.x.sku)}"><span>Size ${esc(z.t)}</span><b>${pgNum(z.x.onHand)===null?'—':z.x.onHand}</b></div>`).join('')}</div>`:''}</article>`}).join('')}</div>`:none('No items match.'))
  +`<p class="note">${stkFresh()}${RF.length>60?'Showing 60 of '+RF.length+'.':''}</p>`;}
-function mnBest(){const retail=tsChannel==='retail';
- const raw=retail?data.retail7:data.sellers&&data.sellers.week;
- const rows=(Array.isArray(raw)?raw:[]).map(r=>({sku:String(r.sku||''),name:String(r.name||r.sku||''),qty:mnNum(r.qty),amt:mnNum(retail?r.amt:r.rev)})).filter(r=>r.amt!=null).sort((a,b)=>b.amt-a.amt);
- const top5=rows.slice(0,5),tot=top5.reduce((t,r)=>t+r.amt,0),all=rows.reduce((t,r)=>t+r.amt,0);
+/* rev122 port: period x channel best-sellers matrix. Sources stay separate; ranking by signed units; unknown never zero. */
+function mnBestCard(g,rank){
+ const units=g.qty.value===null?'Units unknown'+(g.qty.known?' · '+g.qty.known+' reported':''):g.qty.value.toLocaleString('en-IN')+' units';
+ const amt=g.amt.value===null?'Revenue not supplied':inr(g.amt.value);
+ return '<details class="mn-card mn-bcard"><summary><span class="mn-ava">'+rank+'</span><span class="mn-rm"><b>'+esc(productDisplayName(g.name))+'</b><span>'+esc(units)+' · '+g.members.length+' SKU row'+(g.members.length===1?'':'s')+(g.resolved?'':' · kept separate')+'</span></span><b class="mn-ramt">'+esc(amt)+' <small>⌄</small></b></summary>'
+ +'<section class="mn-bmembers">'+(!g.resolved?'<p class="mn-note">Product family is not verified; this source row is not merged.</p>':'')
+ +g.members.map(r=>'<div class="mn-row"><div class="mn-rm"><b>'+esc(r.sku||'SKU identity unavailable')+'</b><span>'+(r.qty===null?'Units unknown':r.qty.toLocaleString('en-IN')+' units')+'</span></div><b class="mn-ramt">'+(r.amt===null?'Revenue not supplied':inr(r.amt))+'</b></div>').join('')+'</section></details>';
+}
+const mnBestRank=groups=>groups.slice().sort((a,b)=>(b.qty.value??-Infinity)-(a.qty.value??-Infinity)||a.name.localeCompare(b.name));
+function mnBestRangeSec(channel,days){
+ const retail=channel==='retail',title=retail?'Retail':'Online';
+ const raw=retail?(days===7?data.retail7:days===30?data.retail30:null):data.sellers&&data.sellers[{7:'week',30:'month',90:'quarter'}[days]];
+ const head='<div class="mn-sech"><h3>'+title+' · '+days+'-day report</h3></div>';
+ if(!Array.isArray(raw))return {title,groups:[],head,empty:title+' '+days+'-day product data is not supplied in this feed. Unknown, not zero. Other ranges remain available.'};
+ const frozen=retail&&[7,30].includes(days)&&data.retailAnalyticsProvenance&&data.retailAnalyticsProvenance.status==='frozen-not-refreshed';
+ const stamp=retail?(data['retail'+days+'AsOf']||(frozen?data.retailAnalyticsProvenance.asOf:null)):data.sellersAsOf;
+ const note='<p class="mn-note" style="margin:0 2px 10px">'+(stamp?(frozen?'Frozen at ':'Read ')+esc(stkFmt(stamp)||String(stamp))+' · may be stale':'Range-report read time unavailable')+'. Exact start/end dates and full coverage are not supplied. This is not a calendar '+(days===7?'week':days===30?'month':'quarter')+'. Ranked by signed units; returns count negative. Uncertain identifiers stay separate; no guessed product merges.</p>';
+ if(!raw.length)return {title,groups:[],head:head+note,empty:'The supplied report contains no SKU rows. Complete sales coverage is not confirmed.'};
+ const rows=raw.map(r=>({sku:String(r.sku||''),name:String(r.name||r.sku||'Product identity unavailable'),qty:mnNum(r.qty),amt:mnNum(retail?r.amt:r.rev)}));
+ return {title,groups:mnBestRank(pgRangeRows(rows,channel)),head:head+note,empty:'The supplied report contains no SKU rows. Complete sales coverage is not confirmed.'};
+}
+function mnBestTodaySec(channel){
+ const retail=channel==='retail',title=retail?'Retail':'Online',iso=IST(),ds=mnDayState();
+ const rows=[];
+ if(retail){if(ds.rtSt==='today')for(const st of A(data.retail&&data.retail.stores)||[])for(const b of A(st.billList)||[])for(const it of A(b.items)||[])rows.push({sku:String(it.sku||''),name:String(it.name||it.sku||'Product identity unavailable'),qty:mnNum(it.qty),amt:mnNum(it.amt)});}
+ else if(ds.onSt==='today')for(const o of (data.orders||[])){if(o.status==='Cancelled')continue;for(const it of (o.items||[]))rows.push({sku:String(it.sku||''),name:String(it.name||it.sku||'Product identity unavailable'),qty:mnNum(it.qty),amt:null});}
+ const note=retail?'From today\'s supplied bill item lines only. Signed units; returns count negative.':'From today\'s supplied order item lines only, cancelled orders excluded. Units only; per-SKU revenue is not supplied.';
+ const head='<div class="mn-sech"><h3>'+title+' · Today</h3><span class="mn-note">'+esc(mnDayLbl(iso))+'</span></div><p class="mn-note" style="margin:0 2px 10px">'+note+'</p>';
+ const empty=retail?'0 bills read for '+mnDayLbl(iso)+' · no seller lines yet':'No orders read yet for '+mnDayLbl(iso)+' · no seller lines yet';
+ return {title,groups:mnBestRank(pgRangeRows(rows,channel)),head,empty};
+}
+function mnBestKpis(secs){
+ const unitsOf=sec=>sec.groups.length&&sec.groups.every(x=>x.qty.value!==null)?sec.groups.reduce((t,x)=>t+x.qty.value,0):null;
+ if(secs.length===1){
+  const g=secs[0].groups,tot=unitsOf(secs[0]);
+  const top=g.length&&tot!==null&&tot>0&&g[0].qty.value!==null?Math.round(g[0].qty.value/tot*100)+'%':'—';
+  return mnKpis([{i:'shirt',v:g.length||'—',l:'Styles sold'},{i:'box',v:tot===null?'—':tot.toLocaleString('en-IN'),l:'Units sold'},{i:'tag',v:top,l:'Top style share of units'}]);
+ }
+ const r=secs.find(x=>x.title==='Retail'),o=secs.find(x=>x.title==='Online');
+ const ru=r?unitsOf(r):null,ou=o?unitsOf(o):null;
+ return mnKpis([{i:'shirt',v:((r?r.groups.length:0)+(o?o.groups.length:0))||'—',l:'Styles listed'},{i:'receipt',v:ru===null?'—':ru.toLocaleString('en-IN'),l:'Retail units'},{i:'box',v:ou===null?'—':ou.toLocaleString('en-IN'),l:'Online units'}]);
+}
+function mnBest(){
+ const ch=mnBCh,rg=mnBRg;
+ const pills=`<div class="pills ts-channels" role="group" aria-label="Sales channel" style="margin-bottom:12px">${[['retail','Retail'],['online','Online'],['combined','Combined']].map(([v,l])=>`<button data-mn="bch:${v}" aria-pressed="${ch===v}" class="${ch===v?'on':''}">${l}</button>`).join('')}</div>`
+ +`<div class="mn-chips" role="group" aria-label="Seller period" style="margin-bottom:16px">${[['today','Today'],['7','7D'],['30','30D'],['90','90D']].map(([v,l])=>`<button data-mn="brg:${v}" aria-pressed="${rg===v}" class="${rg===v?'on':''}">${l}</button>`).join('')}</div>`;
+ const secs=(ch==='combined'?['retail','online']:[ch]).map(c=>rg==='today'?mnBestTodaySec(c):mnBestRangeSec(c,Number(rg)));
+ let h=mnHead('Best<br>sellers')+pills+mnBestKpis(secs);
+ for(const sec of secs){h+=sec.head;h+=sec.groups.length?sec.groups.map((g,i)=>mnBestCard(g,i+1)).join(''):none(sec.empty);}
+ /* Channel split donut: 7-day daily totals from history/retailHistory, unchanged. */
  const H=A(data.history)||[],RH=A(data.retailHistory)||[],iso=IST();let on7=0,oc=0,rt7=0,rc=0;
  for(let i=6;i>=0;i--){const d=addD(iso,-i);if(d===iso){const n=mnTodayNums();if(n.on!=null){on7+=n.on;oc++;}if(n.rt!=null){rt7+=n.rt;rc++;}}else{const e=H.find(z=>z.d===d);if(e&&mnNum(e.rev)!=null){on7+=mnNum(e.rev);oc++;}const r=RH.find(z=>z.d===d);if(r&&mnNum(r.rev!=null?r.rev:r.sales)!=null){rt7+=mnNum(r.rev!=null?r.rev:r.sales);rc++;}}}
  const both=oc&&rc,po=both&&on7+rt7>0?Math.round(on7/(on7+rt7)*100):null;
- const C=2*Math.PI*34,mx=Math.max(1,...top5.map(r=>r.amt));
- return mnHead('Sellers<br>Growth report')
- +`<div class="pills ts-channels" role="group" aria-label="Sales channel" style="margin-bottom:14px"><button data-ts="retail" class="${retail?'on':''}">Retail</button><button data-ts="online" class="${!retail?'on':''}">Online</button></div>`
- +mnKpis([{i:'shirt',v:rows.length||'—',l:'Styles sold, 7 days'},{i:'rupee',v:rows.length?mnL(Math.round(all/rows.length)):'—',l:'Avg per style'},{i:'tag',v:top5.length&&all?Math.round(top5[0].amt/all*100)+'%':'—',l:'Top style share'}])
- +`<section class="mn-card"><div class="mn-cardh"><span>Revenue by style</span></div><div class="mn-big">${top5.length?inr(tot):'—'}</div><div class="mn-sub">top 5 styles, last 7 days${rows.length?'':' - not supplied'}</div>`
- +(top5.length?top5.map(r=>`<div class="mn-hb"><span>${esc(r.name)}</span><div class="mn-hbar"><i style="width:${Math.max(3,r.amt/mx*100)}%"></i></div><b>${mnL(r.amt)}</b></div>`).join(''):none((retail?'Retail':'Online')+' 7-day product data is not supplied in this feed. Unknown, not zero.'))+'</section>'
- +`<section class="mn-card"><div class="mn-cardh"><span>Channel split</span></div>${po===null?'<p class="note">Both channels are not supplied for the same days, so no split is shown.</p>':`<div class="mn-split"><svg viewBox="0 0 84 84" class="mn-donut" role="img" aria-label="Online ${po} percent, retail ${100-po} percent"><circle cx="42" cy="42" r="34" class="mn-donut-bg"/><circle cx="42" cy="42" r="34" class="mn-donut-fg" stroke-dasharray="${(po/100*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" class="mn-donut-t">${po}%</text></svg><div class="mn-spl"><div><i class="mn-swatch"></i>Online<b>${po}%</b></div><div><i class="mn-swatch dim"></i>Retail<b>${100-po}%</b></div><span class="mn-sub2">revenue, last 7 days</span></div></div>`}</section>`
- +(top5.length?`<div class="mn-sech"><h3>Top styles</h3><span class="mn-note">7 days</span></div><section class="mn-card mn-list">${top5.map((r,i)=>`<div class="mn-row"><span class="mn-ava">${i+1}</span><div class="mn-rm"><b>${esc(r.name)}</b><span>${r.qty==null?'qty unknown':r.qty+' sold'}</span></div><b class="mn-ramt">${inr(r.amt)}</b></div>`).join('')}</section>`:'')
- +'<details class="fold" style="margin-top:14px"><summary>Full seller views (today, 30 and 90 days)</summary>'+topSalesRange()+'</details>';}
+ const C=2*Math.PI*34;
+ h+=`<section class="mn-card"><div class="mn-cardh"><span>Channel split</span></div>${po===null?'<p class="note">Both channels are not supplied for the same days, so no split is shown.</p>':`<div class="mn-split"><svg viewBox="0 0 84 84" class="mn-donut" role="img" aria-label="Online ${po} percent, retail ${100-po} percent"><circle cx="42" cy="42" r="34" class="mn-donut-bg"/><circle cx="42" cy="42" r="34" class="mn-donut-fg" stroke-dasharray="${(po/100*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 42 42)"/><text x="42" y="47" text-anchor="middle" class="mn-donut-t">${po}%</text></svg><div class="mn-spl"><div><i class="mn-swatch"></i>Online<b>${po}%</b></div><div><i class="mn-swatch dim"></i>Retail<b>${100-po}%</b></div><span class="mn-sub2">revenue, last 7 days</span></div></div>`}</section>`;
+ return h;
+}
 function mnBody(){if(detail&&/^o:/.test(detail))return mnOrderDetail(detail.slice(2));
  if(tab==='today')return mnToday();if(tab==='orders')return mnOrders();if(tab==='stock')return mnStock();if(tab==='retail')return mnRetail();if(tab==='best')return mnBest();return '';}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-mn]');if(!t)return;const p=t.dataset.mn.split(':'),a=p[0],v=p.slice(1).join(':');
- if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
+ if(a==='revmode')mnRevMode=v;else if(a==='retrange')mnRetRange=v;else if(a==='store'){rf=v||'All';tab='retail';detail=null;window.scrollTo(0,0);}else if(a==='sheet')mnSheet=v==='open';else if(a==='sort'){osrt=v;mnSheet=false;}else if(a==='pay'){ps=v;mnSheet=false;}else if(a==='bch')mnBCh=['retail','online','combined'].includes(v)?v:'retail';else if(a==='brg')mnBRg=['today','7','30','90'].includes(v)?v:'today';else if(a==='refresh'){const rfb=document.getElementById('rf');if(rfb)rfb.click();return;}else return;render();});
 if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.addEventListener('scroll',()=>{if(__tk)return;__tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0;document.body.classList.toggle('mn-hide-pill',y>80&&y>__ly+6);if(y<__ly-6||y<=80)document.body.classList.remove('mn-hide-pill');__ly=y;__tk=false;});},{passive:true});}
 /*MN END*/
-export const __mnTest={set:d=>{data=d},shareSummary,retRange:m=>{mnRetRange=m},mnRetail,mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext};
+export const __mnTest={set:d=>{data=d},shareSummary,retRange:m=>{mnRetRange=m},mnRetail,mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext,mnBest,mnOrders,best:(c,r)=>{if(c)mnBCh=c;if(r)mnBRg=r;},sheet:v=>{mnSheet=!!v},sort:(v,p)=>{if(v)osrt=v;if(p)ps=p;}};
 
 
