@@ -1,6 +1,7 @@
 /* Proposed reader only. OFF until a separately approved release supplies anchors,
    measured limits and a bounded decryptor. No publisher, keys or network writes. */
 export const PROPOSED_POLICY=Object.freeze({"enabled":true,"cutover":true,"repo":"khandpurarsh-sys/dj-ops","origin":"https://khandpurarsh-sys.github.io","basePath":"/dj-ops/","policyVersion":"dressjet-static-v2-proposed-1","bootstrapGeneration":1,"bootstrapSha256":"60c8e8571119d0a60a9055eaf7dc1108e9a16e54e9783b29b9b18029d522321b","maxFeedBytes":2097152,"maxBodyBytes":1048576,"maxPlaintextBytes":8388608,"timeoutMs":15000,"boundedDecryptorVerified":true,"requiredKids":["8GOA2Gtn","BdzJ1fS2","DtFLt6s3","NczC6Ww8","R8McjQ4b","ZVx5xiim","eKlKbhWk","emuDKqXq","gejFeX4x","jkSP8g0I","oYAlwWHx","qASYbNhs","uzTFaoki","x8pxzyEM","xZw9PRCY","yKOhpUFs","zsExOo1d"]});
+const NEW_REQUIRED_KIDS=Object.freeze(PROPOSED_POLICY.requiredKids.map(k=>k==='eKlKbhWk'?'yxNJE9dV':k));
 const enc=new TextEncoder(),ROWS=['1','2','3','87','88'],HEX=/^[a-f0-9]{64}$/;
 export const utf8=s=>enc.encode(s);
 export async function sha256(bytes){const d=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('');}
@@ -38,7 +39,7 @@ function envelope(body,main,p){
  if(!plain(e)||!Array.isArray(e.msgs)||!e.msgs.length||!e.msgs.every(m=>plain(m)&&typeof m.kid==='string'&&plain(m.epk)&&typeof m.epk.x==='string'&&typeof m.epk.y==='string'&&typeof m.iv==='string'&&(typeof m.wk==='string'||typeof m.ct==='string')))fail('envelope fields');
  if(new Set(e.msgs.map(m=>m.kid)).size!==e.msgs.length)fail('duplicate recipient');
  if(main&&(e.v!==2||e.z!==1||typeof e.ct!=='string'||!e.ct||typeof e.iv!=='string'||!e.iv||!e.sid||typeof e.sid!=='string'))fail('main envelope fields');
- if(main&&e.msgs.map(m=>m.kid).sort().join(',')!==p.requiredKids.slice().sort().join(','))fail('recipient set');
+ if(main){const roster=e.msgs.map(m=>m.kid).sort().join(',');if(roster!==p.requiredKids.slice().sort().join(',')&&roster!==NEW_REQUIRED_KIDS.slice().sort().join(','))fail('recipient set');}
  return e;
 }
 export async function validateFeed(bytes,p,accepted=null){
@@ -64,6 +65,7 @@ export async function validateFeed(bytes,p,accepted=null){
   envelope(row.body,main,p);
  }
  const f=JSON.parse(j.rows['3'].body),s=JSON.parse(j.rows['1'].body);
+ if(f.msgs.map(m=>m.kid).sort().join(',')!==s.msgs.map(m=>m.kid).sort().join(','))fail('main recipient mismatch');
  if(f.sid!==j.sid||s.sid!==j.sid||f.slim||s.slim!==1)fail('snapshots mismatch');
  return {feed:j,raw,hash,generation:j.generation};
 }
