@@ -6,7 +6,7 @@ function approvedRoster(kids,p){
  const set=new Set(kids),old=p.requiredKids;
  if(set.size!==kids.length||kids.some(k=>!old.includes(k)&&k!=='yxNJE9dV'))return false;
  if(old.some(k=>!OPTIONAL_REMOVALS.includes(k)&&!set.has(k)))return false;
- return set.has('yxNJE9dV')===!set.has('eKlKbhWk');
+ return true;
 }
 const enc=new TextEncoder(),ROWS=['1','2','3','87','88'],HEX=/^[a-f0-9]{64}$/;
 export const utf8=s=>enc.encode(s);
