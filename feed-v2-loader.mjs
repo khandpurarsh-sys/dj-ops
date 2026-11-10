@@ -2,9 +2,12 @@
    measured limits and a bounded decryptor. No publisher, keys or network writes. */
 export const PROPOSED_POLICY=Object.freeze({"enabled":true,"cutover":true,"repo":"khandpurarsh-sys/dj-ops","origin":"https://khandpurarsh-sys.github.io","basePath":"/dj-ops/","policyVersion":"dressjet-static-v2-proposed-1","bootstrapGeneration":1,"bootstrapSha256":"60c8e8571119d0a60a9055eaf7dc1108e9a16e54e9783b29b9b18029d522321b","maxFeedBytes":2097152,"maxBodyBytes":1048576,"maxPlaintextBytes":8388608,"timeoutMs":15000,"boundedDecryptorVerified":true,"requiredKids":["8GOA2Gtn","BdzJ1fS2","DtFLt6s3","NczC6Ww8","R8McjQ4b","ZVx5xiim","eKlKbhWk","emuDKqXq","gejFeX4x","jkSP8g0I","oYAlwWHx","qASYbNhs","uzTFaoki","x8pxzyEM","xZw9PRCY","yKOhpUFs","zsExOo1d"]});
 const OPTIONAL_REMOVALS=Object.freeze(['eKlKbhWk','xZw9PRCY','NczC6Ww8','yKOhpUFs','gejFeX4x','BdzJ1fS2']);
+// Optional adds: yxNJE9dV (3 Nov iPhone rotation); tHhbQ90n (10 Nov, owner-signed add of the
+// "dad" DRJ device, approval seq 1794318511225, verified against the pinned owner key).
+const OPTIONAL_ADDS=Object.freeze(['yxNJE9dV','tHhbQ90n']);
 function approvedRoster(kids,p){
  const set=new Set(kids),old=p.requiredKids;
- if(set.size!==kids.length||kids.some(k=>!old.includes(k)&&k!=='yxNJE9dV'))return false;
+ if(set.size!==kids.length||kids.some(k=>!old.includes(k)&&!OPTIONAL_ADDS.includes(k)))return false;
  if(old.some(k=>!OPTIONAL_REMOVALS.includes(k)&&!set.has(k)))return false;
  return true;
 }
