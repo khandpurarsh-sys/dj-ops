@@ -2974,3 +2974,7 @@ body.lay-nocturne .mn-fab{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 :root[data-halo-palette="midnight"] body.lay-nocturne .halo-menu-toggle{transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .22s!important;will-change:transform}
 :root[data-halo-palette="midnight"] body.lay-nocturne.mn-hide-pill .halo-menu-toggle{transform:translateX(-50%) translateY(160%)!important;opacity:0!important;pointer-events:none}
 @media (prefers-reduced-motion:reduce){:root[data-halo-palette="midnight"] body.lay-nocturne .halo-menu-toggle{transition:none!important}}
+
+/* Demo mode banner */
+#demob{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 14px;border-radius:99px;border:1px solid var(--edge);background:var(--sf);color:var(--ink);font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+#demob button{border:1px solid var(--edge);background:transparent;color:var(--ink);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
