@@ -1515,7 +1515,7 @@ async function loadExp(g){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo
 function nextReadPlan(now=new Date(),kind='online'){
  const ms=now.getTime();if(!Number.isFinite(ms))return null;
  const offset=330*60000,local=new Date(ms+offset),day=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate());
- let start=null;for(let d=0;d<2&&start===null;d++)for(let h=11;h<=23&&start===null;h++)for(const minute of (kind==='retail'&&h<23?[15,45]:[15])){const t=day+d*86400000+h*3600000+minute*60000-offset;if(t>ms){start=t;break;}}
+ const hours=[0,11,12,13,14,15,16,17,18,19,20,21,22,23];let start=null;for(let d=0;d<2&&start===null;d++)for(const h of hours){if(start!==null)break;for(const minute of (kind==='retail'&&h>=11&&h<23?[15,45]:[15])){const t=day+d*86400000+h*3600000+minute*60000-offset;if(t>ms){start=t;break;}}
  const fmt=t=>new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');
  const tomorrow=new Date(start+offset).getUTCDate()!==local.getUTCDate();
  return {start,read:(tomorrow?'Tomorrow, ':'')+fmt(start)+' IST',update:(tomorrow?'Tomorrow, ':'')+fmt(start+25*60000)+'-'+fmt(start+30*60000)+' IST'};
