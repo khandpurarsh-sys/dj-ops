@@ -1541,14 +1541,23 @@ function overviewOrderMount(){
  const combined=overviewDay==='yesterday'?root.querySelector('.yd-combined'):null;const anchor=combined||grid;
  if(state){anchor.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
 }
-function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();}
+function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();mnFoldSidecol();}
+/* Foldable: unfold the Today screen into a two-column layout on wide displays (sales cards + quick rows in the right rail). Runs after every render; no-ops off Today, on narrow screens, and on detail pages. */
+function mnFoldSidecol(){try{
+ const m=document.querySelector('main');if(!m)return;
+ if(window.innerWidth<700||document.body.dataset.mntab!=='today')return;
+ const g=m.querySelector(':scope>.mn-grid2');if(!g)return;
+ const col=document.createElement('div');col.className='mn-sidecol';
+ g.insertAdjacentElement('afterend',col);col.appendChild(g);
+ m.querySelectorAll(':scope>.mn-yday').forEach(el=>col.appendChild(el));
+}catch(e){}}
 
 function render(){return haloRender()}
-function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
+function renderNowCore(){document.body.dataset.mntab='';if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
  if(tab==='exp'&&!(data&&data.expenses))tab='today';
  let h=`<header>${detail?('<button class="refresh" id="bk">‹ '+(/^rb:/.test(detail)?'Bills':'Back')+'</button>'):logo}<div><h1${detail&&detailTitle().length>14?' class="hl"':''}>${detail?detailTitle():({today:'Today',orders:'Orders',best:'Top sellers',stock:'Low stock',retail:'Retail',exp:'Expenses',ask:'Kingsley'})[tab]}${!detail&&tab==='today'?'<span class="dt">'+new Date(IST()+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+'</span>':''}</h1><p>Dressjet${tab==='best'&&!detail?' · '+(tsChannel==='retail'?'Retail':'Online')+' sellers':(s.at||s.asOf)?((tab==='retail'||/^(rt|rb):/.test(detail||''))&&data.retail?' · Retail data: '+esc(retailTime(data.retail)):' · Online data: '+esc(s.at||s.asOf)):''}${status?' · '+esc(status):''}</p></div><button class="refresh" id="rf">Refresh</button></header>${detail||tab==='best'?'':tab==='retail'?retailFreshBanner():tab==='stock'?stockSourceBanner():freshBanner(s)}<main>${!detail&&tab==='today'?recoveryView():''}`;
- const mnActive=mnOn()&&((detail&&/^o:/.test(detail))||(!detail&&['today','orders','stock','retail','best'].includes(tab)));document.body.classList.toggle('mn-tab',mnActive);document.body.classList.toggle('mn-detail',mnActive&&!!detail);document.body.classList.toggle('mn-sheet-open',mnActive&&mnSheet);
+ const mnActive=mnOn()&&((detail&&/^o:/.test(detail))||(!detail&&['today','orders','stock','retail','best'].includes(tab)));document.body.classList.toggle('mn-tab',mnActive);document.body.classList.toggle('mn-detail',mnActive&&!!detail);document.body.classList.toggle('mn-sheet-open',mnActive&&mnSheet);document.body.dataset.mntab=(mnActive&&!detail)?tab:'';document.body.dataset.mnmode=mnRevMode;
  if(mnActive){h+=mnBody();}
  else if(detail==='set:privacy'){h+=settingsView();}
  else if(detail){h+=detailView(orders,live,pend,s);}
@@ -2101,7 +2110,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
   +`<div class="mn-big">${comb==null?'—':inr(comb)}</div><div class="mn-sub">${rtZero&&onH==null?esc(comp)+' · no read yet for '+dLbl:comp+', hour by hour'}</div>`
   +legendF(hr.cumRt!=null)
-  +(rtZero&&onH==null?'':mnHourChart(hr,{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'}))
+  +(rtZero&&onH==null?'':mnHourChart(Object.assign({},hr,{cum:hr.cumOn||hr.cum}),{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'}))
   +(hr.empty?'':'<p class="mn-note2">'+esc(head+' · '+tail)+'</p>')
   +(hr.note&&!hr.feed?'<p class="mn-note2">'+esc(hr.note)+'</p>':'')
   +(yc&&yc.partial?'<p class="mn-note2">Dotted line is yesterday\'s '+(yc.partial==='retail'?'online':'retail')+' shape only - the '+(yc.partial==='retail'?'retail':'online')+' hourly split is not supplied.</p>':'')
@@ -2115,8 +2124,8 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   const pw=rng===7?mnWindowSeries(14).slice(0,7):null;
   revCard=`<section class="mn-card"><div class="mn-cardh"><span>Revenue</span>${mnRevPills(ds)}</div>`
   +`<div class="mn-big">${sup?inr(tot):'—'}</div><div class="mn-sub">${compW}, ${wA} to ${wB}</div>`
-  +legendF(true)
-  +(sup?mnArea(ser.map(p=>({d:p.d,v:p.tot})),{labels:rng===7?'dow':'sparse',cmp:pw?pw.map(p=>({d:p.d,v:p.tot})):null,id:'t',aria:'Combined online and retail revenue, '+wA+' to '+wB}):'<p class="mn-note2">No daily history supplied yet.</p>')
+  +'<div class="mn-legend"><span><i class="mn-swatch"></i>Online '+(anyOn?mnL(ser.reduce((q,p)=>q+(p.on||0),0))+' supplied':'—')+'</span> <span><i class="mn-swatch dash"></i>Retail '+(anyRt?mnL(ser.reduce((q,p)=>q+(p.rt||0),0))+' supplied':'—')+'</span></div>'
+  +(sup?mnDualArea(ser,{labels:rng===7?'dow':'sparse',id:'t',aria:'Online and retail revenue, '+wA+' to '+wB}):'<p class="mn-note2">No daily history supplied yet.</p>')
   +(sup&&sup<rng?'<p class="mn-note2">'+sup+' of '+rng+' days supplied - missing days are left out, not zero.</p>':'')
   +'</section>';
  }
@@ -2247,3 +2256,25 @@ if(!window.__mnScrollHide){window.__mnScrollHide=1;let __ly=0,__tk=false;window.
 export const __mnTest={set:d=>{data=d},shareSummary,retRange:m=>{mnRetRange=m},mnRetail,mode:m=>{mnRevMode=m},mnDayState,mnTodayHourly,mnYesterdayHourly,mnYesterday,mnWindowSeries,mnToday,mnRevPills,mnRetail,priorDayContext};
 
 
+
+/* Dual-series daily revenue chart (Online gold solid, Retail grey dashed) for the 7D/30D revenue card. */
+function mnDualArea(ser,opts={}){const W=660,H=225,PT=16,PB=36,PL=4,PR=10;
+ const on=ser.map(p=>({d:p.d,v:p.on})),rt=ser.map(p=>({d:p.d,v:p.rt}));
+ const all=on.concat(rt).map(p=>p.v).filter(v=>v!=null);
+ if(!all.length)return '<p class="mn-note2">Daily history is not supplied for this range. Unknown, not zero.</p>';
+ const mx=(Math.max(...all)||1)*1.1;
+ const X=i=>PL+(W-PL-PR)*(on.length===1?.5:i/(on.length-1)),Y=v=>PT+(H-PT-PB)*(1-v/mx);
+ const smooth=seg=>{let d='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1);for(let i=0;i<seg.length-1;i++){const p0=seg[Math.max(0,i-1)],p1=seg[i],p2=seg[i+1],p3=seg[Math.min(seg.length-1,i+2)];d+='C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+' '+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+' '+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+' '+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+' '+p2[0].toFixed(1)+' '+p2[1].toFixed(1);}return d;};
+ const paths=list=>{let line='',area='',seg=[];const flush=()=>{if(seg.length===1)line+='M'+seg[0][0].toFixed(1)+' '+seg[0][1].toFixed(1)+'l.2 0';else if(seg.length>1){const d=smooth(seg);line+=d;area+=d+'L'+seg[seg.length-1][0].toFixed(1)+' '+Y(0)+'L'+seg[0][0].toFixed(1)+' '+Y(0)+'Z';}seg=[];};list.forEach((p,i)=>{if(p.v!=null)seg.push([X(i),Y(p.v)]);else flush();});flush();return{line,area};};
+ const a=paths(on),b=paths(rt);
+ const lbl=opts.labels==='dow'?on.map((p,i)=>{const wd=new Date(p.d+'T12:00:00+05:30').toLocaleDateString('en-IN',{weekday:'short',timeZone:'Asia/Kolkata'});return '<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" class="mn-xl">'+wd+'</text>'}).join(''):on.map((p,i)=>i%5===0?'<text x="'+X(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" class="mn-xl">'+Number(p.d.slice(8))+'</text>':'').join('');
+ const gid='mgd'+(opts.id||'x');
+ const lastI=(()=>{for(let i=on.length-1;i>=0;i--)if(on[i].v!=null)return i;return -1})();
+ return '<svg viewBox="0 0 '+W+' '+H+'" class="mn-chart" role="img" aria-label="'+esc(opts.aria||'Online and retail daily revenue chart')+'"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0c897" stop-opacity=".34"/><stop offset="1" stop-color="#e0c897" stop-opacity="0"/></linearGradient></defs>'
+ +'<line x1="'+PL+'" y1="'+Y(0)+'" x2="'+(W-PR)+'" y2="'+Y(0)+'" class="mn-grid"/>'
+ +(b.line?'<path d="'+b.line+'" class="mn-rt"/>':'')
+ +(a.area?'<path d="'+a.area+'" fill="url(#'+gid+')"/>':'')
+ +(a.line?'<path d="'+a.line+'" class="mn-line"/>':'')
+ +(lastI>=0?'<circle cx="'+X(lastI).toFixed(1)+'" cy="'+Y(on[lastI].v).toFixed(1)+'" r="5" class="mn-dot"/><circle cx="'+X(lastI).toFixed(1)+'" cy="'+Y(on[lastI].v).toFixed(1)+'" r="10" class="mn-dot-halo"/>':'')
+ +lbl+'</svg>';
+}

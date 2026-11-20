@@ -232,11 +232,11 @@ ok('midnight: online fresh today, retail stale -> only retail dropped',()=>{
 });
 
 // 6. 7D window: legend + half cards use window-appropriate labels
-ok('7D: legend day-suffixed, half cards dated, no "today" counts',()=>{
+ok('7D: dual legend carries window sums, half cards dated, no "today" counts',()=>{
   T.set(base({history:[{d:YDAY,rev:4000}],retailHistory:[{d:YDAY,rev:1000}]}));
   T.mode('7');const h=T.mnToday();T.mode('today');
-  assert.ok(h.includes('Online ₹5K · '+LBL(TODAY)),'online legend carries explicit day: '+(h.match(/Online ₹[^<]+/)||['none'])[0]);
-  assert.ok(h.includes('Retail ₹3K · '+LBL(TODAY)),'retail legend carries explicit day');
+  assert.ok(h.includes('Online ₹4K supplied'),'online legend carries the window sum: '+(h.match(/Online ₹[^<]+/)||['none'])[0]);
+  assert.ok(h.includes('Retail ₹1K supplied'),'retail legend carries the window sum');
   assert.ok(h.includes('2 orders on '+LBL(TODAY)),'half card dated: '+(h.match(/\d+ orders?[^(<]*/)||['none'])[0]);
   assert.ok(!h.includes('orders today'),'no today-flavored count in window mode');
   assert.ok(h.includes('Online + Retail,'),'window composition line present');
@@ -296,7 +296,7 @@ const stRt=()=>base({snapshot:{day:YDAY,revenue:260511,orderCount:85,readAt:YNOO
 ok('7D/30D with retail unread: legend carries no Retail Rs 0 beside a window total; card says today',()=>{
   for(const m of ['7','30']){T.set(stRt());T.mode(m);const h=T.mnToday();T.mode('today');
     assert.ok(!h.includes('Retail ₹0'),m+'D legend has no Retail ₹0');
-    assert.ok(h.includes('Retail last checked'),m+'D legend says last checked');
+    assert.ok(h.includes('Retail ₹7K supplied'),m+'D legend carries the supplied window retail sum');
     assert.ok(h.includes('0 bills today · no bills read yet'),m+'D retail card is explicitly today');
     assert.ok(!h.includes('106,630')&&!h.includes('1.07L')&&!h.includes('22 bills'),m+'D no 2 Nov retail figures');}
 });
