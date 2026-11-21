@@ -14,33 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private let privacyCoverTag = 991122
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        window?.backgroundColor = Self.navy
-        NotificationCenter.default.addObserver(self, selector: #selector(syncFullScreen), name: UIDevice.orientationDidChangeNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(syncFullScreen), name: UIScene.didActivateNotification, object: nil)
-        DispatchQueue.main.async { self.syncFullScreen() }
         return true
-    }
-
-    // Foldable / large-screen full-screen guard: never let the window sit
-    // letterboxed inside the screen, and never let the web view inset its
-    // content. Any gap that remains shows the app navy, not system black.
-    private static let navy = UIColor(red: 10.0/255.0, green: 22.0/255.0, blue: 40.0/255.0, alpha: 1)
-
-    @objc func syncFullScreen() {
-        guard let w = window else { return }
-        w.backgroundColor = Self.navy
-        let screenBounds = w.screen.bounds
-        if w.frame != screenBounds { w.frame = screenBounds }
-        if let root = w.rootViewController {
-            root.view.backgroundColor = Self.navy
-            if root.view.frame != w.bounds { root.view.frame = w.bounds }
-            if let bridge = root as? CAPBridgeViewController, let wv = bridge.webView {
-                wv.scrollView.contentInsetAdjustmentBehavior = .never
-                wv.backgroundColor = Self.navy
-                wv.scrollView.backgroundColor = Self.navy
-                if wv.frame != root.view.bounds { wv.frame = root.view.bounds }
-            }
-        }
     }
 
     private func addPrivacyCover() {
@@ -68,7 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillResignActive(_ application: UIApplication) { addPrivacyCover() }
     func applicationDidEnterBackground(_ application: UIApplication) { addPrivacyCover() }
-    func applicationDidBecomeActive(_ application: UIApplication) { removePrivacyCover(); syncFullScreen() }
+    func applicationDidBecomeActive(_ application: UIApplication) { removePrivacyCover() }
     func applicationWillEnterForeground(_ application: UIApplication) {}
 
     func applicationWillTerminate(_ application: UIApplication) {}
