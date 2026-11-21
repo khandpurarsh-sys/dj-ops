@@ -11,9 +11,12 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: xcode-27
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
+      - run: xcodebuild -version
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: feed-v2 loader gates
