@@ -1542,15 +1542,20 @@ function overviewOrderMount(){
  if(state){anchor.insertAdjacentElement('afterend',state);if(plan)state.insertAdjacentElement('afterend',plan);}
 }
 function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();mnFoldSidecol();}
-/* Foldable: unfold the Today screen into a two-column layout on wide displays (sales cards + quick rows in the right rail). Runs after every render; no-ops off Today, on narrow screens, and on detail pages. */
+/* Wide layout only. Re-render from the same data after crossing the layout breakpoint. */
+function mnWideViewport(){return window.innerWidth>=700||(window.innerWidth>=600&&window.innerWidth>window.innerHeight)}
 function mnFoldSidecol(){try{
- const m=document.querySelector('main');if(!m)return;
- if(window.innerWidth<700||document.body.dataset.mntab!=='today')return;
+ const wide=mnWideViewport();document.body.classList.toggle('mn-wide',wide);
+ const m=document.querySelector('main');if(!m||!wide||document.body.dataset.mntab!=='today')return;
  const g=m.querySelector(':scope>.mn-grid2');if(!g)return;
  const col=document.createElement('div');col.className='mn-sidecol';
  g.insertAdjacentElement('afterend',col);col.appendChild(g);
+ const heading=m.querySelector(':scope>.mn-sech');
+ if(heading&&/Latest bills/i.test(heading.textContent)){const list=heading.nextElementSibling;col.appendChild(heading);if(list?.classList.contains('mn-list'))col.appendChild(list)}
  m.querySelectorAll(':scope>.mn-yday').forEach(el=>col.appendChild(el));
 }catch(e){}}
+let mnViewportWide=mnWideViewport(),mnViewportTimer;
+window.addEventListener('resize',()=>{clearTimeout(mnViewportTimer);mnViewportTimer=setTimeout(()=>{const wide=mnWideViewport();if(wide!==mnViewportWide){mnViewportWide=wide;if(data)render()}},120)});
 
 function render(){return haloRender()}
 function renderNowCore(){document.body.dataset.mntab='';if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}

@@ -3056,3 +3056,17 @@ body.mn-tab .yd-view-tabs{display:none}
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-fresh{padding-bottom:2px!important}
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2{margin-bottom:4px!important}
 }
+
+/* Wide viewport sizing only. Existing palette, cards, chart, type and controls unchanged. */
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide .app{width:100%;max-width:none!important;min-height:100dvh;margin:0;padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide[data-mntab=today] main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:14px;align-items:start}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide[data-mntab=today] main>*{grid-column:1/-1;min-width:0}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide[data-mntab=today] main>section.mn-card{grid-column:1;grid-row:auto}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide[data-mntab=today] main>.mn-sidecol{grid-column:2;display:flex;flex-direction:column;gap:10px;min-width:0}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide .mn-sidecol>.mn-grid2{display:grid;grid-template-columns:1fr!important;margin-bottom:0!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-wide .mn-sidecol .mn-sech{margin-top:4px}
+@media(min-width:600px) and (orientation:landscape) and (max-height:600px){
+ :root[data-th] body.lay-halo.mn-wide .halo-menu-toggle{top:calc(env(safe-area-inset-top,0px) + 10px);bottom:auto!important}
+ :root[data-th] body.lay-halo.mn-wide .halo-menu-panel{top:calc(env(safe-area-inset-top,0px) + 78px);bottom:auto!important;max-height:calc(100dvh - 90px);overflow-y:auto}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-wide .halo-rail{padding-top:max(72px,calc(env(safe-area-inset-top,0px) + 64px))!important}
+}
