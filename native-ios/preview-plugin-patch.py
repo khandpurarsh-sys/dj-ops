@@ -1,3 +1,7 @@
+import subprocess
+for cmd in ["cat ios/App/App/Info.plist","cat ios/App/App/Base.lproj/LaunchScreen.storyboard","cat ios/App/App/Base.lproj/Main.storyboard","grep -nE 'TARGETED_DEVICE_FAMILY|UILaunch|SDKROOT|IPHONEOS_DEPLOYMENT|INFOPLIST' ios/App/App.xcodeproj/project.pbxproj","xcodebuild -version","ls ios/App/App"]:
+    print("=== DIAG", cmd, flush=True)
+    print(subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout, flush=True)
 # PREVIEW-ONLY patch, applied in CI right after `cap sync` and before pod
 # install, only when sign_and_upload is false. The DjOpsUnlock plugin stores
 # its gate key with a SecAccessControl requiring .userPresence and the
