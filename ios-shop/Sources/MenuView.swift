@@ -66,7 +66,7 @@ struct MenuSheetView: View {
                 .scrollIndicators(.hidden)
                 // The list viewport ends above the dock (capsule ~58pt + 18pt float + margin), so no row
                 // is ever hidden behind it, in any orientation.
-                .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 92) }
+                .padding(.bottom, 92) // viewport frame ends above the dock; rows are clipped there, never hidden under it
             }
             .modifier(MenuPanelFrame(landscape: geo.size.width > geo.size.height, height: geo.size.height))
             
