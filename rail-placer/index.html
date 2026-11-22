@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DressJet rail placer</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#0b1620;color:#efe6d2;font-family:-apple-system,Helvetica,Arial,sans-serif;touch-action:none;overscroll-behavior:none}
+.wrap{max-width:460px;margin:0 auto;padding:10px 12px 18px}
+h1{font-size:14px;letter-spacing:.2em;font-weight:600;margin:6px 0 8px;text-align:center}
+.sub{font-size:12px;opacity:.7;text-align:center;margin-bottom:8px}
+#screen{position:relative;width:100%;aspect-ratio:0.70;border-radius:34px;overflow:hidden;border:3px solid #333;
+ background:linear-gradient(180deg,#9db6d9 0%,#c7b9a8 38%,#a0653f 62%,#6e4a2d 100%)}
+#screen .man{position:absolute;left:18%;right:18%;top:22%;bottom:0;border-radius:40% 40% 0 0;background:radial-gradient(circle at 50% 18%,#e9c9a3 0 11%,transparent 12%),linear-gradient(180deg,transparent 22%,#c2492e 23%,#a73a22 100%);opacity:.85}
+.wm{position:absolute;top:3.2%;left:0;right:0;text-align:center;letter-spacing:.35em;font-size:13px;color:#efe6d2;text-shadow:0 1px 3px #0006}
+.search{position:absolute;left:4%;right:20%;top:8%;height:5.4%;border-radius:99px;background:#ffffff38;border:1px solid #ffffff88;backdrop-filter:blur(8px);font-size:11px;padding:2.2% 5%;color:#fff}
+.widget{position:absolute;right:3%;top:7.5%;width:14%;text-align:center;font-size:12px;color:#fff;text-shadow:0 1px 3px #0008}
+.ring{margin:4px auto 0;width:34px;height:34px;border-radius:50%;border:3px solid #ffffffaa;border-top-color:#79d28a}
+.shop{position:absolute;left:30%;right:30%;bottom:9%;height:6%;border-radius:99px;background:#ffffff30;border:1px solid #ffffffaa;text-align:center;font-size:10px;letter-spacing:.4em;line-height:2.6;color:#fff}
+#rail{position:absolute;display:flex;flex-direction:column;align-items:center;border-radius:99px;
+ background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(14px) saturate(1.6);box-shadow:0 4px 18px #0004;touch-action:none;cursor:grab}
+#rail span{display:block;text-align:center;color:#fff;text-shadow:0 1px 2px #0008}
+#rail.drag{cursor:grabbing;outline:2px dashed #79d28a}
+.panel{margin-top:10px;background:#12263a;border-radius:16px;padding:12px 14px}
+label{font-size:12px;opacity:.8;display:flex;justify-content:space-between}
+input[type=range]{width:100%;margin:6px 0 10px}
+.nums{font-size:13px;font-variant-numeric:tabular-nums;line-height:1.7}
+button{width:100%;padding:13px;border:0;border-radius:12px;background:#c0b090;color:#0e2c46;font-weight:700;font-size:15px;letter-spacing:.1em;margin-top:6px}
+#out{display:none;margin-top:10px;background:#0e2c46;border:1px solid #c0b090;border-radius:14px;padding:12px;font-size:14px;line-height:1.7;white-space:pre-wrap;touch-action:auto;user-select:text;-webkit-user-select:text}
+</style></head><body><div class="wrap">
+<h1>PLACE THE MENU RAIL</h1>
+<div class="sub">Drag the glass rail where you want it. Use the slider for size. Tap Done and screenshot the numbers.</div>
+<div id="screen">
+ <div class="man"></div><div class="wm">DRESSJET</div>
+ <div class="search">⌕ Search DressJet</div>
+ <div class="widget">2:40<div class="ring"></div></div>
+ <div class="shop">SHOP NOW</div>
+ <div id="rail">
+  <span>⌂</span><span>⌕</span><span>≡</span><span>◻</span>
+ </div>
+</div>
+<div class="panel">
+ <label>Size <b id="sv">100%</b></label>
+ <input id="size" type="range" min="60" max="160" value="100">
+ <div class="nums" id="nums"></div>
+ <button id="done">DONE</button>
+ <div id="out"></div>
+</div>
+</div>
+<script>
+const scr=document.getElementById('screen'),rail=document.getElementById('rail');
+const BASE_W=46, BASE_ICON=17, BASE_ITEM=40, SCREEN_W_PT=400; // mock assumes ~400pt wide screen
+let scale=1, topPct=40, rightPct=0;
+function layout(){
+  const W=scr.clientWidth, H=scr.clientHeight, k=W/SCREEN_W_PT*scale;
+  const item=BASE_ITEM*k, w=BASE_W*k, pad=6*k;
+  rail.style.width=w+'px'; rail.style.padding=pad+'px 0';
+  [...rail.children].forEach(s=>{s.style.width=item+'px';s.style.height=item+'px';s.style.lineHeight=item+'px';s.style.fontSize=(BASE_ICON*1.15*k)+'px'});
+  const rh=item*4+pad*2;
+  const maxTop=100-rh/H*100; topPct=Math.min(Math.max(topPct,0),maxTop);
+  const maxRight=100-w/W*100; rightPct=Math.min(Math.max(rightPct,0),maxRight);
+  rail.style.top=(topPct/100*H)+'px'; rail.style.right=(rightPct/100*W)+'px';
+  const bottomPct=topPct+rh/H*100;
+  document.getElementById('nums').innerHTML='Right gap: <b>'+rightPct.toFixed(1)+'%</b> of width<br>Top: <b>'+topPct.toFixed(1)+'%</b> of height<br>Spans: <b>'+topPct.toFixed(0)+'% to '+bottomPct.toFixed(0)+'%</b> down (centre '+((topPct+bottomPct)/2).toFixed(0)+'%)<br>Size: <b>'+Math.round(scale*100)+'%</b>';
+  layout.last={topPct,rightPct,bottomPct,scale};
+}
+let drag=null;
+rail.addEventListener('pointerdown',e=>{rail.setPointerCapture(e.pointerId);const r=rail.getBoundingClientRect();drag={dx:e.clientX-r.left,dy:e.clientY-r.top};rail.classList.add('drag')});
+rail.addEventListener('pointermove',e=>{if(!drag)return;const s=scr.getBoundingClientRect(),r=rail.getBoundingClientRect();
+  const left=e.clientX-drag.dx-s.left, top=e.clientY-drag.dy-s.top;
+  topPct=top/s.height*100; rightPct=(s.width-left-r.width)/s.width*100; layout()});
+['pointerup','pointercancel'].forEach(t=>rail.addEventListener(t,()=>{drag=null;rail.classList.remove('drag')}));
+document.getElementById('size').addEventListener('input',e=>{scale=e.target.value/100;document.getElementById('sv').textContent=e.target.value+'%';layout()});
+document.getElementById('done').addEventListener('click',()=>{layout();const v=layout.last,o=document.getElementById('out');
+ o.style.display='block';
+ o.textContent='MY RAIL PLACEMENT\nRight gap: '+v.rightPct.toFixed(1)+'% of screen width\nTop: '+v.topPct.toFixed(1)+'% of screen height\nBottom: '+v.bottomPct.toFixed(1)+'%\nSize: '+Math.round(v.scale*100)+'% of the 308 rail\n\nScreenshot this and send it.';
+ o.scrollIntoView({behavior:'smooth'})});
+addEventListener('resize',layout);layout();
+</script></body></html>
