@@ -61,9 +61,12 @@ struct MenuSheetView: View {
                             }
                         }
                     }
-                    .padding(.bottom, geo.size.width > geo.size.height ? 110 : 30)
+                    .padding(.bottom, 24)
                 }
                 .scrollIndicators(.hidden)
+                // The list viewport ends above the dock (capsule ~58pt + 18pt float + margin), so no row
+                // is ever hidden behind it, in any orientation.
+                .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 92) }
             }
             .modifier(MenuPanelFrame(landscape: geo.size.width > geo.size.height, height: geo.size.height))
             
@@ -193,26 +196,15 @@ private struct GlassPanel: ViewModifier {
 }
 
 
-/** Portrait (and every tall screen): the original bottom sheet, 82% tall, unchanged.
- *  Sideways (width > height): the sheet fills the WHOLE screen - its backing runs under every
- *  safe area (camera side, home bar), content stays inside them. */
+/** Every screen, every orientation: the sheet fills the WHOLE screen. Its backing runs under every
+ *  safe area (camera side, rounded corners, home bar); the content stays inside them. */
 private struct MenuPanelFrame: ViewModifier {
     let landscape: Bool
     let height: CGFloat
-    @ViewBuilder func body(content: Content) -> some View {
-        if landscape {
-            content
-                .padding(.horizontal, 26)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(Color.white.opacity(0.97).ignoresSafeArea())
-        } else {
-            content
-                .padding(.horizontal, 26)
-                .frame(maxWidth: .infinity)
-                .frame(maxHeight: height * 0.82, alignment: .top)
-                .background(Color.white.opacity(0.97))
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
-                .ignoresSafeArea(edges: .bottom)
-        }
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 26)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(Color.white.opacity(0.97).ignoresSafeArea())
     }
 }

@@ -507,6 +507,10 @@ struct MenuProofView: View {
                 DockOverlay(dock: Dock(current: "menu", bagCount: 0, dark: false, onHome: {}, onMenu: {}, onBag: {}))
             }
         }
+        // "inset": simulate the foldable cover screen's lopsided safe area (big trailing, some top/leading).
+        .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: a.contains("inset") ? 100 : 0) }
+        .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: a.contains("inset") ? 40 : 0) }
+        .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: a.contains("inset") ? 24 : 0) }
         .onAppear {
             let m: UIInterfaceOrientationMask = a.contains("landR") ? .landscapeRight : (a.contains("landL") ? .landscapeLeft : .portrait)
             if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
