@@ -1,6 +1,6 @@
 import {PROPOSED_POLICY,createV2Loader,indexedStore} from './feed-v2-loader.mjs';
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
-const WEB_BUILD_ID='20261103-dated-sellers-v1';
+const WEB_BUILD_ID='20261122-order-identity-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':p===0?'0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
@@ -211,8 +211,24 @@ function ocard(o){const items=o.items?o.items.map(i=>esc(i.sku)+(i.qty>1?' ×'+i
  return `<article class="glass order" ${isMoreId(o.id)?'':'data-d="o:'+esc(o.id)+'"'}><div class="otop"><b>${oid(o)}</b><span class="st ${st.toLowerCase()}">${esc(st)}</span></div><div class="osku">${items}${isMoreId(o.id)?(items?' ':'')+'<small>'+esc(String(o.id).trim())+' items</small>':''}</div><div class="ometa"><span>${[esc(o.ch),payOf(o)?esc(payOf(o)):'',o.ageH!=null?ageTxt(o.ageH)+' old':esc(oT(o))].filter(Boolean).join(' · ')}</span><b>${inr(o.amt)}</b></div></article>`;}
 function kv(a,b){return `<div class="line"><span>${a}</span><b>${b}</b></div>`;}
 function kvw(a,b){return `<div class="line"><span>${a}</span><b style="margin-left:16px;min-width:0;text-align:right;overflow-wrap:anywhere">${b}</b></div>`;}
+// Today has full orders; Pending has summaries. Reconcile only one verified pair.
+function sameTodayPendingOrder(full,summary){
+ if(!full||!summary||!Array.isArray(full.items)||!full.items.length||!Array.isArray(summary.skus)||!summary.skus.length)return false;
+ if(Object.keys(summary).some(k=>!['id','ch','status','ageH','skus','amt'].includes(k)))return false;
+ for(const k of ['id','ch','status'])if(typeof full[k]!=='string'||!full[k]||full[k]!==summary[k])return false;
+ if(typeof full.amt!=='number'||typeof summary.amt!=='number'||!Number.isFinite(full.amt)||full.amt!==summary.amt)return false;
+ if(full.items.some(x=>!x||typeof x.sku!=='string'||!x.sku)||summary.skus.some(x=>typeof x!=='string'||!x))return false;
+ const a=full.items.map(x=>x.sku).sort(),b=[...summary.skus].sort();
+ return JSON.stringify(a)===JSON.stringify(b);
+}
+function resolveOrderDetailCandidates(orders,pend,id){
+ const dedupe=rows=>[...new Map(rows.map(o=>[JSON.stringify(o),o])).values()],a=dedupe(orders.filter(x=>String(x.id)===id)),b=dedupe(pend.filter(x=>String(x.id)===id)),all=dedupe([...a,...b]);
+ if(all.length<=1)return {order:all[0],ambiguous:false};
+ if(a.length===1&&b.length===1&&sameTodayPendingOrder(a[0],b[0]))return {order:a[0],ambiguous:false};
+ return {order:null,ambiguous:true};
+}
 function detailView(orders,live,pend,s){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);
- if(t==='o'){if(isMoreId(k))return none('Grouped source row: order identity is unavailable.');const candidates=[...orders,...pend].filter(x=>String(x.id)===k),unique=[...new Map(candidates.map(o=>[JSON.stringify(o),o])).values()];if(unique.length>1)return none('Several supplied order records share this number. Identity is ambiguous; no record has been selected.');const o=unique[0];if(!o)return none('Order not in the latest data.');
+ if(t==='o'){if(isMoreId(k))return none('Grouped source row: order identity is unavailable.');const resolved=resolveOrderDetailCandidates(orders,pend,k);if(resolved.ambiguous)return none('Several supplied order records share this number. Identity is ambiguous; no record has been selected.');const o=resolved.order;if(!o)return none('Order not in the latest data.');
   const items=o.items?o.items:(o.skus?String(o.skus).split(',').map(z=>({sku:z.trim(),qty:null})):[]);const units=items.length?pgSum(items,'qty').value:null;
   return `<section class="glass list">${isMoreId(o.id)?'':kv('Order no',oid(o))}${kv('Status',esc(o.status||'Status unavailable'))}${kv('Channel',esc(o.ch||'Channel unavailable'))}${payOf(o)?kv('Payment',esc(payOf(o))):''}${awbOf(o)?kv('Tracking no.',SV(esc(awbOf(o)))):''}${crOf(o)?kv('Courier',esc(crOf(o))):''}${kv('Amount',inr(o.amt))}${kv(o.ageH!=null?'Age':'Placed',o.ageH!=null?ageTxt(o.ageH):(o.ts!=null||o.at!=null?esc(oT(o)):o.time?'Today '+esc(o.time):'Time unavailable'))}${kv('Units',units===null?'unavailable':units)}</section><h2>Items</h2><section class="glass list">${items.map(z=>'<div class="line" data-d="s:'+esc(z.sku)+'"><span>'+SV(esc(z.sku))+'</span><b>'+ (pgNum(z.qty)===null?'Quantity unknown':'× '+Number(z.qty))+' ›</b></div>').join('')||'<div class="empty">No item detail.</div>'}</section>`;}
  if(t==='c'){if(rollStale(s))return none('Online has not been read for today. Channel sales are unknown, not zero.');const l=live.filter(o=>o.ch===k),tot=pgSum(l,'amt').value,sk={};l.forEach(o=>(Array.isArray(o.items)?o.items:[]).forEach(z=>sk[z.sku]=(sk[z.sku]||0)+(pgNum(z.qty)||0)));
