@@ -32,6 +32,17 @@ private func isHostedCheckout(_ u: String) -> Bool {
  *  click fallback, one-shot late reload with loop guard, and the empty-overlay rescue
  *  (25s window, max 2, so a completed order never re-adds). */
 private let OPEN_DEF = #"""
+window.__djSame=function(c,exp){
+  // EXACT cart match: same variants, same quantities, nothing extra. Count alone is NOT enough
+  // (a stale cart with one other product has the same count and made checkout show that product).
+  if(!c||!c.items)return false;
+  var have={},want={},k,nh=0,nw=0;
+  c.items.forEach(function(i){have[i.variant_id]=(have[i.variant_id]||0)+i.quantity;});
+  exp.forEach(function(e){want[e.id]=(want[e.id]||0)+e.quantity;});
+  for(k in have)nh++;for(k in want)nw++;
+  if(nh!==nw)return false;
+  for(k in want){if(have[k]!==want[k])return false;}
+  return true;};
 window.__djOpenFastrr=function(expCount,itemsJson){
 if(window.__djFastrr)return;window.__djFastrr=true;
 function rep(m){try{window.webkit.messageHandlers.djBridge.postMessage('report:'+m);}catch(e){}}
@@ -49,6 +60,7 @@ function findBtn(){
   for(var i=0;i<bs.length;i++){var t=(bs[i].textContent||'').toLowerCase();if(!bs[i].disabled&&(t.indexOf('shiprocket')>=0||t.indexOf('buy now')>=0))return bs[i];}
   return null;}
 rep('inj:fired');
+function go(){
 var n=0,taps=0;
 var t=setInterval(function(){n++;try{
   if(ovl()){rep('ovl:YES@'+n);try{sessionStorage.removeItem('djrl');}catch(e){}try{window.webkit.messageHandlers.djBridge.postMessage('fastrrOpen');}catch(e){}clearInterval(t);
@@ -56,7 +68,7 @@ var t=setInterval(function(){n++;try{
     var w=setInterval(function(){try{
       if(Date.now()-t0>25000){clearInterval(w);return;}
       fetch('/cart.js',{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){
-        if(c&&c.item_count===0&&expCount>0&&resc<2){resc++;rep('cart:rescue '+resc);
+        if(c&&expCount>0&&!window.__djSame(c,itemsJson)&&resc<2){resc++;rep('cart:rescue '+resc);
           (async function(){try{
             await fetch('/cart/clear.js',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
             await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:itemsJson})});
@@ -83,7 +95,21 @@ var t=setInterval(function(){n++;try{
     if(rc<1){try{sessionStorage.setItem('djrl',''+(rc+1));}catch(e){}rep('cart:late-reload');location.reload();return;}
     rep('btn:none-stop');}
   if(n>300){rep('slow:still-trying');n=0;}
-}catch(e){rep('tickErr '+e.message);}},400);};
+}catch(e){rep('tickErr '+e.message);}},400);}
+// Gate: never open checkout on a cart that is not EXACTLY the bag. Wrong items: re-sync, reload once or twice, then open.
+(async function(){try{
+  var r=await fetch('/cart.js',{cache:'no-store'});var c=await r.json();
+  if(expCount>0&&!window.__djSame(c,itemsJson)){
+    rep('cart:wrong-items');
+    await fetch('/cart/clear.js',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    await fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:itemsJson})});
+    try{await fetch('/cart/update.js',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({attributes:{order_source:'DressJet app iOS'}})});}catch(e){}
+    var fx=0;try{fx=+(sessionStorage.getItem('djfix')||0);}catch(e){}
+    if(fx<2){try{sessionStorage.setItem('djfix',''+(fx+1));}catch(e){}window.__djFastrr=false;rep('cart:fixed-reload');location.reload();return;}
+  }else{try{sessionStorage.removeItem('djfix');}catch(e){}}
+}catch(e){rep('cart:gateErr '+e.message);}
+go();})();
+};
 """#;
 
 private func openJs(_ expectedCount: Int, _ itemsJson: String) -> String {
@@ -103,16 +129,18 @@ try{
  *  coordinator): count match alone is not enough - the item-rendered button must be on
  *  the DOM, or the overlay binds an empty cart. /cart.js reads bypass the HTTP cache. */
 private func verifyOpenJs(_ expectedCount: Int, _ itemsJson: String) -> String {
-    openJs(expectedCount, itemsJson) + """
+    OPEN_DEF + """
 (async function(){
 function rep(m){try{window.webkit.messageHandlers.djBridge.postMessage('report:'+m);}catch(e){}}
 try{
   var r=await fetch('/cart.js',{cache:'no-store'});var c=await r.json();
-  if(c&&c.item_count===\(expectedCount)&&document.querySelector('button.sr-headless-checkout')){rep('cart:match');window.__djOpenFastrr(\(expectedCount),[\(itemsJson)]);return;}
-  rep('cart:stale '+(c?c.item_count:'?'));
+  if(window.__djSame(c,[\(itemsJson)])&&document.querySelector('button.sr-headless-checkout')){rep('cart:match');window.__djOpenFastrr(\(expectedCount),[\(itemsJson)]);return;}
+  rep('cart:stale '+(c?c.item_count:'?')+' (wrong items, re-syncing)');
 }catch(e){rep('cart:verifyErr '+e.message);}
 if(window.__djCart)return;window.__djCart=true;
 \(syncBodyJs(itemsJson))
+var sy=0;try{sy=+(sessionStorage.getItem('djsync')||0);}catch(e){}
+if(sy<2){try{sessionStorage.setItem('djsync',''+(sy+1));}catch(e){}rep('cart:synced-reload');location.reload();return;}
 if(document.querySelector('button.sr-headless-checkout')){rep('cart:direct-open');window.__djOpenFastrr(\(expectedCount),[\(itemsJson)]);}
 else location.reload();})();
 """
@@ -135,18 +163,22 @@ struct CheckoutView: View {
             Header(dark: false, bagCount: bag.count, onBack: onBack)
             // Debug strip until Arsh says remove: one screenshot names the failing stage.
             // 220-ios: stage log with elapsed seconds so the next recording pins the slow stage.
-            Text(stamps.isEmpty ? debug : stamps)
+            // 316: hidden for customers. The stage log still records; launch with -djdebug to show it.
+            Color.clear.frame(height: 0)
                 .onChange(of: debug) { _, d in
                     let t = Int(Date().timeIntervalSince(t0))
                     stamps = String((stamps + " | " + d + " +" + String(t) + "s").suffix(110))
                 }
-                .font(Dj.assistant(10))
-                .tracking(0.4)
-                .foregroundStyle(Dj.cream)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14).padding(.vertical, 3)
-                .background(Dj.navyDeep)
+            if CommandLine.arguments.contains("-djdebug") {
+                Text(stamps.isEmpty ? debug : stamps)
+                    .font(Dj.assistant(10))
+                    .tracking(0.4)
+                    .foregroundStyle(Dj.cream)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14).padding(.vertical, 3)
+                    .background(Dj.navyDeep)
+            }
             ZStack {
                 CheckoutWeb(expectedCount: bag.count, itemsJson: itemsJson,
                             navigating: $navigating, debug: $debug)
