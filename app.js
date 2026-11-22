@@ -1,6 +1,6 @@
 import {PROPOSED_POLICY,createV2Loader,indexedStore} from './feed-v2-loader.mjs';
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
-const WEB_BUILD_ID='20261122-order-identity-v1';
+const WEB_BUILD_ID='20261122-source-read-plan-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
 const A=x=>Array.isArray(x)&&x.length?x:null;const pct=(a,b)=>b?Math.round((a-b)/b*100):null;const arrow=p=>p===null?'':p===0?'0%':(p>0?'▲ ':'▼ ')+Math.abs(p)+'%';const ageTxt=h=>h<24?Math.round(h)+'h':Math.floor(h/24)+'d '+Math.round(h%24)+'h';const none=m=>`<div class="glass empty">${m}</div>`;
@@ -1489,24 +1489,29 @@ async function loadExp(){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;
    }}catch(e){}}
   data.expenses=ed;}catch(e){}
  if(data.expenses)render();}
-/* Scheduled read times are plans, independent of source freshness and feed checks. */
-function nextReadPlan(now=new Date(),kind='online'){
- const ms=now.getTime();if(!Number.isFinite(ms))return null;
- const offset=330*60000,local=new Date(ms+offset),day=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate());
- let start=null;for(let d=0;d<2&&start===null;d++)for(let h=11;h<=23&&start===null;h++)for(const minute of (kind==='retail'&&h<23?[15,45]:[15])){const t=day+d*86400000+h*3600000+minute*60000-offset;if(t>ms){start=t;break;}}
- const fmt=t=>new Date(t).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');
- const tomorrow=new Date(start+offset).getUTCDate()!==local.getUTCDate();
- return {start,read:(tomorrow?'Tomorrow, ':'')+fmt(start)+' IST',update:(tomorrow?'Tomorrow, ':'')+fmt(start+25*60000)+'-'+fmt(start+30*60000)+' IST'};
+/* A next-read floor is a publisher-supplied plan, never a guessed cadence. */
+function nextReadPlan(source,now=new Date()){
+ const value=source&&source.snapshot&&source.snapshot.nextOnlineReadFloorAt;
+ if(typeof value!=='string')return null;
+ const m=value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?(?:Z|\+05:30)$/);
+ if(!m)return null;
+ const parts=m.slice(1).map(Number),calendar=new Date(Date.UTC(parts[0],parts[1]-1,parts[2],parts[3],parts[4],parts[5]));
+ if(parts[0]<1000||calendar.getUTCFullYear()!==parts[0]||calendar.getUTCMonth()!==parts[1]-1||calendar.getUTCDate()!==parts[2]||calendar.getUTCHours()!==parts[3]||calendar.getUTCMinutes()!==parts[4]||calendar.getUTCSeconds()!==parts[5])return null;
+ const start=Date.parse(value),ms=now.getTime();if(!Number.isFinite(start)||!Number.isFinite(ms)||start<=ms)return null;
+ const opts={timeZone:'Asia/Kolkata'},date=new Date(start),sameDay=date.toLocaleDateString('en-IN',opts)===now.toLocaleDateString('en-IN',opts);
+ const time=date.toLocaleTimeString('en-IN',{...opts,hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');
+ return {start,read:(sameDay?'':date.toLocaleDateString('en-IN',{...opts,day:'numeric',month:'short',year:'numeric'})+', ')+time+' IST'};
 }
 // Temporary display-only hold, parent1Nov21:22:57. Resumption needs separate review.
 const RETAIL_READS_HELD=false;
 function nextReadMount(){
+ const old=root.querySelector('.next-read-plan');if(old)old.remove();
  if(!data)return;const head=root.querySelector('header');if(!head)return;
- let el=root.querySelector('.next-read-plan');if(!el){el=document.createElement('div');el.className='next-read-plan';head.insertAdjacentElement('afterend',el);}
- const retail=nextReadPlan(new Date(),'retail'),online=nextReadPlan(new Date(),'online');if(!retail||!online){el.remove();return;}
- el.replaceChildren();const add=text=>{const line=document.createElement('span');line.textContent=text;el.append(line);};
- if(RETAIL_READS_HELD)add('Retail reads paused while the feed update is prepared. Showing the last verified retail figures.');
- for(const [name,p] of [['Online',online]])for(const text of [name+' next scheduled read: '+p.read,name+' update expected around '+p.update])add(text);
+ const online=nextReadPlan(data),lines=[];
+ if(RETAIL_READS_HELD)lines.push('Retail reads paused while the feed update is prepared. Showing the last verified retail figures.');
+ if(online)lines.push('Online next read planned from '+online.read);
+ if(!lines.length)return;
+ const el=document.createElement('div');el.className='next-read-plan';for(const text of lines){const line=document.createElement('span');line.textContent=text;el.append(line);}head.insertAdjacentElement('afterend',el);
  if(root.querySelector('#feed-state'))overviewOrderMount();
 }
 function loadStateMount(){
