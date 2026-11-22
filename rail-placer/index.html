@@ -19,6 +19,13 @@ h1{font-size:14px;letter-spacing:.2em;font-weight:600;margin:6px 0 8px;text-alig
 #rail{position:absolute;display:flex;flex-direction:column;align-items:center;border-radius:99px;
  background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(14px) saturate(1.6);box-shadow:0 4px 18px #0004;touch-action:none;cursor:grab}
 #rail span{display:block;text-align:center;color:#fff;text-shadow:0 1px 2px #0008}
+#guides{position:absolute;inset:0;pointer-events:none;z-index:5}
+#guides i{position:absolute;display:block}
+.g10{background:#ffffff26}.g50{background:#ffffff4d}
+.gw{background:#ff4d6d}
+.tk{position:absolute;font-size:8px;color:#fff;opacity:.85;text-shadow:0 1px 2px #000a}
+.gl{position:absolute;font-size:9px;color:#ff9fb2;font-weight:700;text-shadow:0 1px 2px #000b;background:#0007;padding:0 3px;border-radius:3px}
+.tog{display:flex;gap:8px;align-items:center;font-size:12px;margin:2px 0 8px}
 #rail.drag{cursor:grabbing;outline:2px dashed #79d28a}
 .panel{margin-top:10px;background:#12263a;border-radius:16px;padding:12px 14px}
 label{font-size:12px;opacity:.8;display:flex;justify-content:space-between}
@@ -34,6 +41,7 @@ button{width:100%;padding:13px;border:0;border-radius:12px;background:#c0b090;co
  <div class="search">⌕ Search DressJet</div>
  <div class="widget">2:40<div class="ring"></div></div>
  <div class="shop">SHOP NOW</div>
+ <div id="guides"></div>
  <div id="rail">
   <span>⌂</span><span>⌕</span><span>≡</span><span>◻</span>
  </div>
@@ -41,6 +49,7 @@ button{width:100%;padding:13px;border:0;border-radius:12px;background:#c0b090;co
 <div class="panel">
  <label>Size <b id="sv">100%</b></label>
  <input id="size" type="range" min="60" max="160" value="100">
+ <div class="tog"><input id="gtog" type="checkbox" checked> <label style="display:inline">Show guides (red = Wi-Fi ring row and column, grey grid every 10%)</label></div>
  <div class="nums" id="nums"></div>
  <button id="done">DONE</button>
  <div id="out"></div>
@@ -60,7 +69,7 @@ function layout(){
   const maxRight=100-w/W*100; rightPct=Math.min(Math.max(rightPct,0),maxRight);
   rail.style.top=(topPct/100*H)+'px'; rail.style.right=(rightPct/100*W)+'px';
   const bottomPct=topPct+rh/H*100;
-  document.getElementById('nums').innerHTML='Right gap: <b>'+rightPct.toFixed(1)+'%</b> of width<br>Top: <b>'+topPct.toFixed(1)+'%</b> of height<br>Spans: <b>'+topPct.toFixed(0)+'% to '+bottomPct.toFixed(0)+'%</b> down (centre '+((topPct+bottomPct)/2).toFixed(0)+'%)<br>Size: <b>'+Math.round(scale*100)+'%</b>';
+  document.getElementById('nums').innerHTML='Right gap: <b>'+rightPct.toFixed(1)+'%</b> of width<br>Top: <b>'+topPct.toFixed(1)+'%</b> of height<br>Spans: <b>'+topPct.toFixed(0)+'% to '+bottomPct.toFixed(0)+'%</b> down (centre '+((topPct+bottomPct)/2).toFixed(0)+'%)<br>Size: <b>'+Math.round(scale*100)+'%</b>'+(window.WIFI?'<br>Rail centre vs Wi-Fi column: <b>'+((100-rightPct-(w/W*100)/2)-WIFI.xPct>=0?'+':'')+((100-rightPct-(w/W*100)/2)-WIFI.xPct).toFixed(1)+'%</b> (0 = lined up)':'');
   layout.last={topPct,rightPct,bottomPct,scale};
 }
 let drag=null;
@@ -75,4 +84,24 @@ document.getElementById('done').addEventListener('click',()=>{layout();const v=l
  o.textContent='MY RAIL PLACEMENT\nRight gap: '+v.rightPct.toFixed(1)+'% of screen width\nTop: '+v.topPct.toFixed(1)+'% of screen height\nBottom: '+v.bottomPct.toFixed(1)+'%\nSize: '+Math.round(v.scale*100)+'% of the 308 rail\n\nScreenshot this and send it.';
  o.scrollIntoView({behavior:'smooth'})});
 addEventListener('resize',layout);layout();
+function drawGuides(){
+  const g=document.getElementById('guides');g.innerHTML='';
+  const W=scr.clientWidth,H=scr.clientHeight,sr=scr.getBoundingClientRect(),rr=document.querySelector('.ring').getBoundingClientRect();
+  const cx=rr.left+rr.width/2-sr.left, cy=rr.top+rr.height/2-sr.top;
+  window.WIFI={xPct:cx/W*100,yPct:cy/H*100,rightPct:(W-cx)/W*100};
+  let h='';
+  for(let i=1;i<10;i++){const c=i==5?'g50':'g10';
+    h+='<i class="'+c+'" style="left:'+i*10+'%;top:0;bottom:0;width:1px"></i>';
+    h+='<i class="'+c+'" style="top:'+i*10+'%;left:0;right:0;height:1px"></i>';
+    h+='<span class="tk" style="top:1px;left:calc('+i*10+'% + 2px)">'+i*10+'</span>';
+    h+='<span class="tk" style="left:2px;top:calc('+i*10+'% + 1px)">'+i*10+'</span>';}
+  h+='<i class="gw" style="top:'+cy+'px;left:0;right:0;height:2px"></i>';
+  h+='<i class="gw" style="left:'+cx+'px;top:0;bottom:0;width:2px"></i>';
+  h+='<span class="gl" style="left:4px;top:'+(cy+3)+'px">Wi-Fi row '+(cy/H*100).toFixed(1)+'% down</span>';
+  h+='<span class="gl" style="left:'+Math.max(2,cx-92)+'px;top:'+(H*0.30)+'px">Wi-Fi column '+((W-cx)/W*100).toFixed(1)+'% from right</span>';
+  g.innerHTML=h;g.style.display=document.getElementById('gtog').checked?'block':'none';
+}
+document.getElementById('gtog').addEventListener('change',drawGuides);
+addEventListener('resize',drawGuides);setTimeout(function(){drawGuides();layout()},0);
+
 </script></body></html>
