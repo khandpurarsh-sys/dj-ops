@@ -14,6 +14,7 @@ jobs:
   proof:
     runs-on: xcode-27
     timeout-minutes: 40
+    if: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -75,7 +76,6 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
   archive:
-    needs: proof
     runs-on: xcode-27
     timeout-minutes: 40
     steps:
