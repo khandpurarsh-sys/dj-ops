@@ -1,0 +1,55 @@
+name: DressJetShop
+options:
+  bundleIdPrefix: com.dressjet
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  DressJetShop:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: DressJet
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # HTTPS/TLS via Apple frameworks only, no custom crypto: exempt (Arsh answered the
+        # TestFlight export-compliance question "no"); declaring it stops the per-build prompt.
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - com.googleusercontent.apps.1061618560989-abecpm3l3er9454te13uu7v8ibpdij5m
+        UILaunchScreen:
+          UIColorName: SplashNavy
+        # Let SwiftUI/Core Animation drive ProMotion (120 Hz) phones past the 60 Hz default.
+        CADisableMinimumFrameDurationOnPhone: true
+        UIAppFonts:
+          - cinzel_medium.ttf
+          - cormorant_medium.ttf
+          - cormorant_medium_italic.ttf
+          - assistant_regular.ttf
+          - assistant_medium.ttf
+          - assistant_semibold.ttf
+    entitlements:
+      path: Sources/DressJetShop.entitlements
+      properties:
+        com.apple.developer.applesignin:
+          - Default
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dressjet.shop
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "314"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+  DressJetShopTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: DressJetShop

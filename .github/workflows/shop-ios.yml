@@ -1,0 +1,146 @@
+name: shop-ios
+on:
+  push:
+    branches: [shop-ios-ci]
+    tags: ['ship-*']
+permissions:
+  contents: read
+concurrency:
+  group: shop-ios
+  cancel-in-progress: false
+env:
+  BUILD_NO: "314"
+jobs:
+  proof:
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
+          xcodebuild -showsdks | grep -q iphoneos27
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          cd ios-shop && xcodegen
+      - name: Simulator proof, every orientation
+        run: |
+          set -e
+          cd ios-shop
+          SIM_ID=$(xcrun simctl list devices available | grep -E 'iPhone' | head -1 | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}' | head -1)
+          echo "simulator: $SIM_ID"
+          xcrun simctl list devices available | grep "$SIM_ID"
+          xcrun simctl boot "$SIM_ID" || true
+          xcrun simctl bootstatus "$SIM_ID" -b
+          xcodebuild build -project DressJetShop.xcodeproj -scheme DressJetShop \
+            -destination "platform=iOS Simulator,id=$SIM_ID" -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO
+          APP=$(ls -d build/dd/Build/Products/*-iphonesimulator/DressJetShop.app | head -1)
+          xcrun simctl install "$SIM_ID" "$APP"
+          xcrun simctl status_bar "$SIM_ID" override --time 9:41 --batteryState charged --batteryLevel 100 || true
+          mkdir -p build/proof
+          shot() { N=$1; W=$2; MODE=$3; shift 3
+            xcrun simctl terminate "$SIM_ID" com.dressjet.shop 2>/dev/null || true
+            xcrun simctl launch "$SIM_ID" com.dressjet.shop "$MODE" "$@"
+            sleep "$W"; xcrun simctl io "$SIM_ID" screenshot "build/proof/$N.png"; }
+          shot light-dock 4 -dockproof light
+          shot light-nodock 4 -dockproof light nodock
+          shot light-nomenu 4 -dockproof light nomenu
+          shot dark-dock 4 -dockproof dark
+          shot dark-nodock 4 -dockproof dark nodock
+          shot dark-nomenu 4 -dockproof dark nomenu
+          shot light-mini-dock 4 -dockproof light mini
+          shot light-mini-nodock 4 -dockproof light mini nodock
+          shot light-mini-nomenu 4 -dockproof light mini nomenu
+          shot menu-portrait-dock 6 -menuproof
+          shot menu-portrait-nodock 6 -menuproof nodock
+          shot menu-landR-dock 6 -menuproof landR
+          shot menu-landR-nodock 6 -menuproof landR nodock
+          shot menu-landL-dock 6 -menuproof landL
+          shot menu-landL-nodock 6 -menuproof landL nodock
+          set +e
+          python3 ../scripts/measure_dock.py build/proof; D=$?
+          python3 ../scripts/measure_menu.py build/proof; M=$?
+          echo "dock-measure exit=$D menu-measure exit=$M" | tee build/proof/exit-codes.txt
+          test $D -eq 0 && test $M -eq 0
+      - name: Upload proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof
+          path: ios-shop/build/proof/*
+          retention-days: 7
+          if-no-files-found: ignore
+  archive:
+    needs: proof
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Generate project (automatic signing, team from App Store Connect)
+        run: |
+          brew install xcodegen
+          cd ios-shop
+          sed -i '' 's/CODE_SIGN_STYLE: Manual/CODE_SIGN_STYLE: Automatic/; s/DEVELOPMENT_TEAM: ""/DEVELOPMENT_TEAM: "8TG7VX985U"/' project.yml
+          xcodegen
+      - name: App Store Connect API key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s\n' "$ASC_PRIVATE_KEY" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          chmod 600 ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      - name: Archive
+        run: |
+          cd ios-shop
+          set -o pipefail
+          xcodebuild archive -project DressJetShop.xcodeproj -scheme DressJetShop \
+            -destination 'generic/platform=iOS' -archivePath build/DressJetShop.xcarchive \
+            MARKETING_VERSION=1.0 CURRENT_PROJECT_VERSION=$BUILD_NO \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1 | tee /tmp/archive.log | tail -40
+      - name: Verify archive
+        run: |
+          set -e
+          PL=$(ls ios-shop/build/DressJetShop.xcarchive/Products/Applications/*.app/Info.plist)
+          V=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PL")
+          E=$(/usr/libexec/PlistBuddy -c 'Print :ITSAppUsesNonExemptEncryption' "$PL")
+          echo "CFBundleVersion=$V ITSAppUsesNonExemptEncryption=$E"
+          test "$V" = "$BUILD_NO" && test "$E" = "false"
+      - name: Export (upload to TestFlight only on a ship-* tag)
+        run: |
+          cd ios-shop
+          set -o pipefail
+          if [[ "$GITHUB_REF" == refs/tags/ship-* ]]; then DEST=upload; else DEST=export; fi
+          echo "destination: $DEST"
+          printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+            '<plist version="1.0"><dict>' \
+            '<key>method</key><string>app-store-connect</string>' \
+            "<key>destination</key><string>$DEST</string>" \
+            '<key>signingStyle</key><string>automatic</string>' \
+            '<key>teamID</key><string>8TG7VX985U</string>' \
+            '</dict></plist>' > /tmp/export.plist
+          xcodebuild -exportArchive -archivePath build/DressJetShop.xcarchive \
+            -exportPath build/ipa -exportOptionsPlist /tmp/export.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.ASC_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} 2>&1 | tee /tmp/export.log | tail -40
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-logs
+          path: |
+            /tmp/archive.log
+            /tmp/export.log
+          retention-days: 3
+          if-no-files-found: ignore
