@@ -3002,7 +3002,7 @@ body.mn-tab .yd-view-tabs{display:none}
 :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-eyebrow{margin-bottom:4px!important}
 :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-yday{padding:10px 6px!important}
 
-@media (max-width:699px){
+@media (min-width:700px){
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:145px}
 
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);column-gap:14px;align-items:start}
@@ -3034,6 +3034,8 @@ body.mn-tab .yd-view-tabs{display:none}
 /* Foldable inner display: sales cards + quick rows fill the right rail. */
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-sidecol{grid-column:2;display:flex;flex-direction:column;gap:10px}
  :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-sidecol>.mn-grid2{grid-template-columns:1fr!important;margin-bottom:0!important}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-sech{grid-column:1/-1}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>section.mn-card.mn-list{grid-column:1/-1}
 
 /* Foldable Today fit round 3: Today-mode card fits too. */
 :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2{margin-bottom:6px!important}
