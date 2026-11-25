@@ -100,8 +100,18 @@ jobs:
         run: |
           set -e
           mkdir -p ~/private_keys
-          printf '%s\n' "$ASC_PRIVATE_KEY" > ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          python3 - "$HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8" <<'PYKEY'
+          import os, sys
+          k = os.environ['ASC_PRIVATE_KEY'].lstrip('\ufeff').strip()
+          if k.startswith(chr(34)) and k.endswith(chr(34)):
+              k = k[1:-1].strip()
+          k = k.replace('\\n', chr(10))
+          with open(sys.argv[1], 'w') as f:
+              f.write(k + chr(10))
+          
+          PYKEY
           chmod 600 ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          grep -c 'BEGIN PRIVATE KEY' ~/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
           KC=$RUNNER_TEMP/ci.keychain-db
           security create-keychain -p tmpkc "$KC"
           security set-keychain-settings -lut 21600 "$KC"
