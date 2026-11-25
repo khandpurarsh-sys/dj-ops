@@ -1,4 +1,5 @@
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
+import {PROPOSED_POLICY,createV2Loader,indexedStore} from './feed-v2-loader.mjs?archive=1';
 const WEB_BUILD_ID='20261114-demo-ios-v1';
 const $=s=>document.querySelector(s),root=$('#root');
 const inr=n=>{if(n===null||n===undefined||n===''||typeof n==='boolean'||(typeof n==='string'&&!n.trim()))return '—';const v=Number(n);return isFinite(v)?(v<0?'-':'')+'₹'+Math.round(Math.abs(v)).toLocaleString('en-IN'):'—'};
@@ -62,133 +63,26 @@ if(pu){const inp=$('#pn'),e=$('#err');inp.focus();inp.oninput=async()=>{inp.valu
 function showKey(t){if(DJ_NATIVE&&document.hidden)return;root.innerHTML=shell(`<div class="lock">${logo}<h1>Almost done</h1><p>Send this public key to your assistant. It is not secret. It lets updates be locked so only this phone can read them.</p><div class="glass"><div class="keybox" id="k">${esc(t)}</div><button class="btn" id="cp">Copy key</button><button class="btn alt" id="sh">Share key</button><button class="btn alt" id="nx">Continue</button></div></div>`);
  $('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(t);$('#cp').textContent='Copied'}catch{}};
  $('#sh').onclick=()=>navigator.share?navigator.share({text:t}):0;$('#nx').onclick=()=>{LS.removeItem('dj_keypending');lockScreen();};}
-const feedCache={};let acceptedStaticMemory=null,feedBatchMemory=null,apiFallbackAfter=0;
+const feedCache={};
 function feedSave(k,v){try{LS.setItem(k,v);return true}catch{return false}}
-function acceptedStatic(repo){if(acceptedStaticMemory?.repo===repo)return acceptedStaticMemory;try{const j=JSON.parse(LS.getItem('dj_static_feed')||'null');return j?.repo===repo?j:null}catch{return null}}
-function acceptFeed(){if(staticFeed){acceptedStaticMemory=staticFeed;feedSave('dj_static_feed',JSON.stringify(staticFeed));}}
-let feedPauseUntil=Number(LS.getItem('dj_feed_pause_until')||0)||0,loadBusy=false,feedBatchFlight=null;
-function feedError(){return new Error('GitHub feed rate-limited. Next check after '+new Date(feedPauseUntil).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM')+' IST');}
-async function feedJson(url){feedPauseUntil=Math.max(feedPauseUntil,Number(LS.getItem('dj_feed_pause_until')||0)||0);if(Date.now()<feedPauseUntil)throw feedError();const r=await fetch(url,{cache:'no-cache',headers:{Accept:'application/vnd.github+json'}});if(!r.ok){const err=await r.json().catch(()=>({}));if(r.status===429||(r.status===403&&(r.headers.get('x-ratelimit-remaining')==='0'||/rate limit/i.test(err.message||'')))){const reset=Number(r.headers.get('x-ratelimit-reset')||0)*1000,ra=r.headers.get('retry-after')||'',seconds=Number(ra),retry=ra?(Number.isFinite(seconds)?Date.now()+seconds*1000:Date.parse(ra)):0;feedPauseUntil=Math.max(Date.now()+60000,reset,Number.isFinite(retry)?retry:0);feedSave('dj_feed_pause_until',String(feedPauseUntil));throw feedError();}throw new Error('GitHub feed HTTP '+r.status+(err.message?': '+err.message:''));}return r.json();}
-function readFeedBatch(repo){if(feedBatchMemory?.repo===repo)return feedBatchMemory;try{const x=JSON.parse(LS.getItem('dj_feed_batch_v2')||'null');return x&&x.repo===repo&&x.rows&&typeof x.rows==='object'?x:null}catch{return null}}
-async function feedBatch(repo,force=false){
- const old=readFeedBatch(repo),now=Date.now();if(!force&&old&&Number.isFinite(old.at)&&now>=old.at&&now-old.at<180000)return old;
- if(feedBatchFlight)return feedBatchFlight;
- feedBatchFlight=(async()=>{
-  const rows=old?{...old.rows}:{},since=old&&old.latest&&Number.isFinite(Date.parse(old.latest))?'&since='+encodeURIComponent(new Date(Date.parse(old.latest)-1000).toISOString()):'';
-  const j=await feedJson('https://api.github.com/repos/'+repo+'/issues/comments?sort=created&direction=desc&per_page=6'+since);
-  if(!Array.isArray(j))throw new Error('Unexpected feed response');
-  const seen={};let latest=old?.latest||'';
-  for(const c of j){if(typeof c.created_at==='string'&&(!latest||c.created_at>latest))latest=c.created_at;const m=String(c.issue_url||'').match(/^https:\/\/api\.github\.com\/repos\/([^/]+\/[^/]+)\/issues\/(1|2|3|87|88)$/);if(!m||m[1].toLowerCase()!==repo.toLowerCase())continue;const n=m[2];if(seen[n])continue;seen[n]=true;rows[n]={body:typeof c.body==='string'?c.body:'',owner:String(c.user?.login||''),id:c.id};}
-  const out={repo,rows,at:Date.now(),latest,seen,complete:j.length<6};feedBatchMemory=out;feedSave('dj_feed_batch_v2',JSON.stringify(out));return out;
- })();try{return await feedBatchFlight}finally{feedBatchFlight=null}
-}
-/* Same-origin ciphertext is primary. API fallback is one repository batch per 15 minutes. */
-const feedUrl=n=>{const b=(window.DJ_CONFIG||{}).feedBase;return b?new URL(n,b).href:n};
-
-let staticFeed=null,staticFeedFlight=null,feedLoadMode=false,feedTransport='';
-async function staticFeedRead(force=false){
- if(staticFeedFlight)return staticFeedFlight;
- staticFeedFlight=(async()=>{
-  const r=await fetch(feedUrl('feed.json'),{cache:'no-store'});if(!r.ok)throw Error('Static feed HTTP '+r.status);
-  const j=await r.json(),repo=(window.DJ_CONFIG||{}).repo;
-  if(j.version!==1||j.repo!==repo||!j.rows||!j.rows['1']||!j.rows['3'])throw Error('Static feed format invalid');
-  const stored=readFeedBatch(repo),previous=acceptedStatic(repo);
-  for(const [n,row] of Object.entries(j.rows)){
-   if(!['1','2','3','87','88'].includes(n)||typeof row.body!=='string'||!Number.isSafeInteger(row.commentId)||!/^[a-f0-9]{64}$/.test(row.sha256))throw Error('Static feed row invalid');
-   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(row.body));const hex=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');if(hex!==row.sha256)throw Error('Static feed hash mismatch');
-   const e=JSON.parse(row.body);if(!e.ct||!Array.isArray(e.msgs))throw Error('Static feed is not encrypted');
-   if((previous?.repo===repo&&previous.rows?.[n]?.commentId>row.commentId)||(stored?.rows?.[n]?.id>row.commentId))throw Error('Static feed older than last saved update');
-  }
-  const full=JSON.parse(j.rows['3'].body),slim=JSON.parse(j.rows['1'].body);if(!full.sid||full.sid!==slim.sid||j.sid!==full.sid||full.slim||!slim.slim)throw Error('Static feed snapshots mismatch');
-  staticFeed=j;feedTransport='static';return j;
- })();try{return await staticFeedFlight}finally{staticFeedFlight=null}
-}
-/*FEEDV2 START - feed-v2: generation-pinned static feed, reader-first with high-water replay protection */
-const FEEDV2_MAX=2*1024*1024,FEEDV2_ROW_MAX=1024*1024,FEEDV2_BOOTSTRAP=1,FEEDV2_POLICY='dressjet-static-v2-proposed-1';
-function readFeedV2(){try{const j=JSON.parse(LS.getItem('dj_feed_v2')||'null');return j&&j.repo===(window.DJ_CONFIG||{}).repo&&Number.isSafeInteger(j.generation)?j:null}catch{return null}}
-async function fetchCapped(url,max,timeoutMs=15000){
- const ac=new AbortController(),to=setTimeout(()=>ac.abort(),timeoutMs);
- try{
-  const r=await fetch(url,{cache:'no-store',signal:ac.signal});if(!r.ok)throw Error('Static feed v2 HTTP '+r.status);
-  const rd=r.body&&r.body.getReader?r.body.getReader():null;
-  if(!rd){const t=await r.text();if(new TextEncoder().encode(t).length>max)throw Error('Static feed v2 too large');return t}
-  const chunks=[];let n=0;
-  for(;;){const{done,value}=await rd.read();if(done)break;n+=value.byteLength;if(n>max){try{await rd.cancel()}catch{}throw Error('Static feed v2 too large')}chunks.push(value)}
-  const all=new Uint8Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length}
-  return new TextDecoder().decode(all);
- }catch(e){if(e&&e.name==='AbortError')throw Error('Static feed v2 timed out');throw e}
- finally{clearTimeout(to)}
-}
-const shaHex=async t=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('')};
-async function staticFeedV2Read(){
- const repo=(window.DJ_CONFIG||{}).repo;
- const text=await fetchCapped(feedUrl('feed-v2.json'),FEEDV2_MAX);
- let j;try{j=JSON.parse(text)}catch{throw Error('Static feed v2 malformed')}
- if(!j||j.version!==2||j.repo!==repo)throw Error('Static feed v2 format invalid');
- if(!Number.isSafeInteger(j.generation)||j.generation<FEEDV2_BOOTSTRAP)throw Error('Static feed v2 generation invalid');
- let prevSha=null,prevGen=null;
- if(j.generation===FEEDV2_BOOTSTRAP){if(j.previous!=null)throw Error('Static feed v2 genesis must have null previous')}
- else{
-  const p=j.previous;
-  if(typeof p==='string'){if(!/^[a-f0-9]{64}$/.test(p))throw Error('Static feed v2 previous missing');prevSha=p;}
-  else if(p&&typeof p==='object'&&!Array.isArray(p)){
-   if(!Number.isSafeInteger(p.generation)||!/^[a-f0-9]{64}$/.test(p.sha256||''))throw Error('Static feed v2 previous invalid');
-   if(p.generation!==j.generation-1)throw Error('Static feed v2 previous generation mismatch');
-   prevGen=p.generation;prevSha=p.sha256;
-  }
-  else throw Error('Static feed v2 previous missing');
- }
- if(j.policyVersion!==FEEDV2_POLICY)throw Error('Static feed v2 policyVersion invalid');
- if(!j.rows||typeof j.rows!=='object'||Array.isArray(j.rows))throw Error('Static feed v2 rows invalid');
- if(Object.keys(j.rows).sort().join(',')!=='1,2,3,87,88')throw Error('Static feed v2 rows must be exactly 1,2,3,87,88');
- for(const row of Object.values(j.rows)){
-  if(!row||typeof row.body!=='string'||!/^[a-f0-9]{64}$/.test(row.sha256||''))throw Error('Static feed v2 row invalid');
-  const bl=new TextEncoder().encode(row.body).length;
-  if(bl>FEEDV2_ROW_MAX)throw Error('Static feed v2 row too large');
-  if(row.byteLength!==undefined&&row.byteLength!==bl)throw Error('Static feed v2 row length mismatch');
-  if(await shaHex(row.body)!==row.sha256)throw Error('Static feed v2 hash mismatch');
-  const e=JSON.parse(row.body);if(!e.ct||!Array.isArray(e.msgs))throw Error('Static feed v2 is not encrypted');
- }
- const full=JSON.parse(j.rows['3'].body),slim=JSON.parse(j.rows['1'].body);
- if(!full.sid||full.sid!==slim.sid||j.sid!==full.sid||full.slim||!slim.slim)throw Error('Static feed v2 snapshots mismatch');
- const hw=readFeedV2(),feedSHA=await shaHex(text);
- if(hw){
-  if(j.generation<hw.generation)throw Error('Static feed v2 older than last accepted update');
-  if(j.generation>hw.generation&&(prevGen===hw.generation||(prevGen===null&&j.generation===hw.generation+1))&&prevSha!==hw.feedSHA)throw Error('Static feed v2 previous hash does not match last accepted update');
-  if(j.generation===hw.generation){
-   if(feedSHA!==hw.feedSHA)throw Error('Static feed v2 conflicts with last accepted update');
-   staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
-  }
- }
- /* higher generation or first accept: prove the slim row decrypts for this phone before pinning the high-water */
- if(priv&&myKid){try{
-  const dd=await decryptPayload(slim,priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');
-  const df=await decryptPayload(full,priv,myKid);if(!df||!df.snapshot)throw new Error('unexpected payload');
-  if(dd.sid&&df.sid&&dd.sid!==df.sid)throw Error('decrypted snapshots mismatch');
-  const da=dd.snapshot.at||dd.snapshot.asOf,fa=df.snapshot.at||df.snapshot.asOf;
-  if(da&&fa&&da!==fa)throw Error('full and slim snapshots are from different reads');
- }catch(e){throw Error('Static feed v2 decrypt failed: '+e.message)}}
- if(!feedSave('dj_feed_v2',JSON.stringify({repo,generation:j.generation,feedSHA,sid:j.sid})))throw Error('Cannot save feed v2 state');
- staticFeed={version:2,repo:j.repo,sid:j.sid,generation:j.generation,rows:j.rows};feedTransport='static v2';return staticFeed;
-}
-/*FEEDV2 END*/
+let loadBusy=false;
+/* Same-origin ciphertext only (static v2). No GitHub API fallback. */
+let staticFeed=null,feedTransport='';
+/* Static v2 only (cutover). The pinned loader owns validation, archive hydration, the last-good cache and rollback checks.
+   Location is the pinned feed base, never the WebView origin; the loader fails closed before any fetch unless it is exactly
+   https://khandpurarsh-sys.github.io/dj-ops/. Decrypt reads live priv/myKid so a background lock clears identity. */
+let v2Loader=null,v2Result=null;
+function getV2Loader(){if(!v2Loader)v2Loader=createV2Loader({policy:PROPOSED_POLICY,store:indexedStore(window.indexedDB),location:(window.DJ_CONFIG||{}).feedBase||'',
+ decrypt:(e,maxPlaintextBytes)=>decryptPayload(e,priv,myKid,{maxPlaintextBytes})});return v2Loader;}
 async function prepareFeed(){
- staticFeed=null;
- try{await staticFeedV2Read();return}catch(e2){if(readFeedV2())throw e2}
- try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
- const now=Date.now(),next=Math.max(apiFallbackAfter,Number(LS.getItem('dj_api_fallback_after')||0));if(now<next)throw Error('Static feed unavailable; API fallback paused until '+new Date(next).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'})+' IST');
- apiFallbackAfter=now+900000;feedSave('dj_api_fallback_after',String(apiFallbackAfter));await feedBatch((window.DJ_CONFIG||{}).repo,true);
+ staticFeed=null;v2Result=null;
+ v2Result=await getV2Loader().load();staticFeed=v2Result.feed;feedTransport=v2Result.stale?'static v2 cached':'static v2';
 }
 async function lastComment(repo,num,back,force=false){
- if(!back&&staticFeed&&staticFeed.repo===repo){const row=staticFeed.rows[String(num)];if(!row)throw Error('Static supplementary feed unavailable');return row.body;}
- // One batch is shared across all channels. No per-issue count/page fallback.
- const b=readFeedBatch(repo),row=b&&b.rows[String(num)];
- if(!row||!(b.seen[String(num)]||b.complete))throw Error('Feed channel unavailable in bounded fallback');
- if(row.owner.toLowerCase()!==String(repo).split('/')[0].toLowerCase())throw Error('Newest comment is not from the owner');
- const accepted=acceptedStatic(repo);if(accepted?.rows?.[String(num)]?.commentId>row.id)throw Error('API feed older than last accepted static update');
- return row.body.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();
+ if(staticFeed&&staticFeed.repo===repo){const row=staticFeed.rows[String(num)];if(!row)throw Error('Static supplementary feed unavailable');return row.body;}
+ throw Error('Static v2 feed not accepted; historical API feed disabled');
 }
-async function fetchLatest(force=false){const repo=(window.DJ_CONFIG||{}).repo;let body=await lastComment(repo,1,0,force);window.__slim=false;/* reuse a cached full copy only when it is exactly this slim snapshot */try{const o=JSON.parse(body);if(o&&o.slim){let full=false;try{const old=LS.getItem('dj_last'),po=old&&JSON.parse(old);if(po&&!po.slim&&po.z&&po.sid&&po.sid===o.sid){body=old;full=true;}else{const f=await lastComment(repo,3),p=JSON.parse(f);if(p&&!p.slim&&p.z&&p.sid&&p.sid===o.sid){body=f;full=true}}}catch(e){}window.__slim=!full}}catch(e){}return body;}
+async function fetchLatest(force=false){if(!v2Result)throw Error('Static v2 feed not accepted');window.__slim=false;return v2Result.body;}
 function dl(a,b,k){const n=a.length,m=b.length;if(Math.abs(n-m)>k)return k+1;let p2=null,p1=Array.from({length:m+1},(_,j)=>j);for(let i=1;i<=n;i++){const c=[i];let mn=i;for(let j=1;j<=m;j++){let v=Math.min(p1[j]+1,c[j-1]+1,p1[j-1]+(a[i-1]===b[j-1]?0:1));if(p2&&i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])v=Math.min(v,p2[j-2]+1);c[j]=v;if(v<mn)mn=v;}if(mn>k)return k+1;p2=p1;p1=c;}return p1[m];}
 const fzn=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\s]+/g,' ').replace(/\s+/g,' ').trim();
 function fzMatch(q,text){const t=fzn(text),toks=fzn(q).split(' ').filter(Boolean);if(!toks.length)return 0;const flat=t.replace(/ /g,''),words=t.split(' ');let worst=0;
@@ -255,12 +149,12 @@ function applyStk(){if(!stk||!data)return;try{const R=stk.retail,O=stk.online;
   if(data._deadDerived||(!A(data.deadStock)&&rows.some(x=>x.sold30!=null))){const d=rows.filter(x=>x.sold30===0&&x.onHand>0).sort((p,q)=>q.onHand-p.onHand).map(x=>({sku:x.sku,name:x.name,onHand:x.onHand}));data.deadStock=d;data._deadDerived=true;}}
  }catch(e){}}
 async function loadStock(g){const repo=(window.DJ_CONFIG||{}).repo;let b=null;
- try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=LS.getItem('dj_stk');if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');if(g===bgGen)render();}
+ try{b=await lastComment(repo,2);feedSave('dj_stk',b);}catch(e){b=null;if(!status.startsWith('Feed check failed:'))status='Stock feed check failed: '+e.message+(b?'. Showing last saved stock':'. Stock unavailable');if(g===bgGen)render();}
  if(!b||g!==bgGen)return;try{const s2=await decryptPayload(JSON.parse(b),priv,myKid);if(g!==bgGen)return;stk=s2;applyStk();render();}catch(e){}}
 async function load(opts={}){if(DEMO()){loadDemo();return;}if(loadBusy){loadAgain=true;return;}if(DJ_NATIVE&&document.hidden)return;const now=Date.now();if(now-(window.__lastFeedAttempt||0)<60000)return;loadBusy=true;const g=bgGen;window.__lastFeedAttempt=now;window.__lastLoad=now;try{await loadData(g,opts.force===true);if(g===bgGen){await loadStock(g);await loadExp(g);}}finally{loadBusy=false;if(g!==bgGen&&!priv)lockScreen(false);if(loadAgain){loadAgain=false;load();}}}
 function manualRefresh(){return load({force:true})}
-async function loadData(g,force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=window.__slim?'Limited view: full history not loaded':'';}catch(e){b=LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):'No data yet: '+e.message;if(data||!b){if(g===bgGen)render();return;}}
- if(g!==bgGen)return;const dd=await decryptPayload(JSON.parse(b),priv,myKid);if(g!==bgGen)return;if(!dd||!dd.snapshot)throw new Error('unexpected payload');feedSave('dj_last',b);feedSave('dj_slim',window.__slim?'1':'0');acceptFeed();data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){if(g!==bgGen)return;status='Could not read update: '+e.message;}render();}
+async function loadData(g,force=false){try{status='Updating...';render();try{await prepareFeed();status=v2Result.status||'';}catch(e){status=data?'Feed check failed: '+e.message+'. Showing last saved data with original source times':'No data yet: '+e.message;if(g===bgGen)render();return;}
+ if(g!==bgGen)return;const dd=v2Result.data;if(g!==bgGen)return;if(!dd||!dd.snapshot)throw new Error('unexpected payload');data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){if(g!==bgGen)return;status='Could not read update: '+e.message;}render();}
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='bills'?'Retail bills':t==='dc'?k.split('|')[1]+' · '+new Date(k.split('|')[0]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?'Revenue today':t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
 /* order time as epoch ms: ts/at, else age in hours, else today's "h:mm AM" time (IST) */
@@ -1493,8 +1387,8 @@ function expView(){const E=data&&data.expenses;if(!E||!Array.isArray(E.months)||
  if(E.undated&&E.undated.items&&E.undated.items.length)h+=`<details class="fold"><summary>Undated invoices / documents · ${inrP(E.undated.paise)} · ${E.undated.items.length}</summary><p class="note">No reliable date - not placed in any month, not added to any total.</p><section class="glass list">${E.undated.items.map(row).join('')}</section></details>`;
  return h;}
 async function loadExp(g){if(!data)return;const repo=(window.DJ_CONFIG||{}).repo;let b=null,c=null;
- try{b=await lastComment(repo,87);feedSave('dj_exp',b);}catch(e){b=LS.getItem('dj_exp');if(!b){if(g===bgGen&&data)data.expenses=null;return}}
- try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=LS.getItem('dj_expc');}
+ try{b=await lastComment(repo,87);feedSave('dj_exp',b);}catch(e){b=null;if(!b){if(g===bgGen&&data)data.expenses=null;return}}
+ try{c=await lastComment(repo,88);if(c)LS.setItem('dj_expc',c);}catch(e){c=null;}
  if(g!==bgGen)return;try{const ed=await decryptPayload(JSON.parse(b),priv,myKid);
   if(g!==bgGen)return;if(!(ed&&ed.kind==='expenses'&&Array.isArray(ed.months))){data.expenses=null;return}
   if(c){try{const cd=await decryptPayload(JSON.parse(c),priv,myKid);
