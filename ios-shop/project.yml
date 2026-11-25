@@ -53,3 +53,20 @@ targets:
       - path: Tests
     dependencies:
       - target: DressJetShop
+  DressJetShopUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: DressJetShop
+schemes:
+  DressJetShop:
+    build:
+      targets:
+        DressJetShop: all
+    test:
+      config: Debug
+      targets:
+        - DressJetShopTests
+        - DressJetShopUITests
