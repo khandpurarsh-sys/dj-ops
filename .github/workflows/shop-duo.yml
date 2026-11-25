@@ -1,7 +1,7 @@
 name: shop-duo
 on:
   push:
-    branches: [duo-shots-ci-arm]
+    branches: [duo-shots-ci]
 permissions:
   contents: read
 concurrency:
