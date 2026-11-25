@@ -5,8 +5,9 @@ const OPTIONAL_REMOVALS=Object.freeze(['eKlKbhWk','xZw9PRCY','NczC6Ww8','yKOhpUF
 // Optional adds: yxNJE9dV (3 Nov iPhone rotation); tHhbQ90n (10 Nov, owner-signed add of the
 // "dad" DRJ device, approval seq 1794318511225, verified against the pinned owner key);
 // ai6ADtGq (21 Nov, owner-signed add of the "My Duo" iPhone, approval seq 1795237430140,
-// verified against the pinned owner key).
-const OPTIONAL_ADDS=Object.freeze(['yxNJE9dV','tHhbQ90n','ai6ADtGq']);
+// verified against the pinned owner key); b4DNM6EB (25 Nov, owner-signed add of the
+// "Anu duo" iPhone, approval seq 1795623441123, verified against the pinned owner key).
+const OPTIONAL_ADDS=Object.freeze(['yxNJE9dV','tHhbQ90n','ai6ADtGq','b4DNM6EB']);
 function approvedRoster(kids,p){
  const set=new Set(kids),old=p.requiredKids;
  if(set.size!==kids.length||kids.some(k=>!old.includes(k)&&!OPTIONAL_ADDS.includes(k)))return false;
