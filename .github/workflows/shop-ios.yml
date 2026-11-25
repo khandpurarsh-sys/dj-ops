@@ -124,12 +124,20 @@ jobs:
               h = b64u(json.dumps({'alg': 'ES256', 'kid': KID, 'typ': 'JWT'}, separators=(',', ':')).encode())
               n = int(time.time())
               p = b64u(json.dumps({'iss': ISS, 'iat': n, 'exp': n + 1200, 'aud': 'appstoreconnect-v1'}, separators=(',', ':')).encode())
-              der = subprocess.run(['openssl', 'dgst', '-sha256', '-sign', KEY, '-binary'], input=(h + '.' + p).encode(), capture_output=True, check=True).stdout
-              idx = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7f)
-              def ri(d, i):
-                  ln = d[i + 1]; return d[i + 2:i + 2 + ln], i + 2 + ln
-              r, idx = ri(der, idx); s, _ = ri(der, idx)
-              return h + '.' + p + '.' + b64u(r.rjust(32, b'\0')[-32:] + s.rjust(32, b'\0')[-32:])
+              msg = (h + '.' + p).encode()
+              r1 = subprocess.run(['openssl', 'dgst', '-sha256', '-sign', KEY], input=msg, capture_output=True)
+              if r1.returncode == 0:
+                  der = r1.stdout
+                  idx = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7f)
+                  def ri(d, i):
+                      ln = d[i + 1]; return d[i + 2:i + 2 + ln], i + 2 + ln
+                  r, idx = ri(der, idx); s, _ = ri(der, idx)
+                  return h + '.' + p + '.' + b64u(r.rjust(32, b'\0')[-32:] + s.rjust(32, b'\0')[-32:])
+              print('openssl dgst failed, trying node:', r1.stderr.decode()[:300])
+              node_js = 'const c=require("crypto"),f=require("fs");const m=Buffer.from(process.argv[1],"utf8");const s=c.sign("sha256",m,{key:f.readFileSync(process.argv[2]),dsaEncoding:"ieee-p1363"});process.stdout.write(s.toString("base64url"))'
+              r2 = subprocess.run(['node', '-e', node_js, msg.decode(), KEY], capture_output=True)
+              assert r2.returncode == 0, 'node sign failed: ' + r2.stderr.decode()[:300]
+              return h + '.' + p + '.' + r2.stdout.decode().strip()
           def api(method, path, body=None):
               req = urllib.request.Request('https://api.appstoreconnect.apple.com' + path, method=method, data=json.dumps(body).encode() if body else None, headers={'Authorization': 'Bearer ' + jwt(), 'Content-Type': 'application/json'})
               return json.load(urllib.request.urlopen(req, timeout=60))
