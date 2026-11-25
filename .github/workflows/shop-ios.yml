@@ -93,9 +93,10 @@ jobs:
       - name: Signing material and ASC key
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           P12_B64: ${{ secrets.DJOPS_DIST_P12_B64 }}
           P12_PASS: ${{ secrets.DJOPS_DIST_P12_PASSWORD }}
-          PROFILE_B64: ${{ secrets.PROFILE_B64 }}
         run: |
           set -e
           mkdir -p ~/private_keys
@@ -110,9 +111,57 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k tmpkc "$KC"
           security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
           security find-identity -v -p codesigning "$KC"
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "$PROFILE_B64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/ci.mobileprovision"
+          export CERT_FP=$( (openssl pkcs12 -in $RUNNER_TEMP/s.p12 -clcerts -nokeys -passin pass:"$P12_PASS" 2>/dev/null || openssl pkcs12 -legacy -in $RUNNER_TEMP/s.p12 -clcerts -nokeys -passin pass:"$P12_PASS") | openssl x509 -outform DER | openssl sha1 -r | awk '{print $1}')
+          export ASC_KEY_PATH=$HOME/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
           rm -f $RUNNER_TEMP/s.p12
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          python3 <<'PYEOF'
+          import base64, hashlib, json, os, subprocess, time, urllib.request
+          KID = os.environ['ASC_KEY_ID']; ISS = os.environ['ASC_ISSUER_ID']
+          KEY = os.environ['ASC_KEY_PATH']; FP = os.environ['CERT_FP'].lower()
+          def b64u(b): return base64.urlsafe_b64encode(b).rstrip(b'=').decode()
+          def jwt():
+              h = b64u(json.dumps({'alg': 'ES256', 'kid': KID, 'typ': 'JWT'}, separators=(',', ':')).encode())
+              n = int(time.time())
+              p = b64u(json.dumps({'iss': ISS, 'iat': n, 'exp': n + 1200, 'aud': 'appstoreconnect-v1'}, separators=(',', ':')).encode())
+              der = subprocess.run(['openssl', 'dgst', '-sha256', '-sign', KEY, '-binary'], input=(h + '.' + p).encode(), capture_output=True, check=True).stdout
+              idx = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7f)
+              def ri(d, i):
+                  ln = d[i + 1]; return d[i + 2:i + 2 + ln], i + 2 + ln
+              r, idx = ri(der, idx); s, _ = ri(der, idx)
+              return h + '.' + p + '.' + b64u(r.rjust(32, b'\0')[-32:] + s.rjust(32, b'\0')[-32:])
+          def api(method, path, body=None):
+              req = urllib.request.Request('https://api.appstoreconnect.apple.com' + path, method=method, data=json.dumps(body).encode() if body else None, headers={'Authorization': 'Bearer ' + jwt(), 'Content-Type': 'application/json'})
+              return json.load(urllib.request.urlopen(req, timeout=60))
+          certs = api('GET', '/v1/certificates?filter[certificateType]=DISTRIBUTION&limit=50')['data']
+          cid = None
+          for c in certs:
+              der = base64.b64decode(c['attributes']['certificateContent'])
+              if hashlib.sha1(der).hexdigest().lower() == FP:
+                  cid = c['id']; break
+          assert cid, 'no ASC distribution certificate matches the imported p12'
+          bid = api('GET', '/v1/bundleIds?filter[identifier]=com.dressjet.shop')['data'][0]['id']
+          prof = None
+          resp = api('GET', '/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[profileState]=ACTIVE&include=certificates,bundleId&limit=200')
+          for p in resp['data']:
+              rel = p.get('relationships', {})
+              if rel.get('bundleId', {}).get('data', {}).get('id') != bid: continue
+              cids = [c['id'] for c in rel.get('certificates', {}).get('data', [])]
+              if cid in cids:
+                  prof = p; break
+          if prof:
+              print('reusing profile', prof['id'], prof['attributes']['name'])
+              pid = prof['id']
+          else:
+              body = {'data': {'type': 'profiles', 'attributes': {'name': 'DressJet Shop CI appstore', 'profileType': 'IOS_APP_STORE'}, 'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bid}}, 'certificates': {'data': [{'type': 'certificates', 'id': cid}]}}}}
+              pid = api('POST', '/v1/profiles', body)['data']['id']
+              print('created profile', pid)
+          prof = api('GET', '/v1/profiles/' + pid)['data']
+          content = base64.b64decode(prof['attributes']['profileContent'])
+          out = os.path.expanduser('~/Library/MobileDevice/Provisioning Profiles/%s.mobileprovision' % prof['attributes'].get('uuid', prof['id']))
+          open(out, 'wb').write(content)
+          print('installed', out, len(content), 'bytes')
+          PYEOF
       - name: Archive
         run: |
           cd ios-shop
@@ -122,7 +171,7 @@ jobs:
             MARKETING_VERSION=1.0.1 CURRENT_PROJECT_VERSION=$BUILD_NO \
             CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=8TG7VX985U \
             "CODE_SIGN_IDENTITY=Apple Distribution" \
-            "PROVISIONING_PROFILE_SPECIFIER=DressJet Shop CI appstore 317" 2>&1 | tee /tmp/archive.log | tail -40
+            "PROVISIONING_PROFILE_SPECIFIER=DressJet Shop CI appstore" 2>&1 | tee /tmp/archive.log | tail -40
       - name: Verify archive
         run: |
           set -e
@@ -145,7 +194,7 @@ jobs:
             '<key>signingStyle</key><string>manual</string>' \
             '<key>signingCertificate</key><string>Apple Distribution</string>' \
             '<key>teamID</key><string>8TG7VX985U</string>' \
-            '<key>provisioningProfiles</key><dict><key>com.dressjet.shop</key><string>DressJet Shop CI appstore 317</string></dict>' \
+            '<key>provisioningProfiles</key><dict><key>com.dressjet.shop</key><string>DressJet Shop CI appstore</string></dict>' \
             '</dict></plist>' > /tmp/export.plist
           xcodebuild -exportArchive -archivePath build/DressJetShop.xcarchive \
             -exportPath build/ipa -exportOptionsPlist /tmp/export.plist \
