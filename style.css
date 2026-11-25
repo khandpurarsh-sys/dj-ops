@@ -566,7 +566,7 @@ body.lay-halo #halo-explore{position:fixed;z-index:75;bottom:max(22px,env(safe-a
 body.lay-halo #halo-explore small{font-size:10px;border-left:1px solid #7e9bc744;padding-left:11px;color:#60799c}
 body.lay-halo .halo-explore-orb{width:31px;height:31px;border-radius:50%;position:relative;background:radial-gradient(ellipse at 30% 20%,#fff7dc,#c5cfe2 40%,#5d7baf 70%,#f9e2aa);box-shadow:inset 0 0 0 1px #ffffffb8,0 3px 9px #385d8633}
 body.lay-halo .halo-explore-orb::after{content:'';position:absolute;inset:7px;border:1px solid #fff9;border-radius:50%;transform:rotate(-28deg) scaleX(.55)}
-body.lay-halo .halo-map{position:fixed;inset:auto 0 0;width:100%;max-width:640px;max-height:92svh;box-sizing:border-box;margin:0 auto;border-radius:32px 32px 0 0;border:1px solid #ffffffb8;padding:27px 30px max(28px,env(safe-area-inset-bottom));background:linear-gradient(145deg,#eaf1fbea,#d9e5f4e8);color:#173963;box-shadow:0 -15px 90px #284a7955;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px)}
+body.lay-halo .halo-map{position:fixed;inset:auto 0 0;width:100%;max-width:640px;max-height:92svh;box-sizing:border-box;margin:0 auto;border-radius:32px 32px 0 0;border:1px solid #ffffffb8;padding:27px 30px max(28px,env(safe-area-inset-bottom));background:linear-gradient(145deg,#eaf1fbea,#d9e5f4e8);color:#173963;box-shadow:0 -15px 90px #284a7955;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(28px)}
 body.lay-halo .halo-map::backdrop{background:#17345555;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 body.lay-halo .halo-map[open]{animation:haloMapIn .5s cubic-bezier(.16,1,.3,1)}
 body.lay-halo .halo-map-top{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:10px;letter-spacing:.15em}
@@ -2746,7 +2746,7 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav button span{font-size:9.5px!important;letter-spacing:-.01em}
 
 /* ===== Preview: Midnight skin for the classic halo Menu pill + floating destination panel (31 Oct 2026) ===== */
-:root[data-halo-palette=midnight] body.lay-halo .halo-menu-toggle{background:rgba(22,23,29,.82)!important;border:1px solid rgba(255,255,255,.09)!important;color:#f8f1e4!important;border-radius:99px;box-shadow:0 18px 44px rgba(0,0,0,.6)!important;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;font-weight:600;letter-spacing:.01em}
+:root[data-halo-palette=midnight] body.lay-halo .halo-menu-toggle{background:rgba(22,23,29,.68)!important;border:1px solid rgba(255,255,255,.09)!important;color:#f8f1e4!important;border-radius:99px;box-shadow:0 18px 44px rgba(0,0,0,.6)!important;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;font-weight:600;letter-spacing:.01em}
 @supports(backdrop-filter:blur(12px)){:root[data-halo-palette=midnight] body.lay-halo .halo-menu-toggle{backdrop-filter:blur(28px) saturate(1.3);-webkit-backdrop-filter:blur(28px) saturate(1.3)}}
 :root[data-halo-palette=midnight] body.lay-halo .halo-menu-toggle:focus-visible{outline:2px solid #e0c897;outline-offset:4px}
 :root[data-halo-palette=midnight] body.lay-halo .halo-bottom-nav.halo-menu-panel{border-radius:22px!important;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.014)),#191b20!important;border:1px solid #34353b!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 18px 44px rgba(0,0,0,.6)!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;height:auto!important;min-height:0;padding:8px!important;gap:4px}
@@ -2762,6 +2762,28 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette=midnight] body.lay-halo h1{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui,sans-serif;letter-spacing:-.055em}
 :root[data-halo-palette=midnight] body.lay-halo .halo-kpi>b{font-family:inherit!important;letter-spacing:-.045em}
 :root[data-halo-palette=midnight] body.lay-halo .order .ometa b{font-family:inherit}
+
+/* Android parity: 0.95 density (Compose wrapper scales the whole tree; replicate with zoom) */
+html{zoom:.95}
+
+/* Android nocturne parity: mn screens carry no halo hero, scene nav or schedule lines; refresh sits in the rail */
+body.mn-tab header:not(.halo-detail-header){display:none}
+body.mn-tab .halo-scene-nav{display:none}
+body.mn-tab .next-read-plan{display:none}
+body.mn-tab .halo-rail .halo-refresh{position:static;order:2;margin-left:0}
+body.mn-tab .halo-insights-link{order:1}
+body.mn-tab .halo-settings{order:3}
+body.mn-tab main{padding-top:14px;padding-bottom:110px}
+body.mn-tab .mn-head h2{margin:2px 0 8px}
+body.mn-tab:has(.mn-backlink[data-mn="store:"]) .halo-rail{display:none}
+body.mn-tab #feed-state{display:block!important;margin:0 0 8px!important;padding:2px 2px 8px!important;border:0!important;background:transparent!important;box-shadow:none!important;line-height:1.45;font-size:12px;color:#8f97a3;cursor:pointer}
+body.mn-tab #feed-state strong{display:block;font-size:12px;font-weight:500;color:#8f97a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.mn-tab #feed-state strong::after{content:' · details ›';color:#6d7480}
+body.mn-tab #feed-state.open strong::after{content:' · hide ‹'}
+body.mn-tab #feed-state.fs-bad strong{color:#ECCF9A}
+body.mn-tab #feed-state>div{display:none}
+body.mn-tab #feed-state.open>div{display:block;padding-top:4px;font-size:12px;color:#8f97a3}
+.mn-backlink{display:inline-block;margin:2px 0 8px;padding:6px 0;background:none;border:0;color:#ECCF9A;font-weight:600;font-size:14px;cursor:pointer}
 /*MN CSS START - Midnight overview screens */
 :root[data-halo-palette="midnight"] body.lay-halo .mn-head h2{font-size:34px;line-height:1.08;font-weight:650;letter-spacing:-.03em;margin:6px 0 18px;color:#f8f1e4}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-kpis{display:flex;gap:6px;margin:0 0 14px}
@@ -2782,19 +2804,24 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette="midnight"] body.lay-halo .mn-big{font-size:34px;font-weight:680;letter-spacing:-.025em;color:#f7f4ec;margin:2px 0}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-sub{font-size:12.5px;color:#9b9da6}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-sub2{font-size:12px;color:#9b9da6;display:block}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-legend{display:flex;gap:18px;font-size:12px;color:#b9bfc9;margin:12px 0 4px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-legend{display:flex;flex-wrap:wrap;column-gap:18px;row-gap:6px;font-size:12px;color:#b9bfc9;margin:12px 0 4px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-legend span{display:flex;align-items:center;gap:7px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2w{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:#b9bfc9}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-split2 b{color:#ece7da;font-weight:600;white-space:nowrap}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch{width:8px;height:8px;border-radius:50%;background:#e0c897;display:inline-block}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch.dash{background:transparent;border-top:2px dashed #8f96a3;border-radius:0;width:16px;height:0}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-swatch.dim{background:#5c6370}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-chart{width:100%;height:auto;margin-top:8px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-line{fill:none;stroke:#e0c897;stroke-width:2.4;stroke-linecap:round}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-cmp{fill:none;stroke:#8f96a3;stroke-width:1.8;stroke-dasharray:5 6;stroke-linecap:round}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-rt{fill:none;stroke:#8f96a3;stroke-width:1.8;stroke-dasharray:6 5;stroke-linecap:round}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-yov{fill:none;stroke:#8f96a3;stroke-width:1.8;stroke-dasharray:.1 5;stroke-linecap:round;opacity:.85}
 .mn-ref{fill:none;stroke:#e0c897;stroke-width:1.6;stroke-dasharray:3 5;opacity:.85}
 .mn-refl{fill:#e0c897}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid{stroke:rgba(255,255,255,.09);stroke-dasharray:3 6}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-dot{fill:#e0c897;stroke:#171a22;stroke-width:2}
-:root[data-halo-palette="midnight"] body.lay-halo .mn-dot-halo{fill:none;stroke:rgba(236,207,154,.35);stroke-width:1.4}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-dot{fill:#191b20;stroke:#e0c897;stroke-width:2.5}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-dot-halo{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-xl{font-size:11px;fill:#7d8492}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-grid2 .mn-card{margin-bottom:0}
@@ -2875,13 +2902,14 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette="midnight"] body.lay-halo .mn-kt b{font-size:17px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-yday{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;font-size:13.5px;color:#c3c9d2;cursor:pointer}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-yday b{color:#f0ede4;font-weight:620}
-:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) #feed-state,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .next-read-plan,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .asof,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .ranged-freshness{display:none}
+:root[data-halo-palette="midnight"] body.lay-halo .mn-sub3{color:#8f97a3;font-size:12px;font-weight:400}
+:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .next-read-plan,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .asof,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .ranged-freshness{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-fresh{font-size:12px;color:#8f97a3;padding:2px 2px 10px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-note2{font-size:12px;color:#8f97a3;padding:8px 2px 0;line-height:1.5}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-drow{display:flex;align-items:center;gap:6px;margin-top:6px;min-height:20px}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-vs{font-size:11.5px;color:#8f97a3}
 :root[data-halo-palette="midnight"] body.lay-halo .mn-vs2{font-size:12px;color:#c3c9d2}
-:root[data-halo-palette="midnight"] body.lay-halo.mn-tab #feed-state,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .next-read-plan{display:none}
+:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .next-read-plan{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab:not(.mn-detail) .note{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab.mn-detail .asof{display:none}
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab.mn-detail .mn-kt b{font-size:14px}
@@ -2933,36 +2961,7 @@ body.sty-home[data-sty=bento][data-sm=light] .y-bento .y-eye,body.sty-home[data-
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-yday:active{background:rgba(255,255,255,.05)}
 @media (prefers-reduced-motion:reduce){:root[data-halo-palette="midnight"] body.lay-halo.mn-tab main>*,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-line,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-dot,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-dot-halo,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-delta,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-fab,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-sheet,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-veil,:root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-donut-fg{animation:none!important;stroke-dashoffset:0!important}}
 
-/* NOCTURNE layout (iOS) - header rail, bottom nav, menu, bills grid - Arsh's NEW UI stills */
-body.lay-nocturne .noc-rail{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 0 6px}
-body.lay-nocturne .noc-brand{display:flex;align-items:center;gap:10px;letter-spacing:0}
-body.lay-nocturne .noc-logo-tile{width:42px;height:42px;border-radius:13px;background:#191b20;border:1px solid rgba(224,200,151,.55);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
-body.lay-nocturne .noc-logo-tile img{width:30px;height:30px;object-fit:contain}
-body.lay-nocturne .noc-word{font-size:19px;font-weight:600;color:#f8f1e4;letter-spacing:-.01em}
-body.lay-nocturne .noc-hacts{display:flex;align-items:center;gap:10px}
-body.lay-nocturne .noc-round{width:40px;height:40px;border-radius:50%;background:#191b20;border:1px solid #34353b;color:#e0c897;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
-body.lay-nocturne .noc-round:active{transform:scale(.9)}
-body.lay-nocturne .noc-round svg{width:19px;height:19px}
-body.lay-nocturne .noc-ava{width:40px;height:40px;border-radius:50%;background:linear-gradient(160deg,#ead8b0,#d8c18f);color:#15110b;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;border:0;padding:0;cursor:pointer;transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
-body.lay-nocturne .noc-ava:active{transform:scale(.9)}
-body.lay-nocturne.mn-tab:not(.mn-detail) .app>header{display:none}
-body.lay-nocturne .noc-bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;z-index:55;display:flex;gap:2px;padding:5px;border-radius:99px!important;background:rgba(22,23,29,.93)!important;border:1px solid rgba(255,255,255,.09)!important;-webkit-backdrop-filter:blur(28px) saturate(1.3)!important;backdrop-filter:blur(28px) saturate(1.3)!important;box-shadow:0 18px 44px rgba(0,0,0,.45)!important;width:auto!important;min-height:0}
-body.lay-nocturne .noc-bottom-nav button{display:flex;align-items:center;justify-content:center;padding:10px 14px;min-height:0;border-radius:99px;background:transparent;border:0;color:#9b9da6!important;font-size:13px!important;font-weight:600;letter-spacing:-.01em;cursor:pointer;transition:transform .18s cubic-bezier(.2,1.4,.4,1),background .2s,color .2s}
-body.lay-nocturne .noc-bottom-nav button:active{transform:scale(.92)}
-body.lay-nocturne .noc-bottom-nav button svg{width:19px;height:19px}
-body.lay-nocturne .noc-bottom-nav button.on{background:linear-gradient(160deg,#ead8b0,#d8c18f)!important;color:#15110b!important}
-body.lay-nocturne .halo-menu-toggle{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:56}
-body.lay-nocturne .halo-menu-panel{left:50%;bottom:calc(142px + env(safe-area-inset-bottom,0px))!important;z-index:56}
-body.lay-nocturne main{padding-bottom:190px}
-body.lay-nocturne.mn-sheet-open .noc-bottom-nav,body.lay-nocturne.mn-sheet-open .halo-menu-toggle{opacity:0;pointer-events:none}
-body.lay-nocturne .mn-fab{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-exact{font-size:15px;font-weight:700;color:#f8f1e4;display:block;margin-top:1px}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bcard{background:linear-gradient(160deg,rgba(255,255,255,.078),rgba(255,255,255,.03)),#191b20;border:1px solid rgba(255,255,255,.115);border-radius:16px;padding:13px 14px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:transform .18s cubic-bezier(.2,1.4,.4,1)}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bcard:active{transform:scale(.96)}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bt{font-size:11.5px;color:#9b9da6;font-weight:500}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bt b{color:#f8f1e4;font-weight:650}
-:root[data-halo-palette="midnight"] body.lay-nocturne.mn-tab .mn-bamt{font-size:17px;font-weight:650;color:#f8f1e4}
+body.mn-tab .yd-view-tabs{display:none}
 
 /* Drop 3 - split rows, store minis, menu-pill scroll hide, smoothness */
 :root[data-halo-palette="midnight"] body.lay-halo.mn-tab .mn-split2w{margin-top:10px;border-top:1px solid rgba(255,255,255,.07);padding-top:4px}
@@ -2978,3 +2977,81 @@ body.lay-nocturne .mn-fab{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 /* Demo mode banner */
 #demob{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:10px;padding:7px 8px 7px 14px;border-radius:99px;border:1px solid var(--edge);background:var(--sf);color:var(--ink);font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
 #demob button{border:1px solid var(--edge);background:transparent;color:var(--ink);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer}
+/* Foldable wide layout: fill the foldable inner display, no empty side margins. */
+@media (min-width:700px){
+ :root[data-halo-palette=midnight] body.lay-halo .app{max-width:none!important;padding-left:28px;padding-right:28px;}
+ :root[data-halo-palette=midnight] body.lay-halo .mn-grid2,:root[data-halo-palette=midnight] body.lay-halo .mn-sgrid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important;}
+ :root[data-halo-palette=midnight] body.lay-halo .mn-kpis{gap:12px;}
+}
+
+/* Foldable Today fit: whole Today screen (through the Online/Retail sales cards) visible above the floating Menu pill. */
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] #feed-state{margin:6px 0!important;padding:8px 12px!important;line-height:1.35}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .halo-rail{padding-top:calc(env(safe-area-inset-top) + 10px)!important;padding-bottom:12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-head h2{font-size:28px!important;margin:2px 0 8px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-fresh{padding-bottom:6px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2{padding-top:4px!important;line-height:1.4!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-card{padding:14px!important;margin-bottom:10px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-cardh{margin-bottom:6px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-big{font-size:30px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-legend{margin:8px 0 2px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{margin-top:4px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-card .mn-note2{padding-top:5px!important;line-height:1.4!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2{gap:10px!important;margin-bottom:10px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2 .mn-card{padding:12px!important;margin-bottom:0!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-num{font-size:20px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-eyebrow{margin-bottom:4px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-yday{padding:10px 6px!important}
+
+@media (max-width:699px){
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:145px}
+
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);column-gap:14px;align-items:start}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.yd-view-tabs,
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-head,
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-fresh,
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2,
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>h2,
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>section.glass{grid-column:1/-1}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>section.mn-card{grid-column:1}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-grid2{grid-column:2;grid-template-columns:1fr!important}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-yday{grid-column:2}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:190px}
+
+/* Foldable Today fit round 2: clear the Menu pill fully. */
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .halo-rail{padding-bottom:8px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] #feed-state{margin:4px 0!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-head h2{font-size:26px!important;margin:0 0 6px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-fresh{padding-bottom:4px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-card{padding:12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2 .mn-card{padding:10px 12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2 .mn-sub2{font-size:11px!important;line-height:1.4!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-yday{padding:8px 6px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-yday small{font-size:11px!important;line-height:1.3!important}
+
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:135px}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:160px}
+
+/* Foldable inner display: sales cards + quick rows fill the right rail. */
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>.mn-sidecol{grid-column:2;display:flex;flex-direction:column;gap:10px}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-sidecol>.mn-grid2{grid-template-columns:1fr!important;margin-bottom:0!important}
+
+/* Foldable Today fit round 3: Today-mode card fits too. */
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2{margin-bottom:6px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-card{padding:10px 12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-big{font-size:28px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-legend{font-size:11px!important;margin:6px 0 0!important;column-gap:12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{margin-top:2px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-card .mn-note2{font-size:11px!important;padding-top:4px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2 .mn-card{padding:8px 12px!important}
+:root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-grid2 .mn-sub2{line-height:1.35!important}
+
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-chart{max-height:112px}
+
+/* Foldable Today fit round 4: hourly chart compacts in Today mode on the cover screen. */
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"][data-mnmode="today"] .mn-chart{max-height:96px}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"][data-mnmode="today"] .mn-big{font-size:26px!important}
+
+/* Foldable Today fit round 5: final clearance over the Menu pill on the cover screen. */
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"][data-mnmode="today"] .mn-chart{max-height:90px}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] .mn-fresh{padding-bottom:2px!important}
+ :root[data-halo-palette=midnight] body.lay-halo.mn-tab[data-mntab="today"] main>p.mn-note2{margin-bottom:4px!important}
