@@ -92,7 +92,7 @@ jobs:
           xcodegen
       - name: Signing material and ASC key
         env:
-          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_KEY_P8 }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           P12_B64: ${{ secrets.DJOPS_DIST_P12_B64 }}
