@@ -1852,6 +1852,7 @@ const mnIco=n=>{const p={rupee:'<path d="M7 4h10M7 8h10M7 4c6 0 8 1.6 8 4s-2 4-8
 const mnHead=t=>`<div class="mn-head"><h2>${t}</h2></div>`;
 const mnDayLbl=d=>{try{return new Date(d+'T12:00:00+05:30').toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'})}catch(e){return d}};
 /* Retail with no read for today shows zero (owner rule), with a note; never the last day's figures. */
+function mnRtHourlyUnavailable(R){const p=R&&R.hourlyProvenance;return !!(p&&typeof p==='object'&&p.available===false);}
 function mnRtUnread(R){if(!R)return false;const day=typeof R.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(R.day)?R.day:null;return (day!=null&&day<IST())||R.status==='not_read_today'||/none yet/i.test(String(R.at||''));}
 function mnRtChecked(R){if(R&&R.readAt){const t=new Date(R.readAt);if(Number.isFinite(t.getTime()))return t.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short'})+', '+t.toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit',hour12:true}).replace(/am/i,'AM').replace(/pm/i,'PM');}return R&&R.at?String(R.at):'time unknown';}
 function mnDayState(){const s=data.snapshot||{},R=data.retail||{};
@@ -1914,10 +1915,10 @@ const mnHourOf=o=>{const v=o&&(o.ts!=null?o.ts:o.at);if(v==null||v==='')return n
 const mnFeedHour=h=>{const m=String(h==null?'':h).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*([aApP])[mM]/);if(!m)return null;let hr=Number(m[1])%12;if(/p/i.test(m[3]))hr+=12;return hr;};
 function mnTodayHourly(){const s=data.snapshot,OI=ordInfo(s),ds=mnDayState();const on=Array(24).fill(0),rt=Array(24).fill(0);let rtH=false,approx=false,feed=false;
  const TH=A(s&&s.todayHourlyOnline)||[];let thOk=false,oth=null;
- if(TH.length&&TH.some(x=>mnNum(x&&x.h)!=null)){const pk=Object.keys(s||{}).find(k=>/todayHourly/i.test(k)&&s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&typeof s[k].day==='string');if(!pk||s[pk].day===ds.refDay){if(pk){const v=mnNum(s[pk].observedThroughHour);if(v!=null&&v>=0&&v<=23)oth=v;}TH.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null)on[h]+=r;});thOk=true;feed=true;}}
+ if(TH.length&&TH.some(x=>mnNum(x&&x.h)!=null)){const pk=Object.keys(s||{}).find(k=>/todayHourly/i.test(k)&&s[k]&&typeof s[k]==='object'&&!Array.isArray(s[k])&&typeof s[k].day==='string');if(!pk||s[pk].day===ds.refDay){if(pk){const v=mnNum(s[pk].observedThroughHour);if(v!=null&&v>=0&&v<=23)oth=v;}const prov=s.todayHourlyOnlineProvenance;if(prov&&typeof prov==='object'&&!Array.isArray(prov)){const v2=mnNum(prov.observedThroughHour);if(v2!=null&&v2>=0&&v2<=23)oth=v2;}TH.forEach(x=>{const h=mnNum(x&&x.h),r=mnNum(x&&x.rev);if(h!=null&&h>=0&&h<=23&&r!=null)on[h]+=r;});thOk=true;feed=true;}}
  if(!thOk&&ds.onSt!=='stale')(OI.live||[]).forEach(o=>{const h=mnHourOf(o);if(h!=null){on[h]+=Number(o.amt||0);approx=true;}});
  const RT=data.retail&&A(data.retail.stores);
- if(ds.rtSt!=='stale'&&!mnRtUnread(data.retail)&&RT){const FH=A(data.retail&&data.retail.hourly)||[];
+ if(!mnRtHourlyUnavailable(data.retail)&&ds.rtSt!=='stale'&&!mnRtUnread(data.retail)&&RT){const FH=A(data.retail&&data.retail.hourly)||[];
   if(FH.length&&FH.some(x=>mnFeedHour(x.h)!=null)){FH.forEach(x=>{const h=mnFeedHour(x.h);if(h!=null){rt[h]+=Number(x.sales||0);rtH=true;}});}
   else RT.forEach(st2=>(A(st2.billList)||[]).forEach(b=>{const ms=mnNum(b._ms);if(ms==null)return;const d=new Date(ms);if(d.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'})!==IST())return;rt[Number(d.toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24]+=Number(b.amt||0);rtH=true;approx=true;}));}
  const nowH=Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',hour12:false}))%24;
@@ -2014,6 +2015,7 @@ function mnToday(){const {s,OI}=mnTodayNums(),ds=mnDayState(),yd=mnYesterday(ds.
   +(rtZero&&onH==null?'':mnHourChart(Object.assign({},hr,{cum:hr.cumOn||hr.cum}),{yd:yTot,cmp:yc&&yc.cum,rt:hr.cumRt,emptyMsg:'The hour-by-hour shape is not in this feed yet - it appears when the feed supplies it.',aria:'Cumulative revenue by hour; dashed line marks yesterday total'}))
   +(hr.empty?'':'<p class="mn-note2">'+esc(head+' · '+tail)+'</p>')
   +(hr.note&&!hr.feed?'<p class="mn-note2">'+esc(hr.note)+'</p>':'')
+  +(mnRtHourlyUnavailable(data.retail)&&!hr.empty?'<p class="mn-note2">Retail bill times are not supplied in this feed, so the hourly line is online only.</p>':'')
   +(yc&&yc.partial?'<p class="mn-note2">Dotted line is yesterday\'s '+(yc.partial==='retail'?'online':'retail')+' shape only - the '+(yc.partial==='retail'?'retail':'online')+' hourly split is not supplied.</p>':'')
   +'</section>';
  }else{

@@ -318,4 +318,32 @@ ok('banner: per-source last read times, no ambiguous refreshed wording',()=>{
   assert.ok(!ds.banner.includes('refreshed'),'no refreshed wording');
 });
 
+
+// 753-feed shape (publisher-verified 25 Nov): display-text snapshot.at, ISO readAt fields,
+// todayHourlyOnline + todayHourlyOnlineProvenance (no .day), retail hourly unavailable.
+ok('753 feed: as-of uses ISO readAt, hourly online-only with provenance cap',()=>{
+  const oth=nowH();
+  const TH=[];for(let h=0;h<=oth;h++)TH.push({h,rev:h===oth?20198:10000});
+  const prior=[];for(let i=0;i<58;i++)prior.push({at:'2 Nov, 5:00 PM',stores:[{name:'PTG',sales:99999,bills:9}]});
+  T.set(base({snapshot:{day:TODAY,revenue:120198,at:'25 Nov, 7:12 PM IST PARTIAL',readAt:'2026-11-25T19:12:17+05:30',
+    ts:'2026-11-25T19:14:52+05:30',todayHourlyOnline:TH,
+    todayHourlyOnlineProvenance:{observedThroughHour:oth,dayComplete:false},
+    yesterdayHourlyOnline:Array.from({length:24},(_,h)=>({h,rev:5000})),yesterdayHourlyOnlineProvenance:{observedThroughHour:23,dayComplete:true},
+    combinedTodayObservation:{onlineReadAt:'2026-11-25T19:12:17+05:30',retailReadAt:'2026-11-25T19:34:42+05:30',separateClocks:true}},
+    retail:{day:TODAY,status:'ok',readAt:'2026-11-25T19:34:42+05:30',itemsReadAt:'2026-11-25T19:34:16+05:30',
+      hourly:[],hourlyProvenance:{available:false},priorReadObservations:prior,
+      stores:[{name:'PTG',sales:43380,bills:5,units:7,billList:[{no:'R-1309',amt:12000,_ms:Date.now(),items:[{qty:2}]}]}]}}));
+  const html=T.mnToday();
+  assert.ok(!/Data as of unavailable|Data time unknown/.test(html),'as-of must not be unavailable');
+  assert.ok(/7:12/.test(html),'as-of label uses the 19:12 ISO read clock');
+  const hr=T.mnTodayHourly();
+  assert.equal(hr.feed,true);
+  let last=-1;hr.cum.forEach((p,h)=>{if(p&&p.v!=null)last=h;});
+  assert.equal(last,oth,'line stops at provenance observedThroughHour');
+  assert.equal(hr.cumRt,null,'no retail hourly series when hourlyProvenance.available=false');
+  assert.ok(/hourly line is online only/.test(html),'honest retail-hourly note shown');
+  const lastV=hr.cum.filter(p=>p&&p.v!=null).pop().v;
+  assert.equal(lastV,TH.reduce((q,x)=>q+x.rev,0),'line is online-only total, no retail or priorReadObservations folded in');
+});
+
 console.log('\nALL PASS ('+n+')');process.exit(0);
