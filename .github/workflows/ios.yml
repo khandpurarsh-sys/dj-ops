@@ -1,0 +1,178 @@
+name: iOS build
+on:
+  workflow_dispatch:
+    inputs:
+      sign_and_upload:
+        description: "Sign and upload to TestFlight (needs Apple secrets)"
+        type: boolean
+        default: false
+  push:
+    branches: [ios-app]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: feed-v2 loader gates
+        run: node test/feed-v2.test.mjs
+      - run: npm install
+      - run: npm run prepare-www
+      - name: Generate iOS project
+        run: npx cap add ios
+      - name: Deployment target 16.4
+        run: |
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.4/g' ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.4'/" ios/App/Podfile
+      - name: Sync web assets and plugins
+        run: npx cap sync ios
+      - name: Production AppDelegate (privacy cover)
+        run: cp native-ios/AppDelegate.swift ios/App/App/AppDelegate.swift
+      - name: Preview-only plugin ACL relaxation (CI simulator has no passcode)
+        if: ${{ !inputs.sign_and_upload }}
+        run: python3 native-ios/preview-plugin-patch.py
+      - name: Inject preview UI test driver
+        if: ${{ !inputs.sign_and_upload }}
+        run: cp native-ios/UITestAppDelegate.swift ios/App/App/AppDelegate.swift
+      - name: App icon
+        run: rm -rf ios/App/App/Assets.xcassets/AppIcon.appiconset && cp -R native-ios/AppIcon.appiconset ios/App/App/Assets.xcassets/AppIcon.appiconset
+      - name: Build number from run
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" ios/App/App/Info.plist
+      - name: Face ID permission text
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :NSFaceIDUsageDescription string 'Used to unlock DJ Ops with your phone instead of typing the passphrase.'" ios/App/App/Info.plist
+      - name: Light status bar icons (native chrome only)
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :UIViewControllerBasedStatusBarAppearance bool false" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :UIViewControllerBasedStatusBarAppearance false" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :UIStatusBarStyle string UIStatusBarStyleLightContent" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :UIStatusBarStyle UIStatusBarStyleLightContent" ios/App/App/Info.plist
+      - name: Export compliance declaration (exempt - OS-provided crypto only)
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
+      - name: Install pods
+        run: cd ios/App && pod install
+      - name: Unsigned test build (simulator)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            IPHONEOS_DEPLOYMENT_TARGET=16.4 CODE_SIGNING_ALLOWED=NO build
+      - name: Build synthetic roundtrip fixture
+        if: ${{ !inputs.sign_and_upload }}
+        run: |
+          cp crypto.js /tmp/crypto.mjs
+          node native-ios/make-roundtrip-fixture.mjs
+      - name: Preview + dummy unlock-flow validation (simulator)
+        if: ${{ always() && !inputs.sign_and_upload }}
+        run: |
+          set -e
+          xcrun simctl create djops-preview "iPhone 16" || true
+          UDID=$(xcrun simctl list devices -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(v['udid'] for r,vs in d.items() if 'iOS' in r for v in vs if v['name']=='djops-preview'))")
+          xcrun simctl boot $UDID || true
+          echo '--- simctl ui subcommand ---'
+          xcrun simctl help ui 2>&1 | head -20
+          echo '--- simctl privacy subcommand ---'
+          xcrun simctl help privacy 2>&1 | head -12
+          echo '--- simctl keychain subcommand ---'
+          xcrun simctl help keychain 2>&1 | head -12
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name 'App.app' -path '*Debug-iphonesimulator*' | head -1)
+          xcrun simctl install $UDID "$APP_PATH"
+          mkdir -p preview
+          # Launch 1: create vault, attempt phone-unlock enable; sticky SEEN-ERR
+          # banner captures the 1.8s error (simulator has no screen lock at all:
+          # simctl on this runner has no biometric or passcode subcommand)
+          SIMCTL_CHILD_DJOPS_UITEST=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/01-create-gate.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/02-enable-attempt.png
+          # Launch 2: relaunch - wrong passphrase (sticky error), correct unlock,
+          # dismiss phone-unlock offer with Not now, home
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          sleep 2
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_WRONGPASS=1 SIMCTL_CHILD_DJOPS_SKIPDEV=1 xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 45
+          xcrun simctl io $UDID screenshot preview/03-wrong-passphrase.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/04-home-after-relaunch.png
+          # Launch 3: seeded dummy vault, decrypt peer publisher slim + full envelopes
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          xcrun simctl uninstall $UDID com.arsh.djops || true
+          xcrun simctl install $UDID "$APP_PATH"
+          SEED_B64=$(base64 < /tmp/dj-seed.json | tr -d '\n')
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops || true
+          sleep 45
+          xcrun simctl io $UDID screenshot preview/05-roundtrip-peer.png
+          sleep 40
+          xcrun simctl io $UDID screenshot preview/06-roundtrip-peer-late.png
+          # Launches 4-6: fixture-backed v6 render assertions (Today + Expenses
+          # tab, merged vs sid-gated A-only), driven by UITestDriver EXPMODE.
+          # Fail-loud: launch errors abort; the driver's verdict string must be
+          # present on the pasteboard and free of FAIL/TIMEOUT/SKIP markers.
+          for MODE in match mismatch solo; do
+            xcrun simctl terminate $UDID com.arsh.djops || true
+            SEED_B64=$(base64 < /tmp/dj-seed-$MODE.json | tr -d '\n')
+            SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_EXPMODE=$MODE SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops
+            sleep 55
+            xcrun simctl io $UDID screenshot preview/07-expenses-$MODE.png
+            sleep 25
+            xcrun simctl io $UDID screenshot preview/08-expenses-$MODE-late.png
+            PB=$(xcrun simctl pbpaste $UDID)
+            echo "verdict $MODE: $PB"
+            echo "$PB" | grep -q "DJVERDICT $MODE"
+            echo "$PB" | grep -qE "FAIL|TIMEOUT|SKIP" && exit 1
+            true
+          done
+          # Launch 7: auto-lock on leaving the app (background gate + re-unlock)
+          xcrun simctl terminate $UDID com.arsh.djops || true
+          SEED_B64=$(base64 < /tmp/dj-seed-match.json | tr -d '\n')
+          SIMCTL_CHILD_DJOPS_UITEST=1 SIMCTL_CHILD_DJOPS_ROUNDTRIP=1 SIMCTL_CHILD_DJOPS_EXPMODE=match SIMCTL_CHILD_DJOPS_LOCKTEST=1 SIMCTL_CHILD_DJOPS_SEED_B64="$SEED_B64" xcrun simctl launch $UDID com.arsh.djops
+          sleep 75
+          xcrun simctl io $UDID screenshot preview/09-autolock-cycle.png
+          PB=$(xcrun simctl pbpaste $UDID)
+          echo "verdict locktest: $PB"
+          echo "$PB" | grep -q "DJVERDICT"
+          echo "$PB" | grep -qE "FAIL|TIMEOUT|SKIP" && exit 1
+          true
+          echo "$PB" | grep -q "LOCK-AUTO-OK"
+          echo "$PB" | grep -q "LOCK-REUNLOCK-OK"
+          xcrun simctl shutdown $UDID || true
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && !inputs.sign_and_upload }}
+        with:
+          name: ios-preview
+          path: preview/*.png
+      - name: Verify signed build carries no test hooks
+        if: ${{ inputs.sign_and_upload }}
+        run: |
+          ! grep -rn '__djt\|DJOPS_UITEST\|UITestDriver' ios/App/App/public/ && echo CLEAN-WWW
+          ! grep -n 'UITestDriver' ios/App/App/AppDelegate.swift && echo CLEAN-APPDELEGATE
+          diff node_modules/djops-unlock/ios/Sources/DjOpsUnlockPlugin/DjOpsUnlockPlugin.swift native-ios/DjOpsUnlock/ios/Sources/DjOpsUnlockPlugin/DjOpsUnlockPlugin.swift && echo CLEAN-PLUGIN
+          ! find ios/App/App/public -name '*payload*' -o -name '*fixture*' | grep . && echo CLEAN-FIXTURES
+      - name: Sign and upload to TestFlight
+        if: ${{ inputs.sign_and_upload }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -e
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath $RUNNER_TEMP/App.xcarchive \
+            IPHONEOS_DEPLOYMENT_TARGET=16.4 CODE_SIGNING_ALLOWED=NO archive
+          cat > $RUNNER_TEMP/export.plist <<PL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <plist version="1.0"><dict>
+          <key>method</key><string>app-store-connect</string>
+          <key>destination</key><string>upload</string>
+          <key>teamID</key><string>$TEAM_ID</string>
+          </dict></plist>
+          PL
+          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/export.plist -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8 \
+            -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID
