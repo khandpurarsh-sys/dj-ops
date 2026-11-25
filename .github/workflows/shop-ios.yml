@@ -93,8 +93,8 @@ jobs:
       - name: Signing material and ASC key
         env:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
-          P12_B64: ${{ secrets.P12_B64 }}
-          P12_PASS: ${{ secrets.P12_PASS }}
+          P12_B64: ${{ secrets.DJOPS_DIST_P12_B64 }}
+          P12_PASS: ${{ secrets.DJOPS_DIST_P12_PASSWORD }}
           PROFILE_B64: ${{ secrets.PROFILE_B64 }}
         run: |
           set -e
