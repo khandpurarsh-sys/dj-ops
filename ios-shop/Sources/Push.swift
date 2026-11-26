@@ -94,11 +94,12 @@ enum DevicePayload {
 }
 
 
-enum PromptTrigger { case signedIn, firstAddToBag, other }
+enum PromptTrigger { case signedIn, firstAddToBag, launch, orderPlaced, other }
 enum PushPrompt {   // unchanged from v2
     static let cooldown: TimeInterval = 30 * 24 * 3600
     static func shouldShow(status: UNAuthorizationStatus, trigger: PromptTrigger, now: Date, lastPromptAt: Date?, firstLaunch: Bool) -> Bool {
-        guard status == .notDetermined, !firstLaunch, trigger != .other else { return false }
+        guard status == .notDetermined, trigger != .other else { return false }
+        if firstLaunch, trigger != .launch { return false }
         if let l = lastPromptAt, now.timeIntervalSince(l) < cooldown { return false }
         return true
     }
@@ -222,6 +223,11 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
             store.pendingToken = nil
             _ = await sync.retryPendingDelete(uid: Account.shared.uid)
         }
+        // Build 320: ask on first open (system dialog) once the UI is up; iOS only ever shows it once.
+        if s == .notDetermined {
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            await maybePrompt(.launch)
+        }
         firstLaunchHandled = true
     }
     func tokenArrived(_ token: String) async {
@@ -233,9 +239,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         if granted(await status()) { UIApplication.shared.registerForRemoteNotifications() }
         handle(await sync.sync(uid: Account.shared.uid))
     }
+    func onOrderPlaced() { Task { await maybePrompt(.orderPlaced) } }
     func onBagChanged() { Task { await maybePrompt(.firstAddToBag) } }
 
-    /// System dialog only after sign-in success or the first bag change, never on first launch, 30-day cooldown.
+    /// System dialog on first launch, after sign-in, first bag change or a finished order; 30-day cooldown.
     private func maybePrompt(_ t: PromptTrigger) async {
         let s = await status()
         guard PushPrompt.shouldShow(status: s, trigger: t, now: Date(), lastPromptAt: store.lastPromptAt, firstLaunch: !firstLaunchHandled) else { return }

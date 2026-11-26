@@ -87,7 +87,7 @@ import UserNotifications
         let now = Date(timeIntervalSince1970: 100 * 86400)
         func s(_ st: UNAuthorizationStatus = .notDetermined, _ t: PromptTrigger = .signedIn, last: Date? = nil, first: Bool = false) -> Bool {
             PushPrompt.shouldShow(status: st, trigger: t, now: now, lastPromptAt: last, firstLaunch: first) }
-        XCTAssertTrue(s()); XCTAssertFalse(s(.denied)); XCTAssertFalse(s(first: true)); XCTAssertFalse(s(last: now.addingTimeInterval(-29 * 86400))); XCTAssertTrue(s(last: now.addingTimeInterval(-31 * 86400)))
+        XCTAssertTrue(s()); XCTAssertFalse(s(.denied)); XCTAssertFalse(s(first: true)); XCTAssertTrue(s(.notDetermined, .launch, first: true)); XCTAssertTrue(s(.notDetermined, .orderPlaced)); XCTAssertFalse(s(.denied, .launch, first: true)); XCTAssertFalse(s(last: now.addingTimeInterval(-29 * 86400))); XCTAssertTrue(s(last: now.addingTimeInterval(-31 * 86400)))
     }
 }
 

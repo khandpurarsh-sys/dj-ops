@@ -229,6 +229,7 @@ private struct CheckoutWeb: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         private let parent: CheckoutWeb
         private var cartFinishes = 0
+        private var orderPromptFired = false
         init(_ parent: CheckoutWeb) { self.parent = parent }
 
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -251,6 +252,11 @@ private struct CheckoutWeb: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            if let u = webView.url?.absoluteString.lowercased(), !orderPromptFired,
+               u.contains("thank") || u.contains("order-confirm") || u.contains("order_confirm") || u.contains("order-success") || u.contains("order_success") || u.contains("/orders/") {
+                orderPromptFired = true
+                Task { @MainActor in PushCoordinator.shared.onOrderPlaced() }
+            }
             guard let u = webView.url?.absoluteString, isStoreCart(u) else { return }
             cartFinishes += 1
             if cartFinishes > 3 {
