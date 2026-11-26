@@ -53,7 +53,7 @@ enum AccountConfig {
         if signedIn && !refreshToken.isEmpty { Task { try? await syncDown() } }
     }
 
-    func bagChanged() { if signedIn { pushLater() } }
+    func bagChanged() { PushCoordinator.shared.onBagChanged(); if signedIn { pushLater() } }
 
     func saveDetails(name n: String, phone ph: String, address a: String) {
         name = n; phone = ph; address = a
@@ -157,9 +157,16 @@ enum AccountConfig {
         if name.isEmpty { name = (o["displayName"] as? String) ?? "" }
         d.set(rt, forKey: "djacct.rt"); d.set(lid, forKey: "djacct.uid"); d.set(email, forKey: "djacct.email")
         try await syncDown()
+        await PushCoordinator.shared.afterSignIn()
     }
 
-    func signOut() {
+    func signOut() { Task { await PushCoordinator.shared.signOut { [self] in signOutLocal() } } }
+
+    func deviceWriter() -> PushWriting { DeviceWriter { try await self.token() } }
+    /// Credentials captured now (refreshed if expired) so a delete still works after the wipe.
+    func deviceWriterSnapshot() async throws -> PushWriting { let t = try await token(); return DeviceWriter { t } }
+
+    func signOutLocal() {
         pushTask?.cancel()
         uid = nil; email = ""; idToken = ""; refreshToken = ""; message = nil
         ["djacct.rt", "djacct.uid", "djacct.email"].forEach { d.removeObject(forKey: $0) }
@@ -171,10 +178,12 @@ enum AccountConfig {
         do {
             guard let u = uid else { return }
             let t = try await token()
+            await PushCoordinator.shared.deleteAccountDevice()
             _ = try await fs("DELETE", u, nil, t)
             _ = try await post("https://identitytoolkit.googleapis.com/v1/accounts:delete?key=" + AccountConfig.apiKey,
                                json: ["idToken": t])
-            signOut()
+            PushCoordinator.shared.accountDeleted(uid: u)
+            signOutLocal()
             name = ""; phone = ""; address = ""
             ["djacct.name", "djacct.phone", "djacct.address"].forEach { d.removeObject(forKey: $0) }
         } catch {
@@ -214,7 +223,7 @@ enum AccountConfig {
         func sv(_ v: String) -> [String: Any] { ["stringValue": v] }
         let body: [String: Any] = ["fields": ["bag": sv(bag?.json ?? "[]"), "name": sv(name), "phone": sv(phone),
                                               "address": sv(address), "updatedAt": sv(String(Int(Date().timeIntervalSince1970 * 1000)))]]
-        _ = try await fs("PATCH", u, try JSONSerialization.data(withJSONObject: body), try await token())
+        _ = try await fs("PATCH", u, try JSONSerialization.data(withJSONObject: body), try await token(), mask: DevicePayload.mask(["bag", "name", "phone", "address", "updatedAt"]))
     }
 
     // MARK: REST
@@ -237,8 +246,8 @@ enum AccountConfig {
     }
 
     /** Returns the body, or nil on 404 (no document yet). */
-    private func fs(_ method: String, _ uid: String, _ body: Data?, _ tok: String) async throws -> Data? {
-        let u = "https://firestore.googleapis.com/v1/projects/" + AccountConfig.projectId + "/databases/(default)/documents/users/" + uid
+    private func fs(_ method: String, _ uid: String, _ body: Data?, _ tok: String, mask: String = "") async throws -> Data? {
+        let u = "https://firestore.googleapis.com/v1/projects/" + AccountConfig.projectId + "/databases/(default)/documents/users/" + uid + (mask.isEmpty ? "" : "?" + mask)
         var r = URLRequest(url: URL(string: u)!, timeoutInterval: 20)
         r.httpMethod = method
         r.setValue("Bearer " + tok, forHTTPHeaderField: "Authorization")

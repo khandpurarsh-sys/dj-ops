@@ -9,6 +9,7 @@ enum AppScreen: Equatable {
 
 @main
 struct DressJetShopApp: App {
+    @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     var body: some Scene {
         WindowGroup {
             if CommandLine.arguments.contains("-dockproof") { DockProofView() }

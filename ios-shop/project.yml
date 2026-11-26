@@ -1,4 +1,9 @@
 name: DressJetShop
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    minVersion: 11.0.0
+    maxVersion: 99.0.0
 options:
   bundleIdPrefix: com.dressjet
   deploymentTarget:
@@ -10,6 +15,9 @@ targets:
     sources:
       - path: Sources
       - path: Resources
+    dependencies:
+      - package: Firebase
+        product: FirebaseMessaging
     info:
       path: Sources/Info.plist
       properties:
@@ -22,6 +30,9 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - com.googleusercontent.apps.1061618560989-abecpm3l3er9454te13uu7v8ibpdij5m
+        FirebaseAppDelegateProxyEnabled: false
+        UIBackgroundModes:
+          - remote-notification
         UILaunchScreen:
           UIColorName: SplashNavy
         # Let SwiftUI/Core Animation drive ProMotion (120 Hz) phones past the 60 Hz default.
@@ -38,6 +49,8 @@ targets:
       properties:
         com.apple.developer.applesignin:
           - Default
+        # Debug value; the App Store export re-signs with the profile (production). Verified on the IPA in CI.
+        aps-environment: development
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dressjet.shop
