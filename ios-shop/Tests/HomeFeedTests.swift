@@ -35,6 +35,21 @@ final class HomeFeedTests: XCTestCase {
         XCTAssertEqual([3], Feed.remainingProducts(all, [all[0], all[1]]).map { $0.id })
     }
 
+    func testHomeOrderParseAndArrange() {
+        let json = #"{"name":"x","fields":{"order":{"arrayValue":{"values":[{"stringValue":"h2"},{"stringValue":"h1"},{"stringValue":"h3"}]}},"hidden":{"arrayValue":{"values":[{"stringValue":"h3"}]}}}}"#
+        let o = Feed.parseHomeOrder(Data(json.utf8))
+        XCTAssertEqual(Feed.HomeOrder(order: ["h2", "h1", "h3"], hidden: ["h3"]), o)
+        // h9 is a new listing (not in the saved list): it stays on top; h3 is hidden.
+        let all = [mk(1, "2026-01-01"), mk(2, "2026-01-02"), mk(3, "2026-01-03"), mk(9, "2026-02-01")]
+        XCTAssertEqual([9, 2, 1], Feed.arranged(all, o).map { $0.id })
+        // No saved order, or an empty one: newest first, nothing hidden.
+        XCTAssertEqual([9, 3, 2, 1], Feed.arranged(all, nil).map { $0.id })
+        XCTAssertEqual([9, 3, 2, 1], Feed.arranged(all, Feed.HomeOrder(order: [], hidden: [])).map { $0.id })
+        // An empty document (arrays absent) parses to an empty order.
+        XCTAssertEqual(Feed.HomeOrder(order: [], hidden: []), Feed.parseHomeOrder(Data(#"{"fields":{}}"#.utf8)))
+        XCTAssertNil(Feed.parseHomeOrder(Data(#"{"error":{"code":404}}"#.utf8)))
+    }
+
     func testHomeSectionHandlesOrder() {
         XCTAssertEqual(["all-new-jackets", "polos", "shoes", "trousers"], Feed.HOME_SECTION_HANDLES)
     }

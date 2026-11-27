@@ -277,6 +277,38 @@ extension Feed {
         Array(products.sorted { $0.createdAt > $1.createdAt }.prefix(n))
     }
 
+    // MARK: owner-controlled home order (Firestore config/homeOrder, edited on the order page)
+
+    static let homeOrderURL = URL(string: "https://firestore.googleapis.com/v1/projects/dressjet-shop/databases/(default)/documents/config/homeOrder")!
+
+    struct HomeOrder: Equatable {
+        let order: [String]
+        let hidden: Set<String>
+    }
+
+    /** Parse the Firestore REST document. nil when the body is not a homeOrder document. */
+    static func parseHomeOrder(_ data: Data) -> HomeOrder? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let fields = obj["fields"] as? [String: Any] else { return nil }
+        func strings(_ key: String) -> [String] {
+            let arr = ((fields[key] as? [String: Any])?["arrayValue"] as? [String: Any])?["values"] as? [[String: Any]] ?? []
+            return arr.compactMap { $0["stringValue"] as? String }
+        }
+        return HomeOrder(order: strings("order"), hidden: Set(strings("hidden")))
+    }
+
+    /** Home grid order. Products the saved list does not know (new Shopify listings) stay on top,
+     *  newest first; then the saved list in its order; hidden handles are dropped. With no saved
+     *  order this is exactly newest-first, as before. */
+    static func arranged(_ products: [DjProduct], _ o: HomeOrder?) -> [DjProduct] {
+        let newestFirst = products.sorted { $0.createdAt > $1.createdAt }
+        guard let o = o, !o.order.isEmpty else { return newestFirst }
+        let rank = Dictionary(o.order.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+        let fresh = newestFirst.filter { rank[$0.handle] == nil }
+        let listed = newestFirst.filter { rank[$0.handle] != nil }.sorted { rank[$0.handle]! < rank[$1.handle]! }
+        return (fresh + listed).filter { !o.hidden.contains($0.handle) }
+    }
+
     /** Trim, lowercase, split on whitespace. */
     static func searchTokens(_ query: String) -> [String] {
         query.lowercased().split(whereSeparator: { $0.isWhitespace }).map(String.init)

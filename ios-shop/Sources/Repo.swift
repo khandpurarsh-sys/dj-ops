@@ -39,6 +39,7 @@ import SwiftUI
             let cols = Feed.parseCollections(cached)
             if !cols.isEmpty { collections = cols }
         }
+        if let cached = defaults.data(forKey: "djshop.homeOrder") { homeOrder = Feed.parseHomeOrder(cached) }
         recomputeDerived()
     }
 
@@ -51,11 +52,31 @@ import SwiftUI
     /** Endless grid source: catalog minus rail and Latest In items, newest-first. */
     @Published private(set) var gridProducts: [DjProduct] = []
 
+    /** Owner-set order from Firestore config/homeOrder (nil = newest first, as before). */
+    @Published private(set) var homeOrder: Feed.HomeOrder? = nil { didSet { recomputeDerived() } }
+
     private func recomputeDerived() {
-        let latest = Feed.newest(products, Int.max)
+        let latest = Feed.arranged(products, homeOrder)
         latestIn = latest
+        let hidden = homeOrder?.hidden ?? []
         gridProducts = Feed.remainingProducts(products, sections.flatMap { $0.1 } + latest)
+            .filter { !hidden.contains($0.handle) }
             .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /** One read of the order document. Any failure keeps the last good order (cached) or none. */
+    private func refreshHomeOrder() async {
+        var req = URLRequest(url: Feed.homeOrderURL)
+        req.timeoutInterval = 8
+        if let (data, resp) = try? await URLSession.shared.data(for: req), let http = resp as? HTTPURLResponse {
+            if http.statusCode == 200, let o = Feed.parseHomeOrder(data) {
+                homeOrder = o
+                defaults.set(data, forKey: "djshop.homeOrder")
+            } else if http.statusCode == 404 {
+                homeOrder = nil
+                defaults.removeObject(forKey: "djshop.homeOrder")
+            }
+        }
     }
 
     /** Test seam: inject already-parsed products without network. */
@@ -88,6 +109,7 @@ import SwiftUI
 
     func refresh() {
         Task {
+            await refreshHomeOrder()
             do {
                 let raw = try await Self.get(Feed.productsURL)
                 let list = try await Self.enrich(Feed.parseProducts(raw))
