@@ -1,4 +1,5 @@
 import {PROPOSED_POLICY,createV2Loader,indexedStore} from './feed-v2-loader.mjs?archive=1';
+import {CF_POLICY,createCurrentFirstLoader,cfStore} from './current-first-loader.mjs';
 import {setup,unlock,decryptPayload,kid,unlockJwk,importPriv,wrapWith,unwrapWith,rand,b64,ub64} from './crypto.js?v=3';
 const WEB_BUILD_ID='20261122-source-read-plan-v1';
 const $=s=>document.querySelector(s),root=$('#root');
@@ -66,7 +67,23 @@ const feedCache={};
 let v2Loader=null,v2Result=null;
 function getV2Loader(){if(!v2Loader)v2Loader=createV2Loader({policy:PROPOSED_POLICY,store:indexedStore(window.indexedDB),location:window.location.href,
  decrypt:(e,maxPlaintextBytes)=>decryptPayload(e,priv,myKid,{maxPlaintextBytes})});return v2Loader;}
-async function v2BlocksLegacy(){return PROPOSED_POLICY.cutover||await getV2Loader().blocksLegacy()}
+/* Current-first (opt-in preview): window.DJ_CF_POLICY from config.js, or ?cf=1 plus a stored policy. v2 path is untouched when off. */
+const CF_ON=()=>!!(window.DJ_CF_POLICY&&window.DJ_CF_POLICY.enabled);
+let cfLoader=null,histState='none',histReason='';
+function getCF(){if(!cfLoader)cfLoader=createCurrentFirstLoader({policy:{...CF_POLICY,...window.DJ_CF_POLICY},store:cfStore(window.indexedDB),location:window.location.href,decrypt:(e,m)=>decryptPayload(e,priv,myKid,{maxPlaintextBytes:m})});return cfLoader;}
+/* Index summaries drive range cards and day lists. Rows whose bill detail is deferred carry __pending; they are never read as empty. */
+function cfAdapt(cur){const d={...cur.data},ix=cur.historyIndex,td=new Set([cur.sourceDays.today,cur.sourceDays.yesterday]);
+ const build=(rows,list)=>{const q={};(Array.isArray(rows)?rows:[]).forEach(r=>{if(r&&td.has(r.d))(q[r.d]=q[r.d]||[]).push(r)});
+  return list.map(e=>{if(e.detailIncluded){const r=q[e.day]&&q[e.day].shift();if(r)return r;}return {...e.summary,__pending:!e.detailIncluded}});};
+ d.history=build(cur.data.history,ix.onlineDays);d.retailHistory=build(cur.data.retailHistory,ix.retailDays);return d;}
+function cfPostLoad(){normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}
+function cfHistoryReady(r){const full=r.data;if(data)for(const k of Object.keys(data))if(!(k in full)&&k!=='history'&&k!=='retailHistory')full[k]=data[k];data=full;histState='ready';histReason='';try{cfPostLoad()}catch(e){}render();}
+function cfHistoryError(e){histState='error';histReason=e.reason||'';render();}
+function cfBanner(){let b=document.getElementById('cf-hist');if(!CF_ON()||histState==='ready'||histState==='none'){if(b)b.remove();return}
+ if(!b){b=document.createElement('div');b.id='cf-hist';b.setAttribute('role','status');b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:99;padding:8px 14px;border-radius:999px;background:rgba(20,20,24,.92);color:#fff;font:12px/1.3 system-ui,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.35)';document.body.appendChild(b)}
+ if(histState==='loading')b.textContent='Loading older history in the background';
+ else{b.innerHTML='History detail unavailable. <button style="margin-left:6px;border:0;border-radius:999px;padding:3px 10px">Retry</button>';b.querySelector('button').onclick=()=>{if(getCF().retryHistory()){histState='loading';cfBanner()}}}}
+async function v2BlocksLegacy(){return CF_ON()||PROPOSED_POLICY.cutover||await getV2Loader().blocksLegacy()}
 let acceptedStaticMemory=null,feedBatchMemory=null,apiFallbackAfter=0;
 function feedSave(k,v){try{LS.setItem(k,v);return true}catch{return false}}
 function acceptedStatic(repo){if(acceptedStaticMemory?.repo===repo)return acceptedStaticMemory;try{const j=JSON.parse(LS.getItem('dj_static_feed')||'null');return j?.repo===repo?j:null}catch{return null}}
@@ -108,6 +125,9 @@ async function staticFeedRead(force=false){
 }
 async function prepareFeed(){
  staticFeed=null;v2Result=null;
+ if(CF_ON()){const cur=await getCF().loadCurrent({onHistoryReady:cfHistoryReady,onHistoryError:cfHistoryError});histState=cur.historyState;
+  staticFeed={repo:(window.DJ_CONFIG||{}).repo,rows:cur.aux};feedTransport='current-first';
+  v2Result={data:cfAdapt(cur),feed:staticFeed,body:'',record:{generation:cur.generation},stale:false,status:''};return;}
  if(PROPOSED_POLICY.enabled){try{v2Result=await getV2Loader().load();staticFeed=v2Result.feed;feedTransport=v2Result.stale?'static v2 cached':'static v2';return;}catch(e){if(await v2BlocksLegacy())throw e;feedTransport='Static v2 unavailable before cutover: '+e.message;}}
  if(await v2BlocksLegacy())throw Error('Static v2 reader required; historical fallback disabled');
  try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}
@@ -197,7 +217,7 @@ async function loadStock(){const repo=(window.DJ_CONFIG||{}).repo;let b=null;sto
  if(!b)return;try{stk=await decryptPayload(JSON.parse(b),priv,myKid);applyStk();render();}catch(e){stockStatus='Stock supplement unavailable: '+e.message+'. Main figures retain their source times.';render();}}
 async function load(opts={}){if(loadBusy)return;const now=Date.now();if(now-(window.__lastFeedAttempt||0)<60000)return;loadBusy=true;window.__lastFeedAttempt=now;window.__lastLoad=now;try{await loadData(opts.force===true);await loadStock();await loadExp();}finally{loadBusy=false;}}
 function manualRefresh(){return load({force:true})}
-async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=v2Result?.status||(window.__slim?'Limited view: full history not loaded':'');}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_last');status=b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):data?'Feed check failed: '+e.message+'. Showing last saved data with original source times':'No data yet: '+e.message;if(data||!b){render();return;}}
+async function loadData(force=false){try{status='Updating...';render();let b;try{await prepareFeed();b=await fetchLatest(force);status=v2Result?.status||(window.__slim?'Limited view: full history not loaded':'');}catch(e){b=await v2BlocksLegacy()?null:LS.getItem('dj_last');status=CF_ON()&&!data?"Can't load latest figures. Check your connection and retry. ("+e.message+')':b?'Feed check failed: '+e.message+'. Showing last saved data'+(LS.getItem('dj_slim')==='1'?' (limited view)':''):data?'Feed check failed: '+e.message+'. Showing last saved data with original source times':'No data yet: '+e.message;if(data||!b){render();return;}}
  const dd=v2Result?v2Result.data:await decryptPayload(JSON.parse(b),priv,myKid);if(!dd||!dd.snapshot)throw new Error('unexpected payload');feedSave('dj_last',b);feedSave('dj_slim',window.__slim?'1':'0');acceptFeed();data=dd;normBills();if(Array.isArray(data.orders)&&data.orders.some(o=>o&&ordMs(o)!=null)){data.orders=data.orders.map((o,i)=>[o,i]).sort((x,y)=>(ordMs(y[0])==null?-Infinity:ordMs(y[0]))-(ordMs(x[0])==null?-Infinity:ordMs(x[0]))||x[1]-y[1]).map(x=>x[0])}applyStk();}catch(e){status='Could not read update: '+e.message;}render();}
 
 function detailTitle(){const i=detail.indexOf(':'),t=detail.slice(0,i),k=detail.slice(i+1);return t==='bills'?'Retail bills':t==='dc'?k.split('|')[1]+' · '+new Date(k.split('|')[0]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):t==='o'?'Order '+k:t==='c'?k:t==='s'?k:t==='r'?(rollStale(data&&data.snapshot)?'Revenue · last read':'Revenue today'):t==='rb'?'Bill '+k.split('||')[1]:t==='set'?'Settings':t==='db'?'Bill '+k.split('|')[2]:t==='dy'?(k.split('|')[0]==='r'?'Retail · ':'Online · ')+new Date(k.split('|')[1]+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):k;}
@@ -1151,7 +1171,7 @@ function sellerPeriodModel(kind,range,source=data,today=IST()){
   }else{
    const found=history.filter(h=>h&&h.d===day);
    if(found.length!==1){coverage.push({day,complete:false,reason:found.length?'Duplicate date, no record selected':'Date not supplied'});continue;}
-   const h=found[0];c=collect(h.billList,n(kind==='online'?h.orders:h.bills),n(kind==='online'?h.items:h.units),h.partial);stamp=h.sourceReadAt||null;
+   const h=found[0];if(h.__pending){coverage.push({day,complete:false,pending:true,reason:'History detail loading'});continue;}c=collect(h.billList,n(kind==='online'?h.orders:h.bills),n(kind==='online'?h.items:h.units),h.partial);stamp=h.sourceReadAt||null;
   }
   rows.push(...c.lines.map(x=>({...x,day})));coverage.push({day,complete:c.ok,reason:c.why,readAt:stamp});
  }
@@ -1304,7 +1324,7 @@ function ydBills(q){
   stores.forEach(s=>{if(q.store&&retailStoreKey({[s.name]:true},q.store)===null)return;(Array.isArray(s.billList)?s.billList:[]).forEach(b=>rows.push({...b,store:s.name}))});
  }else if(h){
   if(q.retail&&h.by&&q.store){rows=retailStoreBills(h,q.store)}
-  else if(Array.isArray(h.billList))rows=h.billList;
+  else if(h&&h.__pending)rows=[];else if(Array.isArray(h.billList))rows=h.billList;
   else if(q.retail&&h.by)Object.entries(h.by).forEach(([store,s])=>(Array.isArray(s.billList)?s.billList:[]).forEach(b=>rows.push({...b,store})));
  }
  if(q.retail&&Array.isArray(data.jaipurItemRows))rows=rows.map(b=>{const items=data.jaipurItemRows.filter(r=>r.d===q.day&&r.no===b.no);return items.length?{...b,items:items.map(r=>({sku:r.sku,qty:r.qty,amt:r.amt})),itemBasis:'Original item-register amounts and signed quantities; not allocated bill totals. Item-register amounts and bill revenue may use different bases.'}:b});
@@ -1545,7 +1565,7 @@ function feedDiagnosticMount(){
 }
 function renderNow(){renderNowCore();nextReadMount();loadStateMount();overviewOrderMount();stockStatusMount();feedDiagnosticMount();}
 
-function render(){return haloRender()}
+function render(){const r=haloRender();try{cfBanner()}catch(e){}return r}
 function renderNowCore(){if(!KINGSLEY&&tab==='ask')tab='today';document.body.classList.toggle('min-home',!!(data&&minOn()&&tab==='today'&&!detail));if(document.body.classList.contains('min-home'))return minimalNow();document.body.classList.toggle('sty-home',!!(data&&styKind()&&tab==='today'&&!detail));if(document.body.classList.contains('sty-home'))return styHome();if(styKind())styApply();if(!data){root.innerHTML=shell(`<header>${logo}<div><h1>Dressjet Ops</h1><p>${esc(status)}</p></div><button class="refresh" id="rf">Refresh</button></header>`);$('#rf').onclick=manualRefresh;return;}
  const s=data.snapshot,orders=data.orders,live=orders.filter(o=>o.status!=='Cancelled');const pend=A(data.pending)||[];const OI=ordInfo(s);
  if(tab==='exp'&&!(data&&data.expenses))tab='today';

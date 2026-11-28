@@ -8,7 +8,7 @@ const OPTIONAL_REMOVALS=Object.freeze(['eKlKbhWk','xZw9PRCY','NczC6Ww8','yKOhpUF
 // verified against the pinned owner key); b4DNM6EB (25 Nov, owner-signed add of the
 // "Anu duo" iPhone, approval seq 1795623441123, verified against the pinned owner key).
 const OPTIONAL_ADDS=Object.freeze(['yxNJE9dV','tHhbQ90n','ai6ADtGq','b4DNM6EB']);
-function approvedRoster(kids,p){
+export function approvedRoster(kids,p){
  const set=new Set(kids),old=p.requiredKids;
  if(set.size!==kids.length||kids.some(k=>!old.includes(k)&&!OPTIONAL_ADDS.includes(k)))return false;
  if(old.some(k=>!OPTIONAL_REMOVALS.includes(k)&&!set.has(k)))return false;
@@ -17,7 +17,7 @@ function approvedRoster(kids,p){
 const enc=new TextEncoder(),ROWS=['1','2','3','87','88'],HEX=/^[a-f0-9]{64}$/;
 export const utf8=s=>enc.encode(s);
 export async function sha256(bytes){const d=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(d),b=>b.toString(16).padStart(2,'0')).join('');}
-function fail(s){throw Error('Static v2: '+s)}
+export function fail(s){throw Error('Static v2: '+s)}
 function integer(x){return Number.isSafeInteger(x)&&x>0}
 function plain(x){return x!==null&&typeof x==='object'&&!Array.isArray(x)}
 function time(x){return typeof x==='string'&&/(Z|[+-]\d{2}:\d{2})$/.test(x)&&Number.isFinite(Date.parse(x))}
@@ -46,7 +46,7 @@ export async function fetchBounded(url,p,fetcher=fetch){
   const bytes=new Uint8Array(count);let at=0;for(const b of chunks){bytes.set(b,at);at+=b.byteLength;}return bytes;
  }finally{clearTimeout(timer);if(reader)await reader.cancel().catch(()=>{});}
 }
-function envelope(body,main,p){
+export function envelope(body,main,p){
  let e;try{e=JSON.parse(body)}catch{fail('envelope JSON')}
  if(!plain(e)||!Array.isArray(e.msgs)||!e.msgs.length||!e.msgs.every(m=>plain(m)&&typeof m.kid==='string'&&plain(m.epk)&&typeof m.epk.x==='string'&&typeof m.epk.y==='string'&&typeof m.iv==='string'&&(typeof m.wk==='string'||typeof m.ct==='string')))fail('envelope fields');
  if(new Set(e.msgs.map(m=>m.kid)).size!==e.msgs.length)fail('duplicate recipient');
