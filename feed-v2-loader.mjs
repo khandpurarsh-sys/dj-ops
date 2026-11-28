@@ -95,7 +95,7 @@ async function decodeValidated(v,decrypt,p,fetcher,location,cached=null){
     The proposed crypto.js enforces this bound while inflating. Policy remains
     disabled until its reviewed build, anchors and device limits are approved;
     post-parse size is no cap. */
- const full=await decrypt(JSON.parse(v.feed.rows['3'].body),p.maxPlaintextBytes),slim=await decrypt(JSON.parse(v.feed.rows['1'].body),p.maxPlaintextBytes);
+ const [full,slim]=await Promise.all([decrypt(JSON.parse(v.feed.rows['3'].body),p.maxPlaintextBytes),decrypt(JSON.parse(v.feed.rows['1'].body),p.maxPlaintextBytes)]);
  if(!plain(full)||!plain(slim)||JSON.stringify(full)!==JSON.stringify(slim))fail('decrypted variants mismatch');
  if(full.archiveTransport)return hydrateArchive(full,v,decrypt,p,fetcher,location,cached);
  if(!full.snapshot)fail('snapshot missing');return {data:full,chunks:null};
@@ -126,10 +126,15 @@ export async function hydrateArchive(wrapper,v,decrypt,p,fetcher,location,cached
  if(!integer(a.fullBytes)||a.fullBytes>A.maxReconstructedBytes||!HEX.test(a.fullSha256)||!Number.isSafeInteger(a.entries)||a.entries<0||a.entries>A.maxEntries||!Array.isArray(a.chunks)||!a.chunks.length||a.chunks.length>A.maxChunks)fail('archive manifest bounds');
  const here=new URL(location);if(here.origin!==p.origin||!here.pathname.startsWith(p.basePath))fail('archive origin');
  if(typeof a.prefix!=='string'||typeof a.suffix!=='string')fail('archive exact text');const prefix=utf8(a.prefix),suffix=utf8(a.suffix);let total=prefix.length+suffix.length+2,count=0,parts=[],saved={},seen=new Set();
+ /* Interim speedup: only the network fetch is parallel (bounded to 6). Every path/hash/lineage/decrypt check below still runs per chunk, in order. */
+ const prefetched=new Array(a.chunks.length);
+ if(cached===null){const n=a.chunks.length,slots=a.chunks.map(()=>{const s={};s.pr=new Promise((res,rej)=>{s.res=res;s.rej=rej});s.pr.catch(()=>{});return s});slots.forEach((s,i)=>{prefetched[i]=s.pr});let next=0;
+  const worker=async()=>{while(next<n){const i=next++,m=a.chunks[i];try{if(!plain(m)||typeof m.path!=='string'||!integer(m.wireBytes)||m.wireBytes>p.maxBodyBytes)throw Error('skip');const u=new URL(m.path,new URL(p.basePath,p.origin));if(u.origin!==p.origin||u.pathname!==p.basePath+m.path||u.search||u.hash)throw Error('skip');slots[i].res(await fetchBounded(u.href,{...p,maxFeedBytes:p.maxBodyBytes},fetcher));}catch(e){slots[i].rej(e)}}};
+  for(let k=0;k<Math.min(6,n);k++)worker();}
  for(let i=0;i<a.chunks.length;i++){
   const m=a.chunks[i];if(!exactKeys(m,['path','wireBytes','wireSha256','plainBytes','plainSha256','entries'])||!integer(m.wireBytes)||m.wireBytes>p.maxBodyBytes||!integer(m.plainBytes)||m.plainBytes>A.maxChunkPlaintextBytes||!HEX.test(m.wireSha256)||!HEX.test(m.plainSha256)||!integer(m.entries)||!new RegExp('^archives/retail-v1/[a-f0-9]{64}\\.json$').test(m.path)||seen.has(m.path))fail('archive chunk manifest');seen.add(m.path);
   const url=new URL(m.path,new URL(p.basePath,p.origin));if(url.origin!==p.origin||url.pathname!==p.basePath+m.path||url.search||url.hash)fail('archive path');
-  let wire;if(cached!==null){if(typeof cached[m.path]!=='string')fail('archive offline chunk missing');wire=utf8(cached[m.path]);}else wire=await fetchBounded(url.href,{...p,maxFeedBytes:p.maxBodyBytes},fetcher);
+  let wire;if(cached!==null){if(typeof cached[m.path]!=='string')fail('archive offline chunk missing');wire=utf8(cached[m.path]);}else wire=await prefetched[i];
   if(wire.length!==m.wireBytes||await sha256(wire)!==m.wireSha256)fail('archive wire integrity');
   let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(wire)}catch{fail('archive wire utf8')};const e=envelope(text,true,p);
   if(e.archiveSchema!==A.schema||e.archiveEpoch!==a.epoch||e.sid!==a.epoch+'-'+m.plainSha256||e.msgs.map(m=>m.kid).sort().join(',')!==a.kids.join(','))fail('archive chunk lineage');
