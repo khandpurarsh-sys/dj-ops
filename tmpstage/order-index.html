@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>DressJet Shop: home order</title>
+<style>
+@font-face{font-family:DjCinzel;font-weight:500;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/cinzel_medium.ttf)}
+@font-face{font-family:DjCormorant;font-weight:500;font-style:normal;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/cormorant_medium.ttf)}
+@font-face{font-family:DjCormorant;font-weight:500;font-style:italic;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/cormorant_medium_italic.ttf)}
+@font-face{font-family:DjAssistant;font-weight:400;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/assistant_regular.ttf)}
+@font-face{font-family:DjAssistant;font-weight:500;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/assistant_medium.ttf)}
+@font-face{font-family:DjAssistant;font-weight:600;src:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/assistant_semibold.ttf)}
+:root{--navy:#0E2C46;--gold:#C0B090;--cream:#EFE6D2;--ink2:rgba(14,44,70,.6);--ink3:rgba(14,44,70,.45);--line:rgba(14,44,70,.1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#ececec}
+body{font-family:DjAssistant,sans-serif;color:var(--navy)}
+#phone{max-width:430px;margin:0 auto;background:#fff;position:relative;min-height:100vh;box-shadow:0 0 30px #0002}
+#hw{position:sticky;top:0;z-index:20;height:0}
+#hdr{padding:calc(24px + max(env(safe-area-inset-top),47px)) 20px 10px;background:transparent;transition:background .28s,color .28s;color:var(--cream)}
+#hdr.light{background:#fff;color:var(--navy)}
+.wm{font-family:DjCinzel;font-size:15px;letter-spacing:5.7px;text-align:center;margin-bottom:10px;padding-left:5.7px}
+.hrow{display:flex;gap:12px;align-items:center}
+.pill{flex:1;height:46px;border-radius:23px;display:flex;align-items:center;padding:0 18px;gap:10px;font-weight:500;font-size:14px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.55)}
+.pill span:last-child{opacity:.88}
+#hdr.light .pill{background:rgba(255,255,255,.62);border-color:var(--line)}
+.bag{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.26);border:1px solid rgba(255,255,255,.55)}
+#hdr.light .bag{background:rgba(255,255,255,.55);border-color:var(--line)}
+#hero{height:100svh;min-height:560px;position:relative;background:#111;overflow:hidden}#hero .im{position:absolute;left:0;right:0;top:-16.28%;height:116.28%;background:center/cover no-repeat}
+#hero .shop{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);padding:13px 34px;border-radius:30px;font-weight:600;font-size:11.5px;letter-spacing:3px;color:var(--cream);background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.55);white-space:nowrap}
+#feed{display:grid;grid-template-columns:1fr 1fr;column-gap:15px;row-gap:30px;padding:0 15px;padding-top:0}
+.card{min-width:0;position:relative}
+.card.big{grid-column:1/-1;margin:4px -15px -4px}
+.card.big .info{padding:0 15px}
+.pager{position:relative;background:#E0E0E0;overflow:hidden;aspect-ratio:.75}
+.card.big .pager{aspect-ratio:.8}
+.track{display:flex;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+.pg{flex:0 0 100%;height:100%;scroll-snap-align:start}
+.pg img{width:100%;height:100%;display:block}
+.pg img.fl{object-fit:contain;padding:12px}.card.big .pg img.fl{padding:18px}
+.pg img.ph{object-fit:cover}
+.dots{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:3.2px;pointer-events:none}
+.card.big .dots{bottom:10px;gap:4px}
+.dots i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55)}
+.card.big .dots i{width:5px;height:5px}
+.dots i.on{background:var(--gold)}
+.info{padding-top:10px}
+.irow{display:flex;align-items:center}
+.itxt{flex:1;min-width:0}
+.eb{font-weight:600;font-size:10.5px;letter-spacing:3.6px;color:var(--ink3);text-transform:uppercase}
+.tt{font-family:DjCormorant;font-weight:500;font-size:18px;line-height:23.5px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--navy)}
+.pr{font-weight:500;font-size:12.5px;color:var(--ink2);margin-top:4px}
+.plus{width:44px;height:44px;border:0;background:none;font-size:26px;font-weight:200;color:var(--navy);cursor:pointer;font-family:DjAssistant}
+.chips{display:flex;gap:10px;overflow-x:auto;padding-top:8px;scrollbar-width:none}
+.chip{flex:0 0 auto;border:1px solid var(--gold);border-radius:15px;padding:6px 13px;font-size:12.5px;font-weight:600;letter-spacing:1px;color:var(--navy);background:none;font-family:DjAssistant}
+.chip.na{border-color:var(--line);color:rgba(14,44,70,.2);font-weight:400}
+.added{color:var(--gold);font-weight:600;font-size:12.5px;letter-spacing:1px;padding:8px 0}
+#end{padding:34px 0 140px;text-align:center}
+#end hr{border:0;height:1px;width:52px;background:var(--gold);margin:0 auto 12px}
+#end div{font-family:DjCinzel;font-size:8.5px;letter-spacing:4px;color:rgba(192,176,144,.7)}
+/* owner edit layer */
+body.edit .pager{outline:0}
+.ov{display:none}
+body.edit .ov{display:block}
+.num{position:absolute;top:6px;left:6px;background:#0E2C46dd;color:#fff;border-radius:6px;padding:2px 7px;font:600 12px DjAssistant;z-index:3}
+.nw{position:absolute;top:6px;right:6px;background:var(--gold);color:var(--navy);border-radius:6px;padding:2px 7px;font:600 11px DjAssistant;z-index:3}
+.ctl{position:absolute;left:0;right:0;bottom:0;display:flex;gap:4px;padding:6px;background:linear-gradient(transparent,#0E2C46cc);z-index:3}
+body.edit .dots{bottom:38px}
+.ctl button{flex:1;border:0;border-radius:7px;padding:7px 2px;font:600 11.5px DjAssistant;background:#fffffff0;color:var(--navy);cursor:pointer}
+.ctl .dh{flex:0 0 34px;cursor:grab;touch-action:none;font-size:15px;line-height:1}
+.card.sel-ghost{opacity:.3}
+#hid{display:none;padding:10px 15px 0}
+body.edit #hid.has{display:block}
+#hid h4{font:600 10.5px DjAssistant;letter-spacing:3px;text-transform:uppercase;color:var(--ink3);margin:10px 0}
+.hrow2{display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.hrow2 img{width:44px;height:58px;object-fit:cover;background:#E0E0E0}.hrow2 span{flex:1;font-family:DjCormorant;font-size:16px}
+.hrow2 button{border:1px solid var(--gold);background:none;border-radius:8px;padding:6px 12px;color:var(--navy);font:600 12px DjAssistant}
+#bar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:430px;z-index:40;background:#0E2C46;color:#fff;padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:500 13px DjAssistant}
+#bar button{border:0;border-radius:8px;padding:9px 12px;background:#fff;color:var(--navy);font:600 13px DjAssistant;cursor:pointer}
+#bar button.pri{background:var(--gold)}#bar button:disabled{opacity:.4}
+#bar .sp{flex:1}
+#msg{position:fixed;left:50%;transform:translateX(-50%);bottom:64px;max-width:410px;width:calc(100% - 20px);z-index:41;padding:9px 12px;border-radius:8px;font:500 13px DjAssistant;background:#fff7d6;color:#333;display:none;box-shadow:0 2px 8px #0003}
+#msg.ok{background:#dff5e1}#msg.err{background:#fde0e0}
+#modal{display:none;position:fixed;inset:0;background:#000a;z-index:60;align-items:flex-start;justify-content:center;padding:20px}
+#modal .box{background:#fff;border-radius:12px;max-width:430px;width:100%;max-height:88vh;display:flex;flex-direction:column}
+#modal .hd{padding:12px;border-bottom:1px solid #eee;display:flex;flex-direction:column;gap:8px}
+#modal input[type=text]{padding:9px;border:1px solid #ccc;border-radius:8px;font:inherit}
+#modal button{padding:9px;border:0;border-radius:8px;background:#eee;font:inherit}
+#list{overflow:auto;padding:6px}.row{display:flex;gap:10px;align-items:center;padding:6px;border-radius:8px;cursor:pointer}.row:hover{background:#eef}.row img{width:44px;height:58px;object-fit:cover;border-radius:4px}
+#load{padding:200px 20px;text-align:center;color:var(--ink3)}
+</style></head><body>
+<div id="phone">
+ <div id="hw"><div id="hdr"><div class="wm">DRESSJET</div><div class="hrow"><div class="pill"><span style="font-size:16px">&#8981;</span><span>Search DressJet</span></div><div class="bag"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div></div></div></div>
+ <div id="hero"><div class="im" style="background-image:url(https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b/ios-shop/Resources/hero_poster.jpg)"></div><div class="shop">S H O P &nbsp; N O W</div></div>
+ <div id="load">Loading products...</div>
+ <div id="feed"></div>
+ <div id="hid"></div>
+ <div id="end"><hr><div>DRESSJET</div></div>
+</div>
+<div id="msg"></div>
+<div id="bar"><button id="mode" disabled>Edit order</button><span class="sp" id="who"></span><button id="reset" style="display:none">Newest first</button><button id="save" class="pri" style="display:none" disabled>Save order</button><button id="in">Owner sign in</button><button id="out" style="display:none">Sign out</button></div>
+<div id="modal"><div class="box"><div class="hd"><b id="mt">Swap</b><input type="text" id="mq" placeholder="Search products"><label><input type="checkbox" id="mh"> Hide the old product (default: it moves to the end)</label><button id="mc">Cancel</button></div><div id="list"></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const RAW="https://raw.githubusercontent.com/khandpurarsh-sys/dj-ops/6e01a5c653dd2faf6fa4176ac60f76fa05196b6b";
+const FLAT={"the-hartwell-summer-shirt":"ios-shop/Resources/FlatLays/fl_the_hartwell_summer_shirt.webp","the-davos":"ios-shop/Resources/FlatLays/fl_the_davos.webp","the-burghley-saddle":"ios-shop/Resources/FlatLays/fl_the_burghley_saddle.webp","the-vence":"ios-shop/Resources/FlatLays/fl_the_vence.webp","the-zermatt-shirt":"ios-shop/Resources/FlatLays/fl_the_zermatt.webp","the-menton-shirt":"ios-shop/Resources/FlatLays/fl_the_menton.webp","the-st-raphael":"ios-shop/Resources/FlatLays/fl_the_st_raphael.webp","the-morvayne-court":"ios-shop/Resources/FlatLays/fl_the_morvayne_court.webp","the-lombard-crest":"ios-shop/Resources/FlatLays/fl_the_lombard_crest.webp","the-valdorne-polo":"ios-shop/Resources/FlatLays/fl_the_valdorne_polo.webp","the-havelock-polo":"ios-shop/Resources/FlatLays/fl_the_havelock_polo.webp","the-vauxmont-shirt":"ios-shop/Resources/FlatLays/fl_the_vauxmont_shirt.webp","rothwell-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_rothwell_summer_chester_tm.webp","the-brunello-chester-tm":"ios-shop/Resources/FlatLays/fl_the_brunello_chester_tm.webp","the-montverde-waffle-shirt":"ios-shop/Resources/FlatLays/fl_the_montverde_waffle_shirt.webp","the-hurlingham-chester-tm":"ios-shop/Resources/FlatLays/fl_the_hurlingham_chester_tm.webp","the-belladonna-chester-tm":"ios-shop/Resources/FlatLays/fl_the_belladonna_chester_tm.webp","the-thoroughbred-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_thoroughbred_safari_shirt.webp","the-grand-varenne-chester-tm":"ios-shop/Resources/FlatLays/fl_the_grand_varenne_chester_tm.webp","the-marlowe-reserve":"ios-shop/Resources/FlatLays/fl_the_marlowe_reserve.webp","the-silverstone-verona-shirt":"ios-shop/Resources/FlatLays/fl_the_silverstone_verona_shirt.webp","the-avellon-court-shirt":"ios-shop/Resources/FlatLays/fl_the_avellon_court.webp","the-vallerose-crest":"ios-shop/Resources/FlatLays/fl_the_vallerose_crest.webp","the-valcourt-shirt":"ios-shop/Resources/FlatLays/fl_the_valcourt_shirt.webp","the-bellavere-chester-tm":"ios-shop/Resources/FlatLays/fl_the_bellavere_chester_tm.webp","the-montagne-shirt":"ios-shop/Resources/FlatLays/fl_the_montagne_shirt.webp","the-cardinal-estate":"ios-shop/Resources/FlatLays/fl_the_cardinal_estate.webp","the-positano-summer-shirt":"ios-shop/Resources/FlatLays/fl_the_positano_summer_shirt.webp","the-belvoir-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_the_belvoir_chester_tm.webp","the-goodwood-estate":"ios-shop/Resources/FlatLays/fl_the_goodwood_estate.webp","the-capri-coast":"ios-shop/Resources/FlatLays/fl_the_capri_coast.webp","the-montara-polo":"ios-shop/Resources/FlatLays/fl_the_montara_polo.webp","the-rothschild-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_the_rothschild_summer_chester_tm.webp","the-garrison-arm":"ios-shop/Resources/FlatLays/fl_the_garrison_arm.webp","the-alderton-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_the_alderton_summer_chester_tm.webp","the-castello-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_the_castello_summer_chester_tm.webp","the-ravello-paddock-shirt":"ios-shop/Resources/FlatLays/fl_the_ravello_paddock_shirt.webp","the-blackwood-summer-chester-tm":"ios-shop/Resources/FlatLays/fl_the_blackwood_summer_chester_tm.webp","the-westbridge-pathfinder-shirt":"ios-shop/Resources/FlatLays/fl_the_westbridge_pathfinder_shirt.webp","the-denham-shirt":"ios-shop/Resources/FlatLays/fl_the_denham_shirt.webp","the-baronhill":"ios-shop/Resources/FlatLays/fl_the_baronhill.webp","the-monterro":"ios-shop/Resources/FlatLays/fl_the_monterro.webp","the-glenmont-loafers":"ios-shop/Resources/FlatLays/fl_the_glenmont_loafers.webp","the-summer-toscana-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_toscana_chester_tm.webp","the-summer-saddlebrook-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_saddlebrook_chester_tm.webp","the-summer-grantham-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_grantham_chester_tm.webp","the-summer-kings-chariot-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_kings_chariot_chester_tm.webp","the-saddlefield-summer-shirt-chester-tm":"ios-shop/Resources/FlatLays/fl_the_saddlefield_summer_shirt_chester_tm.webp","the-ashmere-graphite-denim":"ios-shop/Resources/FlatLays/fl_the_ashmere_graphite_denim.webp","the-alderwick-moonlit-denim":"ios-shop/Resources/FlatLays/fl_the_alderwick_moonlit_denim.webp","the-lorenzo-estate-shirt":"ios-shop/Resources/FlatLays/fl_the_lorenzo_chester_estate.webp","the-dunsfold-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_dunsfold_chester_tm.webp","the-rothwell-waffle-shirt":"ios-shop/Resources/FlatLays/fl_the_rothwell_waffle_shirt.webp","the-duke-s-trailblazer":"ios-shop/Resources/FlatLays/fl_the_duke_s_trailblazer.webp","the-westburry-gallop":"ios-shop/Resources/FlatLays/fl_the_westburry_gallop.webp","the-lockwood-estate":"ios-shop/Resources/FlatLays/fl_the_lockwood_estate.webp","the-hawthorne-shirt":"ios-shop/Resources/FlatLays/fl_the_hawthorne_shirt.webp","the-cotswold-shirt":"ios-shop/Resources/FlatLays/fl_the_cotswold_shirt.webp","the-summer-sundowner-shirt":"ios-shop/Resources/FlatLays/fl_the_summer_sundowner_shirt.webp","the-barrowfield":"ios-shop/Resources/FlatLays/fl_the_barrowfield.webp","the-sicilian-sand-shirt":"ios-shop/Resources/FlatLays/fl_the_sicilian_sand_shirt.webp","the-westcroft-shirt":"ios-shop/Resources/FlatLays/fl_the_westcroft_shirt.webp","the-lavender-stallion-shirt":"ios-shop/Resources/FlatLays/fl_the_lavender_stallion_shirt.webp","the-winchester-outrider":"ios-shop/Resources/FlatLays/fl_the_winchester_outrider.webp","the-white-cavalier":"ios-shop/Resources/FlatLays/fl_the_white_cavalier.webp","the-hampshire-horsemen":"ios-shop/Resources/FlatLays/fl_the_hampshire_horsemen.webp","the-dunhill-rust":"ios-shop/Resources/FlatLays/fl_the_dunhill_rust.webp","the-montford-midnight":"ios-shop/Resources/FlatLays/fl_the_montford_midnight.webp","the-tuscan-olive":"ios-shop/Resources/FlatLays/fl_the_tuscan_olive.webp","the-milan-admiral":"ios-shop/Resources/FlatLays/fl_the_milan_admiral.webp","the-wexford-cavalier":"ios-shop/Resources/FlatLays/fl_the_wexford_cavalier.webp","the-portofino-viscount":"ios-shop/Resources/FlatLays/fl_the_portofino_viscount.webp","the-house-of-marlborough":"ios-shop/Resources/FlatLays/fl_the_house_of_marlborough.webp","the-chestnut-manor":"ios-shop/Resources/FlatLays/fl_the_chestnut_manor.webp","the-santorini-summer-sky":"ios-shop/Resources/FlatLays/fl_the_santorini_summer_sky.webp","the-olive-regiment":"ios-shop/Resources/FlatLays/fl_the_olive_regiment.webp","the-riviera-noir":"ios-shop/Resources/FlatLays/fl_the_riviera_noir.webp","the-cannes-summer-double-breast-chester-tm":"ios-shop/Resources/FlatLays/fl_the_cannes_summer_double_breast_chester_tm.webp","the-summer-stienfield-chester-tm":"ios-shop/Resources/FlatLays/fl_the_summer_stienfield_chester_tm.webp","the-valcrest-shirt":"ios-shop/Resources/FlatLays/fl_the_valcrest_shirt.webp","the-halston-blue-shirt":"ios-shop/Resources/FlatLays/fl_the_halston_blue_shirt.webp","the-phantom-crest":"ios-shop/Resources/FlatLays/fl_the_phantom_crest.webp","the-brigadier-arm":"ios-shop/Resources/FlatLays/fl_the_brigadier_arm.webp","double-pocket-studded-bronze-shirt":"ios-shop/Resources/FlatLays/fl_double_pocket_studded_bronze_shirt.webp","the-tartan-guard-shirt":"ios-shop/Resources/FlatLays/fl_the_tartan_guard_shirt.webp","the-summer-double-breasted-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_summer_double_breast_safari_shirt.webp","the-imperial-ranger-shirt":"ios-shop/Resources/FlatLays/fl_the_imperial_ranger_shirt.webp","the-garnet-estate-polo":"ios-shop/Resources/FlatLays/fl_the_garnet_estate_polo.webp","the-sahara-sandstorm":"ios-shop/Resources/FlatLays/fl_the_sahara_sandstorm.webp","the-oakshield-wayfarer":"ios-shop/Resources/FlatLays/fl_the_oakshield_wayfarer.webp","the-bolted-frost":"ios-shop/Resources/FlatLays/fl_the_bolted_frost.webp","the-voyager-saddle":"ios-shop/Resources/FlatLays/fl_the_voyager_saddle.webp","the-whitemore-court":"ios-shop/Resources/FlatLays/fl_the_whitemore_court.webp","rosecliff-monarch":"ios-shop/Resources/FlatLays/fl_the_rosecliff_monarch.webp","the-emperors-emerald":"ios-shop/Resources/FlatLays/fl_the_emperor_s_emerald.webp","the-obsidian-marshall":"ios-shop/Resources/FlatLays/fl_the_obsidian_marshall.webp","the-clayford-lineage":"ios-shop/Resources/FlatLays/fl_the_clayford_lineage.webp","driftwood-safari":"ios-shop/Resources/FlatLays/fl_driftwood_safari.webp","the-sandridge-explorer":"ios-shop/Resources/FlatLays/fl_the_sandridge_explorer.webp","montclair-authority":"ios-shop/Resources/FlatLays/fl_montclair_authority.webp","the-oxford-ridges":"ios-shop/Resources/FlatLays/fl_the_oxford_ridges.webp","the-ashford-lancaster":"ios-shop/Resources/FlatLays/fl_the_ashford_lancaster.webp","the-rosewood-manor":"ios-shop/Resources/FlatLays/fl_the_rosewood_manor.webp","darkmoor-command":"ios-shop/Resources/FlatLays/fl_darkmoor_command.webp","the-signature-sandune":"ios-shop/Resources/FlatLays/fl_the_signature_sandune.webp","the-crownfield-leather-jacket":"ios-shop/Resources/FlatLays/fl_the_crownfield_leather_jacket.webp","the-kingsford-expedition":"ios-shop/Resources/FlatLays/fl_the_kingsford_expedition.webp","the-verdant-command-crest":"ios-shop/Resources/FlatLays/fl_the_verdant_command_crest.webp","the-cobalt-regent":"ios-shop/Resources/FlatLays/fl_the_cobalt_regent.webp","the-kingsmen-cavalry-shirt":"ios-shop/Resources/FlatLays/fl_the_kingsmen_cavalry_shirt.webp","the-ravenshire-regiment":"ios-shop/Resources/FlatLays/fl_the_ravenshire_regiment.webp","workshire-emblem":"ios-shop/Resources/FlatLays/fl_workshire_emblem.webp","the-glenroy-stealth":"ios-shop/Resources/FlatLays/fl_the_glenroy_stealth.webp","the-buckingham-umber":"ios-shop/Resources/FlatLays/fl_the_buckingham_umber.webp","the-richmond-stripes":"ios-shop/Resources/FlatLays/fl_the_richmond_stripes.webp","the-cambridge-waffle":"ios-shop/Resources/FlatLays/fl_the_cambridge_waffle.webp","the-white-knight-shirt":"ios-shop/Resources/FlatLays/fl_the_white_knight_shirt.webp","the-harrington-hook":"ios-shop/Resources/FlatLays/fl_the_harrington_hook.webp","the-brown-haverford-shirt":"ios-shop/Resources/FlatLays/fl_the_brown_haverford_shirt.webp","the-barons-blue-shirt":"ios-shop/Resources/FlatLays/fl_the_baron_s_blue_shirt.webp","the-monarch-ashford":"ios-shop/Resources/FlatLays/fl_the_monarch_ashford.webp","the-kensignton-grid":"ios-shop/Resources/FlatLays/fl_the_kensignton_grid.webp","the-belted-noir":"ios-shop/Resources/FlatLays/fl_the_belted_noir.webp","the-spirit-of-riviera":"ios-shop/Resources/FlatLays/fl_the_spirit_of_riviera.webp","the-windsor-crestridge":"ios-shop/Resources/FlatLays/fl_the_windsor_crestridge.webp","the-studded-brigade":"ios-shop/Resources/FlatLays/fl_the_studded_brigade.webp","the-stripes-of-versailles":"ios-shop/Resources/FlatLays/fl_the_stripes_of_versailles.webp","the-duke-of-azure-shirt":"ios-shop/Resources/FlatLays/fl_the_duke_of_azure_shirt.webp","the-elmridge-tweed-pocket-shirt":"ios-shop/Resources/FlatLays/fl_the_elmridge_tweed_pocket_shirt.webp","the-aurum-lock-polo":"ios-shop/Resources/FlatLays/fl_the_aurum_lock_polo.webp","the-steel-amethyst-shirt":"ios-shop/Resources/FlatLays/fl_the_steel_amethyst_shirt.webp","the-mulberry-estate-utilitarian-shirt":"ios-shop/Resources/FlatLays/fl_the_mulberry_estate_utilitarian_shirt.webp","the-brushed-sandford-polo":"ios-shop/Resources/FlatLays/fl_the_brushed_sandford_polo.webp","the-viceroy-s-harness-limited-edition":"ios-shop/Resources/FlatLays/fl_the_viceroy_s_harness_limited_edition.webp","the-french-riviera-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_french_riviera_safari_shirt.webp","the-navy-sovereign-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_navy_sovereign_safari_shirt.webp","the-duke-fire-brick-double-buckle-shirt":"ios-shop/Resources/FlatLays/fl_the_duke_fire_brick_double_buckle_shirt.webp","heritage-cross-stitch-heirloom-shirt":"ios-shop/Resources/FlatLays/fl_heritage_cross_stitch_heirloom_shirt.webp","savannah-safari-shirt":"ios-shop/Resources/FlatLays/fl_savannah_safari_shirt.webp","aqua-marine-shirt":"ios-shop/Resources/FlatLays/fl_aqua_marine_shirt.webp","ice-blue-waffle-shirt":"ios-shop/Resources/FlatLays/fl_ice_blue_waffle_shirt.webp","brunswick-olive-shirt":"ios-shop/Resources/FlatLays/fl_brunswick_olive_shirt.webp","alpine-cable-shirt":"ios-shop/Resources/FlatLays/fl_alpine_cable_shirt.webp","the-savannah-trail-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_savannah_trail_safari_shirt.webp","the-skyline-anchor-button-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_skyline_anchor_button_safari_shirt.webp","the-white-monaco-summer-club-shirt-1-0":"ios-shop/Resources/FlatLays/fl_the_white_monaco_summer_club_shirt_1_0.webp","the-bucklefield-utility-shirt":"ios-shop/Resources/FlatLays/fl_the_bucklefield_utility_shirt.webp","the-brassline-sailors-groove-polo":"ios-shop/Resources/FlatLays/fl_the_brassline_sailors_groove_polo.webp","the-brassline-olive-amazonico-polo":"ios-shop/Resources/FlatLays/fl_the_brassline_olive_tropical_polo.webp","the-blue-tsunami-threads-polo":"ios-shop/Resources/FlatLays/fl_the_blue_tsunami_threads_polo.webp","the-deep-sea-casablanca-style-5-buttoned-shirt":"ios-shop/Resources/FlatLays/fl_the_deep_sea_casablanca_style_5_buttonshirt.webp","the-forest-casablanca-style-5-buttoned-shirt":"ios-shop/Resources/FlatLays/fl_the_forest_casablanca_style_5_button_shirt.webp","the-baby-blue-casablanca-style-5-buttoned-shirt":"ios-shop/Resources/FlatLays/fl_the_baby_blue_casablanca_style_5_button_shirt.webp","the-desert-casablanca-style-5-buttoned-shirt":"ios-shop/Resources/FlatLays/fl_the_desert_casablanca_style_5_button_shirt.webp","the-lemon-casablanca-style-5-buttoned-shirt":"ios-shop/Resources/FlatLays/fl_the_lemon_casablanca_style_5_button_shirt.webp","the-matcha-casablanca-style-5-button-linen-blend-shirt":"ios-shop/Resources/FlatLays/fl_the_matcha_casablanca_style_5_button_linen_blend_shirt.webp","the-white-cuffless-santa-monica-safari-shirt":"ios-shop/Resources/FlatLays/fl_the_white_cuffless_santa_monica_safari_shirt.webp","the-rustic-manor-polo":"ios-shop/Resources/FlatLays/fl_the_rustic_manor_polo.webp","the-navy-blue-dive-master-shirt":"ios-shop/Resources/FlatLays/fl_the_navy_blue_dive_master_shirt.webp","the-bronzeleaf-maroon-shirt":"ios-shop/Resources/FlatLays/fl_the_bronzeleaf_plum_shirt.webp","the-greywood-classic-shirt":"ios-shop/Resources/FlatLays/fl_the_greywood_classic_shirt.webp","the-pink-mayfair-shirt":"ios-shop/Resources/FlatLays/fl_the_pink_mayfair_shirt.webp","the-green-huntsman-shirt":"ios-shop/Resources/FlatLays/fl_the_green_huntsman_shirt.webp","amalfi-lemon-shirt":"ios-shop/Resources/FlatLays/fl_amalfi_lemon_shirt.webp","the-blue-renaissance-shirt":"ios-shop/Resources/FlatLays/fl_the_blue_renaissance_shirt.webp","the-olive-amazonico-shirt":"ios-shop/Resources/FlatLays/fl_the_olive_amazonico_shirt.webp","classic-mafia-polo":"ios-shop/Resources/FlatLays/fl_classic_black_mafia_polo.webp","midnight-blue-anchor-shirt":"ios-shop/Resources/FlatLays/fl_midnight_blue_anchor_shirt.webp","the-ascot-henley":"ios-shop/Resources/FlatLays/flat_ascot_henley.jpg","the-summer-highrove-chester-tm":"ios-shop/Resources/FlatLays/flat_highrove.jpg","the-richberg-vintage-blue-denim":"ios-shop/Resources/FlatLays/flat_richberg.jpg","the-summer-northwick-chester-tm":"ios-shop/Resources/FlatLays/flat_northwick.jpg","the-summer-eddington-chester-tm":"ios-shop/Resources/FlatLays/flat_eddington.jpg","the-st-tropez-shirt":"ios-shop/Resources/FlatLays/flat_st_tropez.jpg","the-darkridge-sherling":"ios-shop/Resources/FlatLays/flat_darkridge_sherling.jpg","the-whitemore-crestfield":"ios-shop/Resources/FlatLays/flat_whitemore.jpg","the-kingswood-emerald":"ios-shop/Resources/FlatLays/flat_kingswood.jpg"};
+const app=initializeApp({apiKey:"AIzaSyAkBpvx0wL7DqYpD1Gb9skYbR-a2CqcMrQ",authDomain:"dressjet-shop.firebaseapp.com",projectId:"dressjet-shop"});
+const auth=getAuth(app),db=getFirestore(app),ref=doc(db,"config","homeOrder");
+const $=id=>document.getElementById(id);
+const msg=(t,c="")=>{const m=$("msg");m.textContent=t;m.className=c;m.style.display=t?"block":"none"};
+let products=[],byH={},order=[],hidden=new Set(),dirty=false,newSet=new Set(),user=null,sortable,edit=false,haveSaved=false;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// ---- same rules as the app (Feed.swift) ----
+const title=t=>t.replace(/\s+[Tt][Mm]\s*$/,"\u2122");
+const group=n=>{const s=String(n);if(s.length<=3)return s;let h=s.slice(0,-3),p=[s.slice(-3)];while(h.length>2){p.unshift(h.slice(-2));h=h.slice(0,-2)}if(h)p.unshift(h);return p.join(",")};
+const paise=p=>Math.round((parseFloat(p)||0)*100);
+const inr=p=>{if(isNaN(parseFloat(p)))return"\u20B9\u2014";const t=paise(p),w=Math.floor(t/100),r=t%100;return r?"\u20B9"+group(w)+"."+String(r).padStart(2,"0"):"\u20B9"+group(w)};
+const priceLabel=p=>{const u=[...new Set(p.variants.map(v=>v.price).filter(x=>String(x).trim()))];if(u.length<=1)return inr(u[0]||"");return"From "+inr(u.reduce((a,b)=>paise(a)<=paise(b)?a:b))};
+const outer=p=>/jacket|coat|sherling|shearling|trench|parka/.test((p.type+" "+p.handle).toLowerCase());
+const feedOrdered=l=>(haveSaved||edit)?l:[...l.filter(outer),...l.filter(p=>!outer(p))];
+const sized=(u,w)=>u.startsWith("https://cdn.shopify.com/")?u+(u.includes("?")?"&":"?")+"width="+w:u;
+const flatURL=h=>FLAT[h]?RAW+"/"+FLAT[h]:null;
+const newest=(a,b)=>b.created_at<a.created_at?-1:b.created_at>a.created_at?1:0;
+function arrange(saved){const inL=new Set(saved);const fresh=products.filter(p=>!inL.has(p.handle)).sort(newest);newSet=new Set(saved.length?fresh.map(p=>p.handle):[]);return[...fresh.map(p=>p.handle),...saved.filter(h=>byH[h])]}
+async function loadProducts(){const r=await fetch("data/products.json?"+Date.now());if(!r.ok)throw new Error("catalog snapshot HTTP "+r.status);const j=await r.json();
+  products=j.products.filter(p=>p.images&&p.images.length&&p.variants&&p.variants.length);byH={};products.forEach(p=>byH[p.handle]=p);window._gen=j.generated}
+async function loadOrder(){let saved=[];hidden=new Set();haveSaved=false;
+  try{const s=await getDoc(ref);if(s.exists()){saved=s.data().order||[];hidden=new Set(s.data().hidden||[]);haveSaved=saved.length>0}}catch(e){msg("Could not read the saved order: "+e.message,"err")}
+  order=saved.length?arrange(saved):products.slice().sort(newest).map(p=>p.handle);dirty=false;render()}
+const visible=()=>feedOrdered(order.filter(h=>byH[h]&&!hidden.has(h)).map(h=>byH[h]));
+function card(p,i,big,lead){
+  const fl=flatURL(p.handle);
+  const pages=[];const flat=fl?[`<div class="pg"><img class="fl" src="${fl}" loading="lazy" alt=""></div>`]:[];
+  const ph=p.images.map(u=>`<div class="pg"><img class="ph" src="${sized(u,big?1000:560)}" loading="lazy" alt=""></div>`);
+  const all=lead?[...ph,...flat]:[...flat,...ph];
+  const dots=all.length>1?`<div class="dots">${all.map((_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</div>`:"";
+  return `<div class="card ${big?"big":""}" data-h="${p.handle}"><div class="pager"><div class="track">${all.join("")}</div>${dots}
+   <div class="ov"><span class="num">${i+1}</span>${newSet.has(p.handle)?'<span class="nw">NEW</span>':""}<div class="ctl"><button class="dh" title="Drag">&#8942;&#8942;</button><button data-a="top">Top</button><button data-a="rep">Swap</button><button data-a="hide">Hide</button></div></div></div>
+   <div class="info"><div class="irow"><div class="itxt"><div class="eb">DressJet</div><div class="tt">${esc(title(p.title))}</div><div class="pr">${priceLabel(p)}</div></div><button class="plus" data-a="plus">+</button></div><div class="ex"></div></div></div>`}
+function render(){
+  const list=visible();$("load").style.display="none";
+  let h="",i=0;
+  for(let c=0;c*5<list.length;c++){const ch=list.slice(c*5,c*5+5);
+    const smalls=ch.length===5?ch.slice(0,4):ch;
+    smalls.forEach(p=>{h+=card(p,i++,false,false)});
+    if(ch.length===5)h+=card(ch[4],i++,true,c%2===1)}
+  $("feed").innerHTML=h;
+  const hl=order.filter(x=>byH[x]&&hidden.has(x));
+  $("hid").className=hl.length?"has":"";
+  $("hid").innerHTML=hl.length?`<h4>Hidden (not shown in the app)</h4>`+hl.map(x=>`<div class="hrow2" data-h="${x}"><img src="${sized(byH[x].images[0],150)}"><span>${esc(title(byH[x].title))}</span><button data-a="show">Show</button></div>`).join(""):"";
+  document.body.classList.toggle("edit",edit);
+  $("save").disabled=!dirty||!user;
+  $("reset").style.display=$("save").style.display=edit?"":"none";
+  $("mode").textContent=edit?"Preview":"Edit order";
+  if(sortable){sortable.destroy();sortable=null}
+  if(edit&&user)sortable=Sortable.create($("feed"),{handle:".dh",draggable:".card",animation:150,ghostClass:"sel-ghost",onEnd(){
+    const seq=[...$("feed").querySelectorAll(".card")].map(c=>c.dataset.h);const s=new Set(seq);
+    order=[...seq,...order.filter(x=>!s.has(x))];dirty=true;
+    const fo=feedOrdered(seq.map(x=>byH[x])).map(p=>p.handle);
+    if(fo.join()!==seq.join())msg("","");else msg("");
+    render()}});
+  bindTracks()}
+function bindTracks(){document.querySelectorAll(".track").forEach(t=>{const d=t.parentNode.querySelectorAll(".dots i");if(!d.length)return;
+  t.addEventListener("scroll",()=>{const k=Math.round(t.scrollLeft/t.clientWidth);d.forEach((x,j)=>x.classList.toggle("on",j===k))},{passive:true})})}
+$("feed").onclick=e=>{const b=e.target.closest("button");if(!b)return;const cardEl=b.closest(".card");if(!cardEl)return;const h=cardEl.dataset.h,a=b.dataset.a;
+  if(a==="plus"){const p=byH[h],ex=cardEl.querySelector(".ex");const open=ex.dataset.o==="1";if(open){ex.dataset.o="";ex.innerHTML="";b.style.display="";return}
+    ex.dataset.o="1";b.style.display="none";ex.innerHTML=`<div class="chips">${p.variants.map(v=>`<button class="chip ${v.available?"":"na"}" ${v.available?"":"disabled"}>${esc(v.title)}</button>`).join("")}</div>`;
+    ex.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ex.innerHTML='<div class="added">Added to bag \u2713 (preview only, nothing is added)</div>'});return}
+  if(!user||!edit)return;
+  if(a==="top"){const first=visible()[0];order=[h,...order.filter(x=>x!==h)];dirty=true;render();window.scrollTo(0,$("hero").offsetHeight)}
+  if(a==="hide"){hidden.add(h);dirty=true;render()}
+  if(a==="rep")openReplace(h)};
+$("hid").onclick=e=>{const b=e.target.closest("button");if(!b||!user)return;hidden.delete(b.closest(".hrow2").dataset.h);dirty=true;render()};
+let repH=null;
+function openReplace(h){repH=h;$("mt").textContent="Swap position "+(visible().findIndex(p=>p.handle===h)+1)+": "+title(byH[h].title);$("mq").value="";$("mh").checked=false;$("modal").style.display="flex";fillList()}
+function fillList(){const f=$("mq").value.trim().toLowerCase();
+  $("list").innerHTML=order.filter(h=>byH[h]&&h!==repH&&(!f||byH[h].title.toLowerCase().includes(f))).map(h=>`<div class="row" data-h="${h}"><img src="${sized(byH[h].images[0],150)}"><span>${esc(title(byH[h].title))}</span></div>`).join("")}
+$("mq").oninput=fillList;$("mc").onclick=()=>$("modal").style.display="none";
+$("list").onclick=e=>{const r=e.target.closest(".row");if(!r)return;const n=r.dataset.h,o=repH;
+  const idx=order.indexOf(o);order=order.filter(x=>x!==n&&x!==o);order.splice(Math.min(idx,order.length),0,n);
+  order=order.filter(x=>x!==o);order.push(o);if($("mh").checked)hidden.add(o);hidden.delete(n);
+  dirty=true;$("modal").style.display="none";render()};
+$("reset").onclick=()=>{if(!confirm("Reset to newest first? (Save to apply)"))return;order=products.slice().sort(newest).map(p=>p.handle);hidden=new Set();newSet=new Set();dirty=true;render()};
+$("save").onclick=async()=>{$("save").disabled=true;msg("Saving...");
+  try{await setDoc(ref,{order,hidden:[...hidden],updatedAt:serverTimestamp(),updatedBy:user.email});
+    const chk=await getDoc(ref,{source:"server"}),d=chk.data()||{};
+    if(!chk.exists()||(d.order||[]).join()!==order.join()||(d.hidden||[]).join()!==[...hidden].join())throw new Error("it did not read back the same, please press Save again");
+    dirty=false;newSet=new Set();haveSaved=true;const t=new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+    msg("Saved to the app at "+t+": "+order.filter(x=>byH[x]).length+" products, "+hidden.size+" hidden. The app shows this exact order the next time it is opened.","ok");render()}
+  catch(e){msg("Save failed: "+e.message,"err");$("save").disabled=false}};
+$("mode").onclick=()=>{edit=!edit;msg("");render()};
+$("in").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>msg("Sign-in failed: "+e.message,"err"));
+$("out").onclick=()=>signOut(auth);
+window.onbeforeunload=()=>dirty?"Unsaved changes":undefined;
+const hdr=$("hdr");const onScroll=()=>{hdr.classList.toggle("light",window.scrollY>=Math.max(1,$("hero").offsetHeight-190))};addEventListener("scroll",onScroll,{passive:true});onScroll();
+onAuthStateChanged(auth,u=>{user=u;$("in").style.display=u?"none":"";$("out").style.display=u?"":"none";$("who").textContent=u?u.email:"Preview (read only)";$("mode").disabled=!u;if(!u){edit=false}if(products.length)render()});
+try{await loadProducts();await loadOrder()}catch(e){$("load").textContent="Could not load products: "+e.message}
+if(location.hash.includes("nohero")){$("hero").style.height="0";$("hero").style.minHeight="0";window.scrollTo=()=>{}}
+const sm=location.hash.match(/scroll=(\d+)/);if(sm)setTimeout(()=>scrollTo(0,+sm[1]),600);
+</script></body></html>
