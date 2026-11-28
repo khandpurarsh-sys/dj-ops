@@ -67,6 +67,7 @@ import SwiftUI
     /** One read of the order document. Any failure keeps the last good order (cached) or none. */
     private func refreshHomeOrder() async {
         var req = URLRequest(url: Feed.homeOrderURL)
+        req.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData // 322: never a stale copy
         req.timeoutInterval = 8
         if let (data, resp) = try? await URLSession.shared.data(for: req), let http = resp as? HTTPURLResponse {
             if http.statusCode == 200, let o = Feed.parseHomeOrder(data) {
@@ -78,6 +79,9 @@ import SwiftUI
             }
         }
     }
+
+    /** 322: called each time the app becomes active, so a saved order shows without a cold start. */
+    func refreshOrder() { Task { await refreshHomeOrder() } }
 
     /** Test seam: inject already-parsed products without network. */
     func seed(_ list: [DjProduct]) { products = list; loaded = true; failed = false }

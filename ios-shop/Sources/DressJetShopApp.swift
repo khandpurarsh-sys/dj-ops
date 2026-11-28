@@ -32,6 +32,7 @@ struct RootView: View {
     @State private var homeScrollId: String? = nil
     @State private var catScrollIds: [String: String] = [:]
     @State private var searchQuery = ""
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         let top = stack.last ?? .splash
@@ -100,6 +101,7 @@ struct RootView: View {
         .animation(DjAnim.enabled ? .spring(response: 0.38, dampingFraction: 0.82) : nil, value: menuOpen)
         .background(Color.white.ignoresSafeArea()) // 224: no system-colour edge during slides
         .onAppear { repo.refresh(); Account.shared.attach(bag) }
+        .onChange(of: scenePhase) { _, p in if p == .active { repo.refreshOrder() } }
     }
 
     private func push(_ s: AppScreen) { stack.append(s) }

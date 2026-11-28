@@ -12,8 +12,10 @@ extension Feed {
     static func feedOrdered(_ products: [DjProduct]) -> [DjProduct] {
         products.filter(isOuterwear) + products.filter { !isOuterwear($0) } // stable, catalog order otherwise
     }
-    static func feedChunks(_ products: [DjProduct]) -> [[DjProduct]] {
-        let o = feedOrdered(products)
+    /** 322: with an owner order saved (config/homeOrder) the list is shown exactly as arranged;
+     *  jackets/coats only lead by default (no saved order), as before. */
+    static func feedChunks(_ products: [DjProduct], ownerOrdered: Bool = false) -> [[DjProduct]] {
+        let o = ownerOrdered ? products : feedOrdered(products)
         return stride(from: 0, to: o.count, by: 5).map { Array(o[$0..<min($0 + 5, o.count)]) }
     }
 }

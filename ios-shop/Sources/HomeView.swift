@@ -69,7 +69,7 @@ struct HomeView: View {
                 HeroVideoView(hero: repo.hero, active: scenePhase == .active && onHero, onShopNow: onDiscover)
                     .frame(maxWidth: .infinity).frame(height: heroH)
                     .id("hero")
-                let chunks = Feed.feedChunks({ var seen = Set<Int64>(); return (repo.latestIn + repo.gridProducts).filter { seen.insert($0.id).inserted } }())
+                let chunks = Feed.feedChunks({ var seen = Set<Int64>(); return (repo.latestIn + repo.gridProducts).filter { seen.insert($0.id).inserted } }(), ownerOrdered: !(repo.homeOrder?.order.isEmpty ?? true))
                 ForEach(Array(chunks.enumerated()), id: \.offset) { ci, chunk in
                     EditorialChunk(chunk: chunk, index: ci, bag: bag, onProduct: onProduct)
                         .id("chunk-\(chunk.first?.id ?? 0)")
