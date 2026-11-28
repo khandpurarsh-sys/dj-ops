@@ -126,8 +126,8 @@ async function staticFeedRead(force=false){
 async function prepareFeed(){
  staticFeed=null;v2Result=null;
  if(CF_ON()){const cur=await getCF().loadCurrent({onHistoryReady:cfHistoryReady,onHistoryError:cfHistoryError});histState=cur.historyState;
-  staticFeed={repo:(window.DJ_CONFIG||{}).repo,rows:cur.aux};feedTransport='current-first';
-  v2Result={data:cfAdapt(cur),feed:staticFeed,body:'',record:{generation:cur.generation},stale:false,status:''};return;}
+  staticFeed={repo:(window.DJ_CONFIG||{}).repo,rows:cur.aux};feedTransport=cur.stale?'current-first saved':'current-first';
+  v2Result={data:cfAdapt(cur),feed:staticFeed,body:'',record:{generation:cur.generation},stale:!!cur.stale,status:cur.status||''};return;}
  if(PROPOSED_POLICY.enabled){try{v2Result=await getV2Loader().load();staticFeed=v2Result.feed;feedTransport=v2Result.stale?'static v2 cached':'static v2';return;}catch(e){if(await v2BlocksLegacy())throw e;feedTransport='Static v2 unavailable before cutover: '+e.message;}}
  if(await v2BlocksLegacy())throw Error('Static v2 reader required; historical fallback disabled');
  try{await staticFeedRead();return}catch(e){feedTransport='API fallback: '+e.message}

@@ -1,7 +1,10 @@
-/* Current-first reader (djops-current-first-v1), draft 1. Built to CONTRACT.md (shadow).
+/* Current-first reader (djops-current-first-v1), draft 2. Built to CONTRACT.md (shadow).
    OFF until a separately approved release pins the bootstrap hash and policy. It reads
    feed-current-v1.json only and never touches feed-v2.json, so installed v2 clients are
-   unaffected. No figures are shown from cache before the network-validated current root. */
+   unaffected. Offline fallback (owner decision 2026-11-28 12:40 IST): when the network or
+   root validation fails, the last SAVED verified root wire state is re-validated and
+   re-decrypted and shown labelled with its original source times; full history restores
+   only through the same complete hash-verified reconstruction (never from partial). */
 import {sha256,utf8,fetchBounded,envelope,approvedRoster} from './feed-v2-loader.mjs';
 
 export const CF_POLICY=Object.freeze({enabled:false,repo:'khandpurarsh-sys/dj-ops',origin:'https://khandpurarsh-sys.github.io',basePath:'/dj-ops/',policyVersion:'djops-current-first-policy-1',bootstrapGeneration:null,bootstrapSha256:null,maxFeedBytes:2097152,maxBodyBytes:1048576,maxPlaintextBytes:8388608,maxFullBytes:33554432,maxChunks:64,timeoutMs:15000,requiredKids:[]});
@@ -38,7 +41,7 @@ function checkRow(n,row,p,accepted){
 }
 export async function validateRoot(bytes,p,accepted=null){
  checkCfPolicy(p);if(!(bytes instanceof Uint8Array)||bytes.byteLength>p.maxFeedBytes)fail('response limit');
- let j;try{j=JSON.parse(dec(bytes))}catch{fail('root JSON/UTF-8')}
+ let raw,j;try{raw=dec(bytes);j=JSON.parse(raw)}catch{fail('root JSON/UTF-8')}
  const hash=await sha256(bytes);
  if(!exact(j,['schema','repo','policyVersion','generation','previous','sid','publishedAt','sourceV2','current','aux'])||j.schema!=='djops-current-first-v1'||j.repo!==p.repo||j.policyVersion!==p.policyVersion||!integer(j.generation)||typeof j.sid!=='string'||!j.sid||!time(j.publishedAt))fail('root format');
  if(!exact(j.sourceV2,['generation','sha256'])||!integer(j.sourceV2.generation)||!HEX.test(j.sourceV2.sha256))fail('sourceV2 binding');
@@ -56,9 +59,56 @@ export async function validateRoot(bytes,p,accepted=null){
  if(!exact(c,['body','byteLength','sha256'])||typeof c.body!=='string'||!integer(c.byteLength)||c.byteLength>p.maxBodyBytes||utf8(c.body).length!==c.byteLength||!HEX.test(c.sha256)||await sha256(utf8(c.body))!==c.sha256)fail('current body hash/length');
  const e=envelope(c.body,true,v2p(p));if(e.sid!==j.sid)fail('current envelope sid');
  if(!exact(j.aux,['2','87','88']))fail('aux rows');for(const n of ['2','87','88']){checkRow(n,j.aux[n],p,accepted);if(await sha256(utf8(j.aux[n].body))!==j.aux[n].sha256)fail('aux hash '+n);envelope(j.aux[n].body,false,v2p(p));}
- return {root:j,hash,generation:j.generation,env:e};
+ return {root:j,hash,generation:j.generation,env:e,raw};
 }
 
+const ONLINE_DEFER=Object.freeze(['billList','cancelledOrders','finalOrders','postCloseCurrentObservation']);
+const RETAIL_DEFER=Object.freeze(['billList','itemOnlyExchanges','unmatchedItemRows','zeroNet179Only','missingItemAmounts']);
+const canon=x=>Array.isArray(x)?'['+x.map(canon).join(',')+']':plain(x)?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canon(x[k])).join(',')+'}':JSON.stringify(x);
+/* Every non-null value the projection showed must be identical in the full candidate, so
+   hydration can never change a Today/Yesterday figure that was already on screen. A null
+   in the projection is a transport placeholder (or a genuine null) and is allowed to be
+   filled by the full candidate; keys shown must exist in the full candidate. */
+function subsetConsistent(a,b,path){
+ if(a===null)return;
+ if(Array.isArray(a)){if(!Array.isArray(b)||a.length!==b.length)fail('projection vs full length '+path);a.forEach((x,i)=>subsetConsistent(x,b[i],path+'['+i+']'));return;}
+ if(plain(a)){if(!plain(b))fail('projection vs full type '+path);for(const k of Object.keys(a)){if(!(k in b))fail('projection key missing in full '+path+'.'+k);subsetConsistent(a[k],b[k],path+'.'+k);}return;}
+ if(a!==b)fail('projection value differs from full '+path);
+}
+function checkIndexConsistency(list,rows,defer,label){
+ if(rows.length!==list.length)fail('reconstructed shape vs index');
+ list.forEach((e,i)=>{
+  const row=rows[e.ordinal];
+  if(!plain(row)||row.d!==e.day)fail('full row day vs index '+label+' '+i);
+  const present=defer.filter(k=>k in row);
+  if(canon(present.slice().sort())!==canon(e.deferredMembers.slice().sort()))fail('deferred member list vs full row '+label+' '+i);
+  const stripped={...row};for(const k of defer)delete stripped[k];
+  if(canon(stripped)!==canon(e.summary))fail('index summary vs full row '+label+' '+i);
+ });
+}
+function checkDetailConsistency(projRows,list,rows,label){
+ const inc=list.filter(e=>e.detailIncluded).sort((a,b)=>a.ordinal-b.ordinal);
+ if(!Array.isArray(projRows)||projRows.length!==inc.length)fail('projection detail rows vs index '+label);
+ const pool=projRows.slice();
+ for(const e of inc){
+  const j=pool.findIndex(r=>plain(r)&&r.d===e.day);
+  if(j<0)fail('projection detail row missing '+label+' '+e.day);
+  const r=pool.splice(j,1)[0];
+  if(canon(r)!==canon(rows[e.ordinal]))fail('projection detail row vs full '+label+' '+e.day);
+ }
+}
+/* Reject a reconstructed full candidate that disagrees with the validated current
+   projection or its history index: summaries must be exact stripped rows, Today/Yesterday
+   complete rows must be byte-identical content, and no shown figure may change. */
+export function checkFullConsistency(z,full){
+ if(!plain(full)||!Array.isArray(full.history)||!Array.isArray(full.retailHistory))fail('reconstructed shape vs index');
+ checkIndexConsistency(z.historyIndex.onlineDays,full.history,ONLINE_DEFER,'online');
+ checkIndexConsistency(z.historyIndex.retailDays,full.retailHistory,RETAIL_DEFER,'retail');
+ checkDetailConsistency(z.data.history,z.historyIndex.onlineDays,full.history,'online');
+ checkDetailConsistency(z.data.retailHistory,z.historyIndex.retailDays,full.retailHistory,'retail');
+ const rest={...z.data};delete rest.history;delete rest.retailHistory;
+ subsetConsistent(rest,full,'data');
+}
 function checkIndex(h){
  if(!exact(h,['schema','onlineDays','retailDays','detailMode'])||h.schema!=='djops-history-index-v1'||h.detailMode!=='automatic-background'||!Array.isArray(h.onlineDays)||!Array.isArray(h.retailDays))fail('history index format');
  const online=['billList','cancelledOrders','finalOrders','postCloseCurrentObservation'],retail=['billList','itemOnlyExchanges','unmatchedItemRows','zeroNet179Only','missingItemAmounts'];
@@ -102,7 +152,7 @@ export async function hydrateFull(z,v,decrypt,p,fetcher,location,chunkCache=null
  }
  if(await sha256(out)!==b.fullSha256)fail('background reconstruction hash');
  let full;try{full=JSON.parse(dec(out))}catch{fail('background reconstruction JSON')}
- if(!plain(full)||!Array.isArray(full.history)||!Array.isArray(full.retailHistory)||full.history.length!==z.historyIndex.onlineDays.length||full.retailHistory.length!==z.historyIndex.retailDays.length)fail('reconstructed shape vs index');
+ checkFullConsistency(z,full);
  return {data:full,chunks:wires};
 }
 
@@ -115,11 +165,15 @@ export function cfStore(indexedDB){
   readChunks:()=>tx('chunks','readonly',(t,o)=>{const q=t.objectStore('chunks').getAll(),k=t.objectStore('chunks').getAllKeys();q.onsuccess=()=>{k.onsuccess=()=>{const m={};k.result.forEach((x,i)=>m[x]=q.result[i]);o(m)}}}),
   putChunks:m=>tx('chunks','readwrite',t=>{const s=t.objectStore('chunks');for(const [k,v] of Object.entries(m))s.put(v,k)})};
 }
-function stateFrom(v){const aux={};for(const n of ['2','87','88'])aux[n]={commentId:v.root.aux[n].source.commentId,sha256:v.root.aux[n].sha256};return{repo:v.root.repo,generation:v.generation,rootSha256:v.hash,sid:v.root.sid,aux,previous:v.root.previous,full:null};}
+function stateFrom(v){const aux={};for(const n of ['2','87','88'])aux[n]={commentId:v.root.aux[n].source.commentId,sha256:v.root.aux[n].sha256};return{repo:v.root.repo,generation:v.generation,rootSha256:v.hash,sid:v.root.sid,aux,previous:v.root.previous,raw:v.raw,full:null};}
 
 /* loadCurrent resolves only after root+current validation and the atomic high-water commit.
    Hydration then starts by itself. A newer loadCurrent supersedes an older one: its callbacks
-   are dropped (identity check), and a partial background never writes any accepted state. */
+   are dropped (identity check), and a partial background never writes any accepted state.
+   When the network or fresh-root validation fails and a saved verified root wire state
+   exists, that saved state is re-validated and re-decrypted and returned stale, labelled so
+   the app shows the saved figures with their original source times; hydration still only
+   completes through full hash-verified reconstruction (cache first, network for misses). */
 export function createCurrentFirstLoader({policy,store,fetcher=fetch,location,decrypt}){
  let active=null;
  async function hydrate(run,cb){
@@ -134,16 +188,28 @@ export function createCurrentFirstLoader({policy,store,fetcher=fetch,location,de
    run.state='ready';cb.onHistoryReady?.({data:h.data,generation:run.v.generation,sid:run.v.root.sid,rootSha256:run.v.hash,historyReady:true,historyState:'ready'});
   }catch(e){if(!same())return;run.state='error';run.reason=e.message;cb.onHistoryError?.({generation:run.v.generation,sid:run.v.root.sid,rootSha256:run.v.hash,historyReady:false,historyState:'error',reason:e.message});}
  }
+ const result=(run,stale,status)=>({data:run.z.data,historyIndex:run.z.historyIndex,reportingDay:run.z.reportingDay,sourceDays:run.z.sourceDays,aux:run.v.root.aux,generation:run.v.generation,sid:run.v.root.sid,rootSha256:run.v.hash,stale,status,historyReady:false,historyState:'loading'});
  return{
   async loadCurrent(cb={}){
    checkCfPolicy(policy);
    const saved=await store.read(policy.repo);
-   const bytes=await fetchBounded(resolveRoot(policy,location),policy,fetcher);   // no cache fallback: failure throws
-   const v=await validateRoot(bytes,policy,saved),z=await decodeCurrent(v,decrypt,policy);
+   let v,z,netError=null;
+   try{
+    const bytes=await fetchBounded(resolveRoot(policy,location),policy,fetcher);
+    v=await validateRoot(bytes,policy,saved);z=await decodeCurrent(v,decrypt,policy);
+   }catch(e){netError=e;}
+   if(netError){
+    if(!saved||typeof saved.raw!=='string')throw netError;   // nothing verified to fall back to
+    try{v=await validateRoot(utf8(saved.raw),policy,saved);z=await decodeCurrent(v,decrypt,policy);}
+    catch{throw netError;}   // saved state unreadable: surface the original failure
+    const run={v,z,cb,state:'loading'};active=run;
+    queueMicrotask(()=>hydrate(run,cb));
+    return result(run,true,'Feed check failed: '+netError.message+'. Showing last saved data with original source times');
+   }
    await store.commit(stateFrom(v));
    const run={v,z,cb,state:'loading'};active=run;
    queueMicrotask(()=>hydrate(run,cb));
-   return{data:z.data,historyIndex:z.historyIndex,reportingDay:z.reportingDay,sourceDays:z.sourceDays,aux:v.root.aux,generation:v.generation,sid:v.root.sid,rootSha256:v.hash,historyReady:false,historyState:'loading'};
+   return result(run,false,'');
   },
   retryHistory(){if(!active||active.state!=='error')return false;active.state='loading';queueMicrotask(()=>hydrate(active,active.cb));return true;},
   historyState(){return active?active.state:'none'}
